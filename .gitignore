@@ -1,0 +1,51 @@
+# React / JavaScript / TypeScript dependencies and build output
+**/node_modules/
+/react_app/build/
+/react_app/dist/
+/react_app/.vite/
+/react_app/.cache/
+/react_app/coverage/
+*.tsbuildinfo
+.eslintcache
+
+# JavaScript tooling logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Java / Spring Boot build output for Maven and Gradle
+**/target/
+**/build/
+**/.gradle/
+**/out/
+*.class
+*.hprof
+# Keep gradle-wrapper.jar, Maven Wrapper and source archives versionable.
+
+# Local configuration and secrets; keep example files versionable
+.env
+.env.*
+!.env.example
+!.env.*.example
+/springboot_app/**/application-local.properties
+/springboot_app/**/application-local.yml
+/springboot_app/**/application-local.yaml
+
+# Application logs
+*.log
+/springboot_app/logs/
+
+# Local editor and operating system files
+**/.idea/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Requested Obsidian folder and local vault configuration
+/obsidian/
+**/.obsidian/
