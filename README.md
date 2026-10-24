@@ -7,7 +7,7 @@
 - [Gioco di carte collezionabili digitale](#gioco-di-carte-collezionabili-digitale)
   - [Indice generale](#indice-generale)
   - [Funzionamento previsto](#funzionamento-previsto)
-    - [Terminologia commerciale](#terminologia-commerciale)
+  - [Terminologia commerciale](#terminologia-commerciale)
   - [Tecnologie](#tecnologie)
   - [Componenti del gruppo](#componenti-del-gruppo)
   - [Lore](#lore)
