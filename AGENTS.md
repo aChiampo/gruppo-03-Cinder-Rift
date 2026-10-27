@@ -4,7 +4,7 @@
 
 - Il progetto è nella fase di documentazione iniziale. `react_app/` e
   `springboot_app/` sono segnaposto; lo stack definitivo è ancora da confermare.
-- Leggi [README](README.md), [linee guida](Guide%20Lines%20and%20Rules.md) e
+- Leggi [README](README.md), [linee guida](Linee-Guida-e-Regole.md) e
   [indice della documentazione](docs/README.md) prima di intervenire.
 - Per ogni attività consulta le pagine pertinenti di `docs/Digital/`,
   `docs/FrontEnd/` e `docs/BackEnd/`, seguendo i collegamenti tra aree.
