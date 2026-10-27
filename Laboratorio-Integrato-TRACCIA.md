@@ -73,7 +73,8 @@ Ogni variante va documentata nel regolamento del gioco rivolto ai giocatori.
 - Definizione dei valori del regolamento: punti vita, vincoli del mazzo, fazioni e relativi vantaggi 
 - Bilanciamento delle statistiche delle carte 
 - Test del gioco e del portale 
-- Documentazione e presentazione finale 
+- Documentazione e presentazione finale
+  
 **Digital Strategist** 
 - Analisi buyer persona e competitor 
 - Sviluppo della lore e dell'ambientazione 
@@ -84,6 +85,7 @@ Ogni variante va documentata nel regolamento del gioco rivolto ai giocatori.
 - Regolamento del gioco rivolto ai giocatori e testi del portale, con ottimizzazione SEO 
 - Strategia di lancio e costruzione della community 
 - Campagna paid (Meta, Google Ads, TikTok o altri canali ritenuti adatti al target) 
+  
 **Web Developer** 
 - Conversione mockup in codice 
 - UX/UI e accessibilità 
@@ -94,6 +96,7 @@ Ogni variante va documentata nel regolamento del gioco rivolto ai giocatori.
 	- Applicare le migliori pratiche SEO, includendo on-page SEO per ottimizzare contenuti, meta tag, immagini, titoli e altri elementi, e technical SEO per migliorare struttura, velocità, indicizzazione e file come robots.txt e sitemap.xml. Collaborare con gli studenti del corso Digital Strategist per attività di off-page SEO. 
 - Performance di caricamento: Lighthouse e pagespeed 
 - Screenshot completi di tutte le pagine dell'applicazione (sia in versione desktop che mobile)
+
 **Software Developer** 
 - Configurazione database 
 - Sviluppo backend e API REST 

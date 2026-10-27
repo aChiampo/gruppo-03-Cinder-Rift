@@ -29,5 +29,5 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 - [Area Digital](../Digital/README.md)
 - [Area BackEnd](../BackEnd/README.md)
 - [Modello di documentazione](../modello-funzionalita.md)
-- [Linee guida](../../Guide%20Lines%20and%20Rules.md)
+- [Linee guida](../../Linee-Guida-e-Regole.md)
 - [README del progetto](../../README.md)

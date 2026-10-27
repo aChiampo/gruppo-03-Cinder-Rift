@@ -7,7 +7,7 @@
 - [Gioco di carte collezionabili digitale](#gioco-di-carte-collezionabili-digitale)
   - [Indice generale](#indice-generale)
   - [Funzionamento previsto](#funzionamento-previsto)
-    - [Terminologia commerciale](#terminologia-commerciale)
+  - [Terminologia commerciale](#terminologia-commerciale)
   - [Tecnologie](#tecnologie)
   - [Componenti del gruppo](#componenti-del-gruppo)
   - [Lore](#lore)
@@ -42,42 +42,43 @@ Le due offerte corrispondono ai due usi di «bundle» nelle risposte. Gli esempi
 
 Stack inizialmente indicato: React, Java/Spring Boot e PostgreSQL. Il gruppo comunicherà lo **stack definitivo** in seguito: versioni, librerie, linguaggio frontend, build e distribuzione restano da definire.
 
-La traccia prevede GitHub, GitHub Projects, OpenAPI/Swagger, JSDoc per JS/TS e motore Java isolato con test JUnit. Gli strumenti non sono ancora configurati.
+La traccia prevede GitHub, GitHub Projects, Swagger, JSDoc per JS/TS e motore Java isolato con test JUnit. Gli strumenti non sono ancora configurati.
 
 ## Componenti del gruppo
 
-| Nome e cognome | GitHub | Ruolo |
-| --- | --- | --- |
-| DA DEFINIRE — persona 1 | @DA_DEFINIRE_1 | Digital Strategist |
-| DA DEFINIRE — persona 2 | @DA_DEFINIRE_2 | Digital Strategist |
-| DA DEFINIRE — persona 3 | @DA_DEFINIRE_3 | Digital Strategist |
-| DA DEFINIRE — persona 4 | @DA_DEFINIRE_4 | Web Developer |
-| DA DEFINIRE — persona 5 | @DA_DEFINIRE_5 | Web Developer |
-| DA DEFINIRE — persona 6 | @DA_DEFINIRE_6 | Web Developer |
-| DA DEFINIRE — persona 7 | @DA_DEFINIRE_7 | Software Developer |
-| DA DEFINIRE — persona 8 | @DA_DEFINIRE_8 | Software Developer |
-| DA DEFINIRE — persona 9 | @DA_DEFINIRE_9 | Software Developer |
+| Nome e cognome           | GitHub                | Ruolo              |
+| ------------------------ | --------------------- | ------------------ |
+| Gennaro Raffaele         | @Raffo-DSG1           | Digital Strategist |
+| Belvedere Paolo          | @DA_DEFINIRE_2        | Digital Strategist |
+| Cortese Giovanni         | @giovannicortese-dot  | Digital Strategist |
+| Brancato Benedetto       | @benedettobrancato    | Software Developer |
+| Chiampo Andrea           | @aChiampo             | Software Developer |
+| Serrain Gabriele         | @bibriserra           | Software Developer |
+| Panigari Federico        | @Federico-Panigari    | Web Developer      |
+| Nigra-Gattinotta Daniele | @danielenigra-creator | Web Developer      |
+| Borra Mirko              | @mirkoborra-pixel     | Web Developer      |
 
-**Team Leader, repository remoto e GitHub Projects:** DA DEFINIRE.
-
+**Team Leader:** @Raffo-DSG1
 ## Lore
 
-**DA DEFINIRE:** nome, ambientazione, personaggi e fazioni. Il lavoro è confermato, ma i contenuti non sono ancora scelti. Le carte non saranno interamente generate con intelligenza artificiale.
+**DA DEFINIRE:** nome, ambientazione, personaggi e asset definitivi. Le fazioni e le caratteristiche delle carte sono descritte nella proposta di regolamento Versione 2.0, ancora da confermare. Le carte non saranno interamente generate con intelligenza artificiale.
 
 Riferimento: [Lore, identità e carte](docs/Digital/lore-identita-carte.md).
 
 ## Regole del gioco
 
-**DA DEFINIRE:** regolamento completo, valori numerici, bilanciamento, composizione dei mazzi e condizioni di conclusione. La strategia della modalità base si concentra sulla composizione dei mazzi; il sistema simula le partite.
+È disponibile la **Versione 2.0 — Proposta per il prototipo e le prove di bilanciamento**, integrata nella documentazione il **2026-10-27**. Descrive composizione dei mazzi, energia e punti potenza, fazioni, equipaggiamenti, combattimento automatico, round e conclusione della partita. Il testo del regolamento è riportato senza modifiche; metadati e collegamenti sono separati dalle regole.
 
-Riferimento: [Regolamento base](docs/Digital/regolamento-base.md). Le modalità aggiuntive non sono confermate.
+L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Le applicazioni non sono inizializzate e non sono state eseguite verifiche applicative.
+
+Riferimento: [Regolamento e svolgimento del gioco — Versione 2.0](docs/Digital/regolamento-base.md), con [elementi da completare e testare](docs/Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Le modalità aggiuntive non sono confermate.
 
 ## Struttura del repository
 
 ```text
 /
 ├── README.md
-├── Guide Lines and Rules.md
+├── Linee-Guida-e-Regole.md
 ├── AGENTS.md
 ├── CLAUDE.md
 ├── .gitignore
@@ -97,16 +98,17 @@ Riferimento: [Regolamento base](docs/Digital/regolamento-base.md). Le modalità 
 ├── react_app/
 │   └── .gitkeep
 └── springboot_app/
-    └── .gitkeep
+	├── applicazione/
+    └── game-engine/
 ```
 
 I file `.gitkeep` mantengono versionabili le cartelle applicative vuote. I documenti di funzionalità usano nomi italiani e si collegano tra aree; codice, commenti nel codice e risorse tecniche usano l'inglese.
 
 Le istruzioni condivise per gli assistenti sono in [AGENTS.md](AGENTS.md);
 [CLAUDE.md](CLAUDE.md) importa lo stesso file. Le regole complete restano nelle
-[linee guida](Guide%20Lines%20and%20Rules.md). Le specifiche attuali rimangono
-sintetiche: il [modello](docs/modello-funzionalita.md) definisce l'approfondimento
-tecnico progressivo quando saranno disponibili le decisioni. L'[indice documentale](docs/README.md#stato-delle-funzionalità)
+[linee guida](Linee-Guida-e-Regole.md). Le specifiche si approfondiscono
+progressivamente: il [modello](docs/modello-funzionalita.md) distingue le proposte
+dalle decisioni confermate e definisce il dettaglio tecnico atteso. L'[indice documentale](docs/README.md#stato-delle-funzionalità)
 riepiloga lo stato corrente, distinguendolo dalle evidenze storiche di verifica.
 
 ## Collaborazione Git
@@ -118,7 +120,7 @@ riepiloga lo stato corrente, distinguendolo dalle evidenze storiche di verifica.
 - Funzionalità verso `dev` tramite pull request; promozione da `dev` a `main` tramite pull request.
 - Nessun commit diretto su `main` o `dev`.
 
-Le [regole Git](Guide%20Lines%20and%20Rules.md#collaborazione-git) includono esempi. Le protezioni remote sono ancora da configurare; numero di approvazioni e strategia di merge restano da decidere. `main` non implica un deploy automatico.
+Le [regole Git](Linee-Guida-e-Regole.md#collaborazione-git) includono esempi. Le protezioni remote sono ancora da configurare; numero di approvazioni e strategia di merge restano da decidere. `main` non implica un deploy automatico.
 
 Esempio illustrativo: `feature/fa06-marketplace` e
 `feature/ba07-trade-logic-implementation` sono attività distinte collegate a F06

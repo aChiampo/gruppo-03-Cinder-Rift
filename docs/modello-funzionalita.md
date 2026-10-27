@@ -184,4 +184,4 @@ Esempio di criterio, da approvare quando le regole saranno disponibili:
 «Dato uno scambio già completato, quando viene ripetuta la stessa richiesta,
 allora non si produce un secondo trasferimento».
 
-[Indice](README.md) · [Linee guida](../Guide%20Lines%20and%20Rules.md)
+[Indice](README.md) · [Linee guida](../Linee-Guida-e-Regole.md)
