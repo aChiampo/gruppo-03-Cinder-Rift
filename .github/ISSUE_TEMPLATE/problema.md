@@ -24,5 +24,4 @@ Collegare la regola pertinente.
 
 Non inserire credenziali, token o dati personali reali.
 
-- [ ] Il caso descritto produce il risultato atteso.
 - [ ] Verificati i casi correlati pertinenti.
