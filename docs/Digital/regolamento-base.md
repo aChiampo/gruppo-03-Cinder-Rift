@@ -15,11 +15,8 @@ Versione 2.0 — Proposta per il prototipo e le prove di bilanciamento
 - **Ultimo aggiornamento significativo nel repository:** 2026-10-27.
 - **Ultima verifica del regolamento:** non eseguita; approvazione, prove di bilanciamento e verifiche applicative non documentate.
 
-Questa scheda e la sezione «Collegamenti» sono informazioni documentali aggiunte per l'integrazione nel repository. Il titolo, il sottotitolo e le sezioni numerate da 1 a 15 riproducono il testo fornito senza modifiche.
 
 La Versione 2.0 costituisce una proposta: la sua presenza nella documentazione non equivale all'approvazione definitiva delle regole o alla loro implementazione. Le decisioni ancora necessarie sono indicate nel testo, in particolare nelle sezioni 11 e 15.
-
-Le regole di gioco sono raccolte in questa pagina Digital. I contratti tecnici condivisi restano nelle pagine BackEnd pertinenti; le pagine FrontEnd vi rimandano e descrivono il comportamento dell'interfaccia. API, formati dei dati e altri dettagli tecnici non definiti dal regolamento restano DA DEFINIRE nelle rispettive specifiche.
 
 ## 1. Descrizione del gioco
 
