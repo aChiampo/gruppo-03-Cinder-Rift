@@ -11,7 +11,6 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 ## Funzionalità
 
 - [F01 — Registrazione e accesso](accesso-utenti.md)
-- [F02 — Acquisto simulato di crediti](acquisto-crediti.md)
 - [F03 — Negozio delle offerte di pacchetti](acquisto-pacchetti.md)
 - [F04 — Consultazione della collezione](collezione-carte.md)
 - [F05 — Composizione dei mazzi](gestione-mazzi.md)

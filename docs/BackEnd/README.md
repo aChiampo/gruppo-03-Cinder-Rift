@@ -12,7 +12,6 @@ Stato corrente nell'[indice generale](../README.md#stato-delle-funzionalità).
 ## Funzionalità
 
 - [F01 — Accesso utenti](accesso-utenti.md)
-- [F02 — Acquisto simulato di crediti](acquisto-crediti.md)
 - [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md)
 - [F04 — Collezione delle carte](collezione-carte.md)
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)

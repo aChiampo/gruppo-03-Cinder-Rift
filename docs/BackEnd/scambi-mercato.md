@@ -19,7 +19,6 @@ Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riport
 ## Collegamenti
 
 - [Interfaccia scambi](../FrontEnd/scambi-mercato.md)
-- [Crediti](acquisto-crediti.md)
 - [Collezione](collezione-carte.md)
 - [Mazzi](gestione-mazzi.md)
 - [Indice BackEnd](README.md)

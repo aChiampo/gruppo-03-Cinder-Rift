@@ -2,7 +2,7 @@
 
 Le pagine documentano decisioni confermate, proposte e punti aperti, senza fissare dettagli ancora mancanti. Il modello definisce l'approfondimento progressivo da applicare quando le informazioni saranno disponibili; le pagine esistenti non vengono espanse in anticipo. Il regolamento Versione 2.0 è disponibile come proposta per il prototipo e le prove di bilanciamento. Tutte le applicazioni e funzionalità software sono **non implementate**.
 
-Ultimo aggiornamento significativo dell'indice: **2026-10-27**. La data riguarda l'integrazione documentale della proposta di regolamento e dei relativi riferimenti tra aree. Le verifiche applicative non sono eseguite: le applicazioni non sono ancora inizializzate. Non costituisce una prova del software o una validazione del bilanciamento.
+Ultimo aggiornamento significativo dell'indice: **2026-10-27**. La data riguarda l'integrazione documentale della proposta di regolamento, i relativi riferimenti tra aree e l'allineamento del perimetro alla richiesta dell'utente del 2026-10-27. Le verifiche applicative non sono eseguite: le applicazioni non sono ancora inizializzate. Non costituisce una prova del software o una validazione del bilanciamento.
 
 ## Aree e strumenti comuni
 
@@ -21,7 +21,6 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 | ID  | Oggetto                                                                    | Perimetro                                   | Specifica   | Implementazione | Verifica     | Riferimento principale                               |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------- | ----------- | --------------- | ------------ | ---------------------------------------------------- |
 | F01 | Email/password, JWT, ruoli ADMIN/MANAGER/USER                              | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Accesso](BackEnd/accesso-utenti.md)                 |
-| F02 | Offerte di crediti, acquisto simulato ed email                             | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Crediti](BackEnd/acquisto-crediti.md)               |
 | F03 | Offerte di più pacchetti acquistabili con crediti                          | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
 | F04 | Collezione                                                                 | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
 | F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Mazzi](BackEnd/gestione-mazzi.md)                   |
@@ -56,7 +55,6 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 | --- | --- | --- |
 | Database | MySQL | PostgreSQL inizialmente indicato; stack definitivo atteso e differenza da verificare |
 | Scambi | Solo carte | Carte e crediti, privati/pubblici; approvazione del committente confermata dal gruppo |
-| Crediti fase 1 | Modalità a scelta, senza pagamenti reali | Offerte con acquisto simulato ed email; dati predisposti per acquisti futuri |
 | Offerte del negozio | Acquisto di pacchetti | Offerte composte da più pacchetti; struttura e prezzi gestibili dal backoffice |
 | Carte | Creazione con strumenti di intelligenza artificiale | Carte non interamente generate; ripartizione del contributo umano da definire |
 | Pagine informative | Richieste dalla traccia | Segnaposto fino a indicazioni successive |
@@ -67,15 +65,15 @@ Da approfondire successivamente nelle pagine interessate:
 
 - Stack definitivo, versioni, strumenti e differenza PostgreSQL/MySQL.
 - Permessi dei tre ruoli e dettagli del ciclo di vita JWT.
-- Offerte di crediti e pacchetti: quantità, prezzi, limiti, apertura e disponibilità.
-- Dettagli della conferma email e gestione degli errori dell'acquisto simulato.
+- Modalità di assegnazione dei crediti in fase 1.
+- Offerte di pacchetti: quantità, prezzi, limiti, apertura e disponibilità.
 - Scambi: durata standard del marketplace, sequenza del consenso, prenotazione, modifica e annullamento.
 - Regolamento: approvazione definitiva della Versione 2.0; soglie di energia, statistiche e punti potenza delle carte, effetti e ordine di risoluzione degli equipaggiamenti, bilanciamento di budget/rarità/copie/bonus, conferma della formula del danno con gli insegnanti e possibilità di cure o prevenzione dei danni. Riferimenti: [formula proposta](Digital/regolamento-base.md#11-danni-ai-giocatori) ed [elementi da completare e testare](Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
 - Effetti degli scambi sui mazzi e uso delle carte in più mazzi.
 - Numero di approvazioni, revisori, strategia di merge e protezioni remote.
 - Nomi del progetto e del gruppo, membri e Team Leader.
 
-Gli esempi «2 $ → 1.000 crediti» e «1.000 crediti → 2 pacchetti Rare + 1 Ultra» chiariscono prodotti diversi e non stabiliscono configurazioni definitive.
+L'esempio «1.000 crediti → 2 pacchetti Rare + 1 Ultra» chiarisce la composizione di un'offerta e non stabilisce una configurazione definitiva.
 
 ## Consegna
 

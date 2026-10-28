@@ -19,5 +19,4 @@ Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riport
 
 - [Servizio scambi](../BackEnd/scambi-mercato.md)
 - [Collezione](collezione-carte.md)
-- [Crediti](acquisto-crediti.md)
 - [Indice FrontEnd](README.md)

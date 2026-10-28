@@ -21,22 +21,22 @@
 ## Funzionamento previsto
 
 1. Registrazione e accesso con email e password; un servizio nell'app Spring Boot gestisce JWT e ruoli `ADMIN`, `MANAGER`, `USER`.
-2. Acquisizione di crediti tramite offerte con acquisto simulato ed email di conferma; nessun addebito reale nella fase 1.
-3. Acquisto con crediti di offerte contenenti più pacchetti, anche di tipi diversi; prezzi e composizione sono gestibili dal backoffice.
-4. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
-5. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata standard da definire.
-6. Sfide con scelta dei mazzi, simulazione sul server e storico con risultati turno per turno.
+2. Acquisto con crediti di offerte contenenti più pacchetti, anche di tipi diversi; prezzi e composizione sono gestibili dal backoffice.
+3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
+4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata standard da definire.
+5. Sfide con scelta dei mazzi, simulazione sul server e storico con risultati turno per turno.
+
+Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pagamenti reali sono esclusi dallo sviluppo previsto dalla traccia.
 
 ### Terminologia commerciale
 
 | Termine | Significato | Esempio illustrativo, non configurazione approvata |
 | --- | --- | --- |
-| Offerta di crediti | Importo monetario simulato in cambio di crediti | 2 $ → 1.000 crediti |
 | Offerta di pacchetti | Crediti in cambio di un insieme di pacchetti | 1.000 crediti → 2 pacchetti «Rare» + 1 «Ultra» |
 | Pacchetto | Contenitore di carte con composizione e apertura da definire | Un pacchetto del tipo «Rare» |
 | Carta | Elemento della collezione utilizzabile nei mazzi | Creatura con attacco, difesa e fazione |
 
-Le due offerte corrispondono ai due usi di «bundle» nelle risposte. Gli esempi non stabiliscono valuta, prezzi, nomi commerciali, rarità o quantità definitive.
+Il termine «bundle» indica un'offerta di pacchetti. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità definitive.
 
 ## Tecnologie
 

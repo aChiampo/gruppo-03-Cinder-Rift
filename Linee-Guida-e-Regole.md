@@ -12,7 +12,7 @@ Regole aggiornate secondo le risposte del gruppo. Le scelte mancanti restano **D
 
 ## Documentazione per funzionalità
 
-Usare `docs/[area]/[nome-funzionalita].md` con aree `Digital`, `FrontEnd`, `BackEnd`. Per i file usare italiano, minuscolo, kebab-case e nessun accento: `acquisto-crediti.md`, `scambi-mercato.md`.
+Usare `docs/[area]/[nome-funzionalita].md` con aree `Digital`, `FrontEnd`, `BackEnd`. Per i file usare italiano, minuscolo, kebab-case e nessun accento: `acquisto-pacchetti.md`, `scambi-mercato.md`.
 
 Gli indici, il [modello](docs/modello-funzionalita.md) e la [lista di consegna](docs/lista-verifica-consegna.md) sono documenti trasversali.
 
@@ -97,11 +97,23 @@ Usare il formato `TODO [riferimento]: azione in inglese`. Collegare un'attività
 | Package Java | Inglese, minuscolo | `com.example.project.trade`; dominio da definire |
 | Costante | Inglese, UPPER_SNAKE_CASE | `MARKETPLACE_TTL` |
 | Tabella o colonna | Inglese, snake_case | `trade_offers`, `owner_id` |
-| Risorsa REST | Inglese, plurale | `trades`, `credit-bundles` |
+| Risorsa REST | Inglese, plurale | `trades`, `packs` |
 | Risorsa statica | Inglese, kebab-case | `card-back.webp` |
 | Branch di attività | Inglese, ID attività minuscolo | `feature/fa06-marketplace`, `feature/ba07-trade-logic-implementation` |
 
 Sono convenzioni di naming, non contratti o schemi già implementati. Vedere la [terminologia del progetto](README.md#terminologia-commerciale).
+
+### Convenzioni per gli endpoint
+
+Ultimo aggiornamento significativo della sezione: **2026-10-28**. Fonte: selezione delle regole e conferma del prefisso `/api` da parte dell'utente nella conversazione del 2026-10-28.
+
+- **Nomi delle risorse:** usare sostantivi inglesi al plurale, in minuscolo; per nomi composti usare kebab-case, ad esempio `/api/cards`, `/api/decks`, `/api/trade-offers`.
+- **Operazioni:** esprimere l'operazione tramite il metodo HTTP, senza verbi nel percorso. Usare ad esempio `GET /api/decks` e `POST /api/decks`, evitando percorsi come `/api/getDecks`, `/api/createDeck` o `/api/packs/{packId}/open`.
+- **Identificativi:** collocare l'identificativo dopo la risorsa e usare segnaposto descrittivi in camelCase, ad esempio `/api/decks/{deckId}`.
+- **Parametri di query:** usare nomi in camelCase per filtri, ordinamento e paginazione, ad esempio `/api/cards?faction=fire&pageSize=20`. Definire i parametri supportati nel contratto della funzionalità.
+- **Prefisso comune:** tutti gli endpoint API usano il prefisso `/api`. La politica di versionamento resta **DA DEFINIRE**.
+
+Gli esempi illustrano le convenzioni di naming: non definiscono endpoint implementati, operazioni disponibili o valori di dominio approvati. I contratti effettivi restano nelle pagine BackEnd pertinenti, secondo le regole del [contratto condiviso tra aree](#contratto-condiviso-tra-aree).
 
 ## Modello di documentazione
 

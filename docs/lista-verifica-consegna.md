@@ -15,8 +15,6 @@ Le caselle sono inizialmente aperte: il documento non certifica verifiche esegui
 - [ ] Includere export database ripristinabile e istruzioni di importazione.
 - [ ] Fornire configurazione di esempio senza credenziali o dati personali reali.
 - [ ] Verificare accesso JWT e permessi ADMIN/MANAGER/USER.
-- [ ] Verificare offerte di crediti simulate, email e assenza di pagamenti reali nella fase 1.
-- [ ] Predisporre i dati per acquisti futuri distinguendo le operazioni simulate.
 - [ ] Verificare offerte di pacchetti, apertura, collezione e backoffice.
 - [ ] Verificare mazzi e vincoli lato server.
 - [ ] Verificare scambi privati/pubblici, carte/crediti, consenso, durata e coerenza dei trasferimenti.

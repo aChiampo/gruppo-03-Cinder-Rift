@@ -20,7 +20,7 @@ Ultimo aggiornamento significativo: 2026-10-27. Verifiche applicative: non esegu
 ## Da definire
 
 - Matrice dei permessi e operazioni consentite su cataloghi già utilizzati.
-- Gestione delle offerte di crediti ed eventuali altre funzioni amministrative.
+- Eventuali altre funzioni amministrative.
 - Contratto tecnico del catalogo e validazioni; compatibilità delle modifiche alle carte con mazzi e partite esistenti, in coordinamento con F05 e F07.
 
 ## Collegamenti
