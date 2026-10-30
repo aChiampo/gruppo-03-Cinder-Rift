@@ -1,0 +1,452 @@
+[
+  {
+    "id": "ALI_R1_1",
+    "name": "Alieni Cacciatore R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 6
+  },
+  {
+    "id": "ALI_R1_2",
+    "name": "Alieni Devastatore R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 6
+  },
+  {
+    "id": "ALI_R1_3",
+    "name": "Alieni Devastatore R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 7
+  },
+  {
+    "id": "ALI_R1_4",
+    "name": "Alieni Leviatano R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 6
+  },
+  {
+    "id": "ALI_R1_5",
+    "name": "Alieni Devastatore R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R1_6",
+    "name": "Alieni Drone R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 7
+  },
+  {
+    "id": "ALI_R1_7",
+    "name": "Alieni Comandante R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R1_8",
+    "name": "Alieni Psionico R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R1_9",
+    "name": "Alieni Drone R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 9
+  },
+  {
+    "id": "ALI_R1_10",
+    "name": "Alieni Psionico R1",
+    "faction": "ALIENI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R2_1",
+    "name": "Alieni Cacciatore R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 6,
+    "initialDef": 9
+  },
+  {
+    "id": "ALI_R2_2",
+    "name": "Alieni Psionico R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "ALI_R2_3",
+    "name": "Alieni Comandante R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 10
+  },
+  {
+    "id": "ALI_R2_4",
+    "name": "Alieni Leviatano R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 6,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R2_5",
+    "name": "Alieni Cacciatore R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R2_6",
+    "name": "Alieni Cacciatore R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "ALI_R2_7",
+    "name": "Alieni Cacciatore R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "ALI_R2_8",
+    "name": "Alieni Devastatore R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "ALI_R2_9",
+    "name": "Alieni Psionico R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R2_10",
+    "name": "Alieni Drone R2",
+    "faction": "ALIENI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 8
+  },
+  {
+    "id": "ALI_R3_1",
+    "name": "Alieni Devastatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 7,
+    "initialDef": 12
+  },
+  {
+    "id": "ALI_R3_2",
+    "name": "Alieni Devastatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "ALI_R3_3",
+    "name": "Alieni Cacciatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "ALI_R3_4",
+    "name": "Alieni Drone R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "ALI_R3_5",
+    "name": "Alieni Psionico R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 13
+  },
+  {
+    "id": "ALI_R3_6",
+    "name": "Alieni Cacciatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 13
+  },
+  {
+    "id": "ALI_R3_7",
+    "name": "Alieni Cacciatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "ALI_R3_8",
+    "name": "Alieni Devastatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "ALI_R3_9",
+    "name": "Alieni Devastatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "ALI_R3_10",
+    "name": "Alieni Cacciatore R3",
+    "faction": "ALIENI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 5,
+    "initialDef": 13
+  },
+  {
+    "id": "ALI_R4_1",
+    "name": "Alieni Comandante R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "ALI_R4_2",
+    "name": "Alieni Leviatano R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "ALI_R4_3",
+    "name": "Alieni Comandante R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "ALI_R4_4",
+    "name": "Alieni Cacciatore R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 13
+  },
+  {
+    "id": "ALI_R4_5",
+    "name": "Alieni Devastatore R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "ALI_R4_6",
+    "name": "Alieni Devastatore R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 15
+  },
+  {
+    "id": "ALI_R4_7",
+    "name": "Alieni Drone R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 13
+  },
+  {
+    "id": "ALI_R4_8",
+    "name": "Alieni Comandante R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 14
+  },
+  {
+    "id": "ALI_R4_9",
+    "name": "Alieni Psionico R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 13
+  },
+  {
+    "id": "ALI_R4_10",
+    "name": "Alieni Psionico R4",
+    "faction": "ALIENI",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 12
+  },
+  {
+    "id": "ALI_R5_1",
+    "name": "Alieni Comandante R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "ALI_R5_2",
+    "name": "Alieni Cacciatore R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 9,
+    "initialDef": 15
+  },
+  {
+    "id": "ALI_R5_3",
+    "name": "Alieni Psionico R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "ALI_R5_4",
+    "name": "Alieni Drone R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 16
+  },
+  {
+    "id": "ALI_R5_5",
+    "name": "Alieni Psionico R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "ALI_R5_6",
+    "name": "Alieni Cacciatore R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "ALI_R5_7",
+    "name": "Alieni Cacciatore R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 16
+  },
+  {
+    "id": "ALI_R5_8",
+    "name": "Alieni Psionico R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 16
+  },
+  {
+    "id": "ALI_R5_9",
+    "name": "Alieni Drone R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "ALI_R5_10",
+    "name": "Alieni Cacciatore R5",
+    "faction": "ALIENI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 17
+  }
+]
