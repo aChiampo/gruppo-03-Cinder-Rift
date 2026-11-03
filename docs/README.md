@@ -2,7 +2,7 @@
 
 Le pagine documentano decisioni confermate, proposte e punti aperti, senza fissare dettagli ancora mancanti. Il modello definisce l'approfondimento progressivo da applicare quando le informazioni saranno disponibili; le pagine esistenti non vengono espanse in anticipo. Il regolamento Versione 2.0 è disponibile come proposta per il prototipo e le prove di bilanciamento. Tutte le applicazioni e funzionalità software sono **non implementate**.
 
-Ultimo aggiornamento significativo dell'indice: **2026-10-27**. La data riguarda l'integrazione documentale della proposta di regolamento, i relativi riferimenti tra aree e l'allineamento del perimetro alla richiesta dell'utente del 2026-10-27. Le verifiche applicative non sono eseguite: le applicazioni non sono ancora inizializzate. Non costituisce una prova del software o una validazione del bilanciamento.
+Ultimo aggiornamento significativo dell'indice: **2026-11-03**, per l’approfondimento F06 con prenotazioni persistenti per versione dell’offerta e variante grafica, richieste dal committente. Il [contratto F06](BackEnd/scambi-mercato.md) distingue decisioni disponibili e integrazioni ancora da definire. L’integrazione documentale della proposta di regolamento resta datata **2026-10-27**. Implementazione non iniziata e verifiche applicative non eseguite: l’aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
 
 ## Aree e strumenti comuni
 
@@ -24,7 +24,7 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 | F03 | Offerte di più pacchetti acquistabili con crediti                          | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
 | F04 | Collezione                                                                 | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
 | F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Mazzi](BackEnd/gestione-mazzi.md)                   |
-| F06 | Scambi di carte e crediti, privati/pubblici, consenso di entrambe le parti | Confermato; approvato anche dal committente | Sintetica   | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
+| F06 | Scambi di carte e token, privati/pubblici, consenso e prenotazioni | Confermato; approvato anche dal committente | In approfondimento | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
 | F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Sfide](BackEnd/sfide-simulazione.md)                |
 | F08 | Storico e dettaglio dei turni                                              | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Storico](BackEnd/storico-partite.md)                |
 | F09 | Pagine informative                                                         | DA DEFINIRE; solo segnaposto                | Sintetica   | Non iniziata    | Non eseguita | [Pagine informative](FrontEnd/pagine-informative.md) |
@@ -67,7 +67,7 @@ Da approfondire successivamente nelle pagine interessate:
 - Permessi dei tre ruoli e dettagli del ciclo di vita JWT.
 - Modalità di assegnazione dei crediti in fase 1.
 - Offerte di pacchetti: quantità, prezzi, limiti, apertura e disponibilità.
-- Scambi: durata standard del marketplace, sequenza del consenso, prenotazione, modifica e annullamento.
+- Scambi: API, integrazione delle prenotazioni con gli altri servizi, giocabilità delle copie prenotate e operatività della pulizia; durata, consenso, modifica e annullamento sono descritti nel [contratto F06](BackEnd/scambi-mercato.md).
 - Regolamento: approvazione definitiva della Versione 2.0; soglie di energia, statistiche e punti potenza delle carte, effetti e ordine di risoluzione degli equipaggiamenti, bilanciamento di budget/rarità/copie/bonus, conferma della formula del danno con gli insegnanti e possibilità di cure o prevenzione dei danni. Riferimenti: [formula proposta](Digital/regolamento-base.md#11-danni-ai-giocatori) ed [elementi da completare e testare](Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
 - Effetti degli scambi sui mazzi e uso delle carte in più mazzi.
 - Numero di approvazioni, revisori, strategia di merge e protezioni remote.
