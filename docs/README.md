@@ -2,7 +2,7 @@
 
 Le pagine documentano decisioni confermate, proposte e punti aperti, senza fissare dettagli ancora mancanti. Il modello definisce l'approfondimento progressivo da applicare quando le informazioni saranno disponibili; le pagine esistenti non vengono espanse in anticipo. Il regolamento Versione 2.0 è disponibile come proposta per il prototipo e le prove di bilanciamento. Tutte le applicazioni e funzionalità software sono **non implementate**.
 
-Ultimo aggiornamento significativo dell'indice: **2026-11-03**, per l’approfondimento F06 con prenotazioni persistenti per versione dell’offerta e variante grafica, richieste dal committente. Il [contratto F06](BackEnd/scambi-mercato.md) distingue decisioni disponibili e integrazioni ancora da definire. L’integrazione documentale della proposta di regolamento resta datata **2026-10-27**. Implementazione non iniziata e verifiche applicative non eseguite: l’aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
+Ultimo aggiornamento significativo dell'indice: **2026-11-04**, per la decisione dell'utente di limitare ogni offerta del negozio a un solo pacchetto; riferimento canonico: [F03](BackEnd/acquisto-pacchetti.md). L'approfondimento F06 con prenotazioni persistenti per versione dell'offerta e variante grafica resta riferito al **2026-11-03**. Il [contratto F06](BackEnd/scambi-mercato.md) distingue decisioni disponibili e integrazioni ancora da definire. L'integrazione documentale della proposta di regolamento resta datata **2026-10-27**. Implementazione non iniziata e verifiche applicative non eseguite: l'aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
 
 ## Aree e strumenti comuni
 
@@ -21,7 +21,7 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 | ID  | Oggetto                                                                    | Perimetro                                   | Specifica   | Implementazione | Verifica     | Riferimento principale                               |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------- | ----------- | --------------- | ------------ | ---------------------------------------------------- |
 | F01 | Email/password, JWT, ruoli ADMIN/MANAGER/USER                              | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Accesso](BackEnd/accesso-utenti.md)                 |
-| F03 | Offerte di più pacchetti acquistabili con crediti                          | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
+| F03 | Offerte di un solo pacchetto acquistabili con crediti                      | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
 | F04 | Collezione                                                                 | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
 | F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Mazzi](BackEnd/gestione-mazzi.md)                   |
 | F06 | Scambi di carte e token, privati/pubblici, consenso e prenotazioni | Confermato; approvato anche dal committente | In approfondimento | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
@@ -55,7 +55,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 | --- | --- | --- |
 | Database | MySQL | PostgreSQL inizialmente indicato; stack definitivo atteso e differenza da verificare |
 | Scambi | Solo carte | Carte e crediti, privati/pubblici; approvazione del committente confermata dal gruppo |
-| Offerte del negozio | Acquisto di pacchetti | Offerte composte da più pacchetti; struttura e prezzi gestibili dal backoffice |
+| Offerte del negozio | Acquisto di pacchetti | Ogni offerta contiene un solo pacchetto; prezzo e configurazione del pacchetto gestibili dal backoffice |
 | Carte | Creazione con strumenti di intelligenza artificiale | Carte non interamente generate; ripartizione del contributo umano da definire |
 | Pagine informative | Richieste dalla traccia | Segnaposto fino a indicazioni successive |
 
@@ -66,14 +66,14 @@ Da approfondire successivamente nelle pagine interessate:
 - Stack definitivo, versioni, strumenti e differenza PostgreSQL/MySQL.
 - Permessi dei tre ruoli e dettagli del ciclo di vita JWT.
 - Modalità di assegnazione dei crediti in fase 1.
-- Offerte di pacchetti: quantità, prezzi, limiti, apertura e disponibilità.
+- Offerte di un solo pacchetto: prezzi, limiti, contenuto del pacchetto, apertura e disponibilità.
 - Scambi: API, integrazione delle prenotazioni con gli altri servizi, giocabilità delle copie prenotate e operatività della pulizia; durata, consenso, modifica e annullamento sono descritti nel [contratto F06](BackEnd/scambi-mercato.md).
 - Regolamento: approvazione definitiva della Versione 2.0; soglie di energia, statistiche e punti potenza delle carte, effetti e ordine di risoluzione degli equipaggiamenti, bilanciamento di budget/rarità/copie/bonus, conferma della formula del danno con gli insegnanti e possibilità di cure o prevenzione dei danni. Riferimenti: [formula proposta](Digital/regolamento-base.md#11-danni-ai-giocatori) ed [elementi da completare e testare](Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
 - Effetti degli scambi sui mazzi e uso delle carte in più mazzi.
 - Numero di approvazioni, revisori, strategia di merge e protezioni remote.
 - Nomi del progetto e del gruppo, membri e Team Leader.
 
-L'esempio «1.000 crediti → 2 pacchetti Rare + 1 Ultra» chiarisce la composizione di un'offerta e non stabilisce una configurazione definitiva.
+L'esempio «1.000 crediti → 1 pacchetto Rare» rispetta la cardinalità confermata di un solo pacchetto per offerta e non stabilisce un prezzo o un tipo definitivo.
 
 ## Consegna
 

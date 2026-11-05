@@ -4,12 +4,12 @@ ID: F10 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.0, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-10-27. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: 2026-11-04, per l'allineamento alla decisione dell'utente su F03: un solo pacchetto per offerta. Il riferimento al regolamento resta datato 2026-10-27. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 
 - Backoffice per il catalogo delle carte e dei pacchetti.
-- Prezzi e composizione delle offerte di pacchetti sono gestibili dal backoffice.
+- Prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice; ogni offerta contiene una sola unità, secondo il contratto canonico F03.
 - Accesso riservato agli utenti autorizzati; non sono ancora assegnati privilegi ai tre ruoli.
 
 ## Riferimenti alla proposta di regolamento

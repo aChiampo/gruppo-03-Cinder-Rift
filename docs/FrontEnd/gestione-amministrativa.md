@@ -4,12 +4,12 @@ ID: F10 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.0, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-10-27. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: 2026-11-04, per l'allineamento alla decisione dell'utente su F03: un solo pacchetto per offerta. Il riferimento al regolamento resta datato 2026-10-27. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 
 - Interfacce di gestione delle carte e dei pacchetti.
-- Consentire agli utenti autorizzati di gestire prezzi e composizione delle offerte di pacchetti.
+- Consentire agli utenti autorizzati di gestire prezzo e configurazione del singolo pacchetto, secondo i contratti canonici BackEnd di F03/F10; ogni offerta contiene un solo pacchetto.
 
 ## Implicazioni della proposta di regolamento
 
