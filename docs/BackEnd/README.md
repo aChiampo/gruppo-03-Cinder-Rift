@@ -9,6 +9,12 @@ stati, payload, dati, errori, transazioni, concorrenza e verifiche secondo il
 da quelle FrontEnd, collegati allo stesso ID funzionalità e contratto.
 Stato corrente nell'[indice generale](../README.md#stato-delle-funzionalità).
 
+## Base di dati v1.0
+
+Ultimo aggiornamento significativo: **2026-11-05**. La [specifica autonoma della base di dati v1.0](Database/database-schema-v1.0.md) è la fonte canonica di tabelle, tipi, vincoli e invarianti; [db_schema-v1.0.dbml](Database/db_schema-v1.0.dbml) ne è la rappresentazione completa in DBML. Tutte le pagine di funzionalità BackEnd sono allineate a questa versione.
+
+Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano gli interi. Carte e arti sono distinte anche nei mazzi, le prenotazioni appartengono alle trattative e ai consensi correnti, le missioni usano flag di riscossione booleani. Le regole/API ancora proposte restano da concordare. Nessuna migrazione, implementazione o verifica applicativa è attestata da questo allineamento.
+
 ## Funzionalità
 
 - [F01 — Accesso utenti](accesso-utenti.md)
