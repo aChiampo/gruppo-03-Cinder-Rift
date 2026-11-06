@@ -29,6 +29,7 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 
 ## Collegamenti
 
+- [Applicazione backend e dipendenze](../../springboot_app/app/README.md)
 - [Indice generale e stato delle funzionalità](../README.md)
 - [Area Digital](../Digital/README.md)
 - [Area FrontEnd](../FrontEnd/README.md)
