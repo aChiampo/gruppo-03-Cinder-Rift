@@ -25,6 +25,7 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 - [F07 — Sfide e simulazione](sfide-simulazione.md)
 - [F08 — Storico delle partite](storico-partite.md)
 - [F10 — Gestione amministrativa](gestione-amministrativa.md)
+- [F13 — Amicizie; dipendenza di F06](amicizie.md)
 
 ## Collegamenti
 

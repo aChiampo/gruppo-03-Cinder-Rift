@@ -31,6 +31,7 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 | F10 | Backoffice carte e prodotti                                                | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Backoffice](BackEnd/gestione-amministrativa.md)     |
 | F11 | Responsive e accessibilità                                                 | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Interfacce](FrontEnd/accessibilita-responsive.md)   |
 | F12 | SEO e prestazioni                                                          | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [SEO](FrontEnd/seo-prestazioni.md)                   |
+| F13 | Amicizie reciproche e richieste | Modellato nella base di dati; flussi proposti | In approfondimento | Non iniziata | Non eseguita | [Amicizie](BackEnd/amicizie.md) |
 | D01 | Lore, identità e carte non interamente generate                            | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Lore e carte](Digital/lore-identita-carte.md)       |
 | D02 | Pubblico, buyer persona e competitor                                       | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Analisi](Digital/analisi-pubblico-competitor.md)    |
 | D03 | Economia e proiezioni                                                      | Confermato                                  | Sintetica   | Non iniziata    | Non eseguita | [Economia](Digital/economia-crediti-pacchetti.md)    |
@@ -42,6 +43,8 @@ Per Digital, implementazione indica la realizzazione dei materiali e verifica in
 Il [regolamento Versione 2.0](Digital/regolamento-base.md) è la proposta condivisa per F05 e F07, con conseguenze per F08, D01 e F10. L'integrazione del testo è approvata, mentre regole definitive e bilanciamento restano da confermare. Le specifiche interessate sono in approfondimento; API, dati, permessi e altri contratti tecnici mancanti restano DA DEFINIRE nelle pagine BackEnd. I riferimenti FrontEnd descrivono le implicazioni per il client senza introdurre contratti concorrenti. F09 resta un segnaposto e O01 non è confermato.
 
 Aggiornare questa tabella nella PR che cambia lo stato; i dettagli della singola porzione restano nelle pagine di area. I metadati temporali si aggiungono alle pagine esistenti al prossimo aggiornamento significativo, senza attribuire date retroattive. Quando serve una verifica storica dettagliata, collegare un report in `docs/report/AAAA-MM-GG-descrizione.md`, creato solo dopo l'attività reale. Il report registra il passato; questo indice mantiene lo stato corrente.
+
+La versione iniziale della specifica [F13 — Amicizie](BackEnd/amicizie.md) descrive richieste e amicizie reciproche sulla base dello schema v1.0; la relazione `accepted` è una precondizione degli scambi privati F06. Ultimo aggiornamento significativo della voce: **2026-11-06**. Specifica in approfondimento, API proposte da concordare, implementazione non iniziata e verifiche applicative non eseguite.
 
 ## Contratti e approfondimento progressivo
 
