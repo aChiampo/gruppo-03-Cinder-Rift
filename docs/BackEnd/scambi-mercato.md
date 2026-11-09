@@ -3,14 +3,16 @@
 ID: **F06**. Perimetro: confermato, scambi pubblici e privati di carte e token.
 Specifica: **in approfondimento**. Implementazione: **non iniziata**.
 Responsabile: **DA DEFINIRE (Software Developer)**.
-Ultimo aggiornamento significativo: **2026-11-05**, allineamento alla base di dati v1.0 su richiesta dell'utente. Verifiche applicative: **non eseguite**.
-Fonte dati e invarianti: [specifica canonica v1.0](Database/database-schema-v1.0.md#sistema-di-scambi-e-negoziazioni).
+Ultimo aggiornamento significativo: **2026-11-09**, allineamento ai saldi distinti dell'inventario e rilevazione della corrispondenza monetaria ancora aperta. Verifiche applicative: **non eseguite**.
+Fonte dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-scambi-e-negoziazioni).
 
 ## Obiettivo, perimetro e dipendenze
 
-Questa pagina descrive il contratto tecnico F06 in conformità alla base di dati v1.0. La specifica del database è autonoma e prevale per struttura e invarianti; API ed errori qui proposti richiedono ancora accordo.
+Questa pagina descrive il contratto tecnico F06 in conformità alla base di dati v1.1. La specifica del database è autonoma e prevale per struttura e invarianti; API ed errori qui proposti richiedono ancora accordo.
 
-A è il pubblicatore e B il rispondente o destinatario privato. Gli identificativi sono `int`; le PK autonome sono auto-incrementali. Destinatari e partecipanti usano `USERS.id`, senza un secondo identificativo pubblico. Le FK e le chiavi composte ereditano gli interi e non generano valori. Token e crediti sono una sola valuta.
+A è il pubblicatore e B il rispondente o destinatario privato. Gli identificativi sono `int`; le PK autonome sono auto-incrementali. Destinatari e partecipanti usano `USERS.id`, senza un secondo identificativo pubblico. Le FK e le chiavi composte ereditano gli interi e non generano valori.
+
+`INVENTORY` conserva tre saldi `int` obbligatori con default `0`: `cobalt_shards` (Scaglie), `rift_cores` (Nuclei Rift), `scraps` (Rotami). I campi `*_token_offer` e `TRADE_TOKEN_RESERVATIONS.token_amount` restano generici e non identificano la risorsa. Quale risorsa sia trasferibile, a quale saldo corrispondano e come rappresentare eventuali scambi multirisorsa restano **DA DEFINIRE**. Non viene attribuita implicitamente trasferibilità ai Nuclei Rift o alle altre risorse. Il protocollo monetario seguente richiede questa decisione prima dell'implementazione.
 
 La pubblicazione pubblica non prenota risorse. Gli hold appartengono sempre a una `CURRENT_NEGOTIATIONS` esistente e a un'offerta accettata. Una modifica rilascia tutti gli hold, incrementa la versione e azzera entrambi i consensi: non mantiene prenotazioni di lati non accettanti. Non sono necessari hold di annuncio senza trattativa né uno stato persistito separato di “lato già prenotato”.
 
@@ -18,7 +20,7 @@ Dipendenze: F01 per identità, F03/F04 per disponibilità, F05/F07 per mazzi e g
 
 ## Flussi
 
-La durata è due giorni dalla creazione. `expires_at` è immutabile: avvio, controproposte e ripubblicazione non rinnovano la scadenza.
+La durata confermata dall’utente il **2026-11-09** è **due giorni dalla creazione** dell’annuncio, sia pubblico sia privato. `expires_at` è immutabile: avvio, controproposte e ripubblicazione non rinnovano la scadenza.
 
 ## Annuncio pubblico
 
@@ -64,11 +66,11 @@ type CardOffer = {
 };
 ```
 
-Ogni coppia compare una sola volta. Il backend controlla ID interi validi, arte appartenente alla carta, quantità positive, importi token non negativi e disponibilità al momento della prenotazione. Non sono FK annidate e non si sostituisce implicitamente un'arte. Token e `offer_version` restano `bigint`: serializzazione a 64 bit e payload definitivi sono da concordare.
+Ogni coppia compare una sola volta. Il backend controlla ID interi validi, arte appartenente alla carta, quantità positive, importi generici non negativi e disponibilità al momento della prenotazione. Non sono FK annidate e non si sostituisce implicitamente un'arte. Gli importi `*_token_offer`, `token_amount` e `offer_version` restano `bigint`: serializzazione a 64 bit e payload definitivi sono da concordare. I saldi di inventario sono invece `int`; gli aggiornamenti devono rispettarne il dominio e non assumere una corrispondenza di risorsa non ancora definita.
 
 ## Modello dati: annunci, negoziazioni e prenotazioni
 
-Le cinque tabelle seguenti derivano dalla v1.0. Gli ID autonomi si generano nel database; i riferimenti storici e le componenti delle PK degli hold non si auto-incrementano. Non è modellato un registro dei movimenti o delle revisioni intermedie.
+Le cinque tabelle seguenti derivano dalla v1.1. Gli ID autonomi si generano nel database; i riferimenti storici e le componenti delle PK degli hold non si auto-incrementano. Non è modellato un registro dei movimenti o delle revisioni intermedie.
 
 ### ORIGINAL_ANNOUNCES
 
@@ -171,16 +173,17 @@ Per ogni trattativa attiva:
 Pubblicare non riserva. Avvio sull'originale e invio privato prenotano A; una prima controproposta finisce senza hold. Ogni accettazione riserva l'esatto lato uscente della versione corrente.
 
 ```text
-reservedTokens(user) = SUM(token_amount WHERE id_user = user AND expires_at > cutoff)
-availableTokens(user) = token_balance - reservedTokens(user)
+// Conceptual monetary calculation after the resource mapping is defined.
+reservedAmount(user) = SUM(token_amount WHERE id_user = user AND expires_at > cutoff)
+availableAmount(user) = balanceOfMappedResource(user) - reservedAmount(user)
 
 reservedCopies(user, card, art) = SUM(quantity for that triple WHERE expires_at > cutoff)
 availableTradableCopies(user, card, art) = tradable_replica - reservedCopies(user, card, art)
 ```
 
-Somme vuote valgono zero. Una tripla assente vale zero dopo una lettura riuscita. Si contano tutti gli hold non scaduti: incoerenze impediscono l'operazione, senza ignorare record per liberare artificialmente risorse.
+`balanceOfMappedResource` è un segnaposto concettuale per il saldo della risorsa concordata, non una funzione o colonna presente nel DBML. Gli hold attuali non hanno un discriminatore di risorsa; la somma generica non può essere sottratta da tutti e tre i saldi o usata per prenotazioni di risorse diverse senza adeguamento del modello. Somme vuote valgono zero. Una tripla assente vale zero dopo una lettura riuscita. Si contano tutti gli hold non scaduti: incoerenze impediscono l'operazione, senza ignorare record per liberare artificialmente risorse.
 
-Prenotare non modifica `token_balance`, `owned_replica` o `tradable_replica`. Il completamento consuma i propri hold e preserva quelli altrui, senza sottrarre due volte la propria riserva o finanziare l'uscita con i beni attesi in entrata.
+Prenotare non modifica `cobalt_shards`, `rift_cores`, `scraps`, `owned_replica` o `tradable_replica`. Il completamento, una volta definita la corrispondenza della risorsa, consuma i propri hold e preserva quelli altrui, senza sottrarre due volte la propria riserva o finanziare l'uscita con i beni attesi in entrata.
 
 ## Stati, transizioni e scadenza
 
@@ -205,7 +208,7 @@ Il cutoff viene letto dopo i lock; serve `expires_at > cutoff`, mentre l'uguagli
 
 ### Guard comuni e ordine dei lock
 
-Applicare il [protocollo transazionale comune v1.0](Database/database-schema-v1.0.md#protocollo-transazionale-comune): guard catalogo condiviso, utenti per ID numerico crescente, eventuali mazzi, annunci, trattative e dettagli in ordine deterministico. Le cancellazioni di catalogo usano il guard esclusivo; la primitiva comune fra processi resta da definire.
+Applicare il [protocollo transazionale comune v1.1](Database/database-schema-v1.1.md#protocollo-transazionale-comune): guard catalogo condiviso, utenti per ID numerico crescente, eventuali mazzi, annunci, trattative e dettagli in ordine deterministico. Le cancellazioni di catalogo usano il guard esclusivo; la primitiva comune fra processi resta da definire.
 
 Le righe stabili `USERS` serializzano anche risorse ancora assenti. Usare `READ COMMITTED`, letture aggiornate dopo i lock e `clock_timestamp()` per il cutoff dopo l'attesa. Se servono altri guard si annulla e si ripianifica. Nessuna transazione resta aperta in attesa della persona.
 
@@ -269,7 +272,7 @@ Dopo conflitto, scadenza o commit incerto il client rilegge lo stato. Mostra sal
 
 ## Criteri di accettazione
 
-Scenari previsti, **non eseguiti**. Gli ID locali restano stabili; gli esiti sono allineati alla v1.0.
+Scenari previsti, **non eseguiti**. Gli ID locali restano stabili; gli esiti sono allineati alla v1.1.
 
 | ID | Dato / quando | Risultato previsto |
 | --- | --- | --- |
@@ -281,7 +284,7 @@ Scenari previsti, **non eseguiti**. Gli ID locali restano stabili; gli esiti son
 | F06-06 | Modifica e consenso concorrenti | Versione precedente rifiutata o invalidata; modifica rilascia tutto e azzera i flag |
 | F06-07 | Risorse insufficienti all'avvio originale, invio privato o accettazione | Rollback dell'operazione; nessun nuovo hold parziale; stato prima della richiesta preservato |
 | F06-08 | Scadenza durante attesa dei lock, worker in ritardo | Cutoff dopo i lock; nessun consenso/completamento; hold scaduti non conteggiati |
-| F06-09 | Acquisto tenta di spendere token prenotati | Rifiuto senza intaccare gli hold vivi |
+| F06-09 | Dopo la definizione della corrispondenza, un acquisto tenta di spendere la risorsa prenotata | Rifiuto senza intaccare gli hold vivi del saldo identificato |
 | F06-10 | Secondo consenso valido | Trasferimenti, consumo hold, storico e chiusura atomici |
 | F06-11 | Guasto durante il completamento | Rollback di trasferimenti, hold e stato |
 | F06-12 | Rifiuto, annullamento, scadenza o retry dopo completamento | Rilascio senza doppio trasferimento; ripubblicazione pubblica valida senza hold |
@@ -300,9 +303,9 @@ Scenari previsti, **non eseguiti**. Gli ID locali restano stabili; gli esiti son
 
 ## Verifiche, decisioni aperte e impatto
 
-Allineamento documentale alla v1.0; nessuna API, migrazione, pulizia o prenotazione è implementata. Le prove transazionali devono essere eseguite dopo l'implementazione.
+Allineamento documentale alla v1.1; nessuna API, migrazione, pulizia o prenotazione è implementata. Le prove transazionali devono essere eseguite dopo l'implementazione.
 
-Restano da definire rotte e payload definitivi, errori, serializzazione a 64 bit, paginazione, deduplicazione delle creazioni, guard catalogo, timeout/retry, lotti, statistiche, conservazione, frammenti, giocabilità e consegna affidabile. Non sono più lacune della v1.0 la prenotazione di pubblicazione o lo stato separato di lato già prenotato: questi comportamenti non fanno parte del modello corrente.
+Restano da definire risorsa dei campi monetari generici, trasferibilità e rappresentazione di eventuali offerte multirisorsa; inoltre rotte e payload definitivi, errori, serializzazione a 64 bit, paginazione, deduplicazione delle creazioni, guard catalogo, timeout/retry, lotti, statistiche, conservazione, frammenti, giocabilità e consegna affidabile. Non sono più lacune della v1.1 la prenotazione di pubblicazione o lo stato separato di lato già prenotato: questi comportamenti non fanno parte del modello corrente.
 
 ## Collegamenti
 
