@@ -2,9 +2,9 @@
 
 Ultimo aggiornamento significativo: **2026-11-06**. Fonte: dipendenze dichiarate nel [POM](pom.xml) e selezione dello stack nella conversazione con il gruppo.
 
-Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React. La versione del server PostgreSQL dipende dall'ambiente, non dal driver dichiarato nel POM.
+Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React.
 
-Questo documento descrive le dipendenze dell'applicazione. La loro presenza non attesta l'implementazione delle funzionalità, il corretto avvio o il funzionamento delle integrazioni. Il sorgente di test attuale contiene soltanto il controllo generato `contextLoads()`; non costituisce copertura delle regole di gioco.
+Questo documento descrive le dipendenze dell'applicazione. La loro presenza non attesta l'implementazione delle funzionalità, il corretto avvio o il funzionamento delle integrazioni.
 
 ## Dipendenze
 
