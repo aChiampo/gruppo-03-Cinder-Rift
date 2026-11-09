@@ -1,4 +1,4 @@
-package com.benedetto.game_campaign.model;
+package com.benedetto.game_engine.campaign.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

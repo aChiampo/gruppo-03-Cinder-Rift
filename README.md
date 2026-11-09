@@ -69,7 +69,7 @@ Riferimento: [Lore, identità e carte](docs/Digital/lore-identita-carte.md).
 
 È disponibile la **Versione 2.0 — Proposta per il prototipo e le prove di bilanciamento**, integrata nella documentazione il **2026-10-27**. Descrive composizione dei mazzi, energia e punti potenza, fazioni, equipaggiamenti, combattimento automatico, round e conclusione della partita. Il testo del regolamento è riportato senza modifiche; metadati e collegamenti sono separati dalle regole.
 
-L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Le applicazioni non sono inizializzate e non sono state eseguite verifiche applicative.
+L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Il prototipo descritto nel [README del motore e della campagna](springboot_app/game_engine/README.md) non equivale all'implementazione completa delle funzionalità; consultare quel documento per i comandi e le verifiche del modulo.
 
 Riferimento: [Regolamento e svolgimento del gioco — Versione 2.0](docs/Digital/regolamento-base.md), con [elementi da completare e testare](docs/Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Le modalità aggiuntive non sono confermate.
 
@@ -98,11 +98,13 @@ Riferimento: [Regolamento e svolgimento del gioco — Versione 2.0](docs/Digital
 ├── react_app/
 │   └── .gitkeep
 └── springboot_app/
-	├── applicazione/
-    └── game-engine/
+    ├── app/
+    └── game_engine/
 ```
 
 I file `.gitkeep` mantengono versionabili le cartelle applicative vuote. I documenti di funzionalità usano nomi italiani e si collegano tra aree; codice, commenti nel codice e risorse tecniche usano l'inglese.
+
+Il modulo `springboot_app/game_engine/` contiene il motore e il package dimostrativo della campagna nella stessa applicazione Spring Boot; non esiste più un modulo `game_campaign` separato. Per dettagli e comandi consultare il [README del motore e della campagna](springboot_app/game_engine/README.md).
 
 Le istruzioni condivise per gli assistenti sono in [AGENTS.md](AGENTS.md);
 [CLAUDE.md](CLAUDE.md) importa lo stesso file. Le regole complete restano nelle
@@ -128,6 +130,6 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
-Le applicazioni non sono inizializzate: non sono disponibili comandi applicativi o test eseguibili. Prerequisiti, configurazione, migrazioni, build e test saranno documentati dopo lo stack definitivo.
+Il modulo dimostrativo del motore e della campagna dispone di wrapper Maven, configurazione e test; i comandi e i limiti sono descritti nel [README del modulo](springboot_app/game_engine/README.md). La presenza di questo prototipo non attesta l'implementazione completa delle funzionalità riportate nelle specifiche.
 
 Non inserire credenziali reali. Gli esempi di ambiente, i lockfile e i wrapper di build restano versionabili secondo la `.gitignore`.

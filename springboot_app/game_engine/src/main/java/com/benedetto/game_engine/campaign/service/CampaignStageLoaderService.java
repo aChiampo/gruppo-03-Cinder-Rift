@@ -1,6 +1,6 @@
-package com.benedetto.game_campaign.service;
+package com.benedetto.game_engine.campaign.service;
 
-import com.benedetto.game_campaign.model.CampaignStage;
+import com.benedetto.game_engine.campaign.model.CampaignStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;

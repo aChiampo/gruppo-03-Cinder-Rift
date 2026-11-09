@@ -1,8 +1,8 @@
-package com.benedetto.game_campaign.service;
+package com.benedetto.game_engine.campaign.service;
 
-import com.benedetto.game_campaign.entity.SpecialEventEntity;
-import com.benedetto.game_campaign.model.CampaignStage;
-import com.benedetto.game_campaign.repository.SpecialEventRepository;
+import com.benedetto.game_engine.campaign.entity.SpecialEventEntity;
+import com.benedetto.game_engine.campaign.model.CampaignStage;
+import com.benedetto.game_engine.campaign.repository.SpecialEventRepository;
 import com.benedetto.game_engine.model.Player;
 import com.benedetto.game_engine.model.PlayerDeck;
 import com.benedetto.game_engine.service.CardLoaderService;
@@ -34,11 +34,8 @@ public class CampaignService {
     }
 
     public List<String> executeStage(Player humanPlayer, String stageJsonPath) {
-        // 1. Carica lo stage con CampaignStageLoaderService
         CampaignStage stage = campaignStageLoaderService.loadStage(stageJsonPath);
 
-        // 2. Se requiredEventCode non è null, verifica su SpecialEventRepository se l'evento è attivo;
-        //    se assente o disattivo, interrompi ed evidenzia l'errore nel log.
         if (stage.getRequiredEventCode() != null && !stage.getRequiredEventCode().isBlank()) {
             Optional<SpecialEventEntity> specialEvent = specialEventRepository.findByCode(stage.getRequiredEventCode());
             if (specialEvent.isEmpty() || !specialEvent.get().isActive()) {
@@ -48,10 +45,8 @@ public class CampaignService {
             }
         }
 
-        // 3. Carica il mazzo del bot avversario da enemyDeckPath usando CardLoaderService
         PlayerDeck enemyDeck = cardLoaderService.loadDeck(stage.getEnemyDeckPath());
 
-        // 4. Se stage.isDeterministic() è true, imposta setDeterministic(true) sui mazzi del giocatore e del bot
         if (stage.isDeterministic()) {
             if (humanPlayer != null && humanPlayer.getDeck() != null) {
                 humanPlayer.getDeck().setDeterministic(true);
@@ -61,13 +56,10 @@ public class CampaignService {
             }
         }
 
-        // 5. Istanzia Player enemyBot = new Player(stage.getEnemyName(), enemyDeck)
         Player enemyBot = new Player(stage.getEnemyName(), enemyDeck);
 
-        // 6. Esegui la partita tramite matchEngine.runMatch(humanPlayer, enemyBot)
         List<String> matchLog = matchEngine.runMatch(humanPlayer, enemyBot);
 
-        // 7. Aggiungi i tutorialHints in cima al log restituito
         List<String> finalLog = new ArrayList<>();
         if (stage.getTutorialHints() != null && !stage.getTutorialHints().isEmpty()) {
             finalLog.addAll(stage.getTutorialHints());

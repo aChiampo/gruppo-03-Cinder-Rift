@@ -1,6 +1,6 @@
-package com.benedetto.game_campaign.repository;
+package com.benedetto.game_engine.campaign.repository;
 
-import com.benedetto.game_campaign.entity.SpecialEventEntity;
+import com.benedetto.game_engine.campaign.entity.SpecialEventEntity;
 import org.springframework.data.repository.Repository;
 
 import java.util.List;

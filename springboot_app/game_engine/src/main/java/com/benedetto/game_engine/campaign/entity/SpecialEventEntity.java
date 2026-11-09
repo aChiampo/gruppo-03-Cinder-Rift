@@ -1,4 +1,4 @@
-package com.benedetto.game_campaign.entity;
+package com.benedetto.game_engine.campaign.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
