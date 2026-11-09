@@ -1,0 +1,137 @@
+{
+  "playerId": "bot_stage_03",
+  "creatureRounds": {
+    "1": [
+      {
+        "id": "M_R1_1",
+        "name": "Mostro Sanguinario R1",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 1,
+        "powerPoints": 1,
+        "baseAtk": 4,
+        "initialDef": 6
+      },
+      {
+        "id": "M_R1_2",
+        "name": "Ombra Vorace R1",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 5,
+        "initialDef": 5
+      }
+    ],
+    "2": [
+      {
+        "id": "M_R2_1",
+        "name": "Spirito Putrido R2",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 2,
+        "powerPoints": 2,
+        "baseAtk": 5,
+        "initialDef": 8
+      },
+      {
+        "id": "M_R2_2",
+        "name": "Predatore Notturno R2",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 2,
+        "powerPoints": 3,
+        "baseAtk": 6,
+        "initialDef": 7
+      }
+    ],
+    "3": [
+      {
+        "id": "M_R3_1",
+        "name": "Abominio Lunare R3",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 3,
+        "powerPoints": 3,
+        "baseAtk": 7,
+        "initialDef": 10
+      },
+      {
+        "id": "M_R3_2",
+        "name": "Orrore Mutato R3",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 3,
+        "powerPoints": 4,
+        "baseAtk": 8,
+        "initialDef": 9
+      }
+    ],
+    "4": [
+      {
+        "id": "M_R4_1",
+        "name": "Colosso Scarlatto R4",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 4,
+        "powerPoints": 4,
+        "baseAtk": 8,
+        "initialDef": 13
+      },
+      {
+        "id": "M_R4_2",
+        "name": "Divoratore del Vuoto R4",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 4,
+        "powerPoints": 5,
+        "baseAtk": 9,
+        "initialDef": 12
+      }
+    ],
+    "5": [
+      {
+        "id": "M_R5_1",
+        "name": "Signore Cremisi R5",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 5,
+        "powerPoints": 5,
+        "baseAtk": 10,
+        "initialDef": 16
+      },
+      {
+        "id": "M_R5_2",
+        "name": "Titano della Luna R5",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 5,
+        "powerPoints": 6,
+        "baseAtk": 11,
+        "initialDef": 15
+      }
+    ]
+  },
+  "equipmentDeck": [
+    {
+      "id": "EQ_M_1",
+      "name": "Lama Cremisi",
+      "atkBonus": 3,
+      "defBonus": 0
+    },
+    {
+      "id": "EQ_M_2",
+      "name": "Scudo di Piastre Ossa",
+      "atkBonus": 0,
+      "defBonus": 4
+    },
+    {
+      "id": "EQ_M_3",
+      "name": "Occhio della Luna",
+      "atkBonus": 2,
+      "defBonus": 2
+    },
+    {
+      "id": "EQ_M_4",
+      "name": "Artigli Ferali",
+      "atkBonus": 3,
+      "defBonus": 1
+    },
+    {
+      "id": "EQ_M_5",
+      "name": "Manto della Notte",
+      "atkBonus": 1,
+      "defBonus": 3
+    }
+  ]
+}

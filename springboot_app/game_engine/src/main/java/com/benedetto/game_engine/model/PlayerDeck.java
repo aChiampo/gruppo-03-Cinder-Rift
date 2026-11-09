@@ -10,13 +10,16 @@ public class PlayerDeck {
     private String playerId;
     private Map<Integer, List<Creature>> creatureRounds;
     private List<Equipment> equipmentDeck;
+    private boolean deterministic;
 
     public void shuffleEquipments() {
-        if (equipmentDeck != null) Collections.shuffle(equipmentDeck);
+        if (!deterministic && equipmentDeck != null) {
+            Collections.shuffle(equipmentDeck);
+        }
     }
 
     public void shuffleRoundCreatures(int roundNumber) {
-        if (creatureRounds != null && creatureRounds.containsKey(roundNumber)) {
+        if (!deterministic && creatureRounds != null && creatureRounds.containsKey(roundNumber)) {
             Collections.shuffle(creatureRounds.get(roundNumber));
         }
     }

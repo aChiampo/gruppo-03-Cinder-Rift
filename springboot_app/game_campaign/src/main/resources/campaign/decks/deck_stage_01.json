@@ -1,0 +1,182 @@
+{
+  "playerId": "bot_stage_01",
+  "creatureRounds": {
+    "1": [
+      {
+        "id": "C_R1_1",
+        "name": "Cultisti Accolito R1",
+        "faction": "CULTISTI",
+        "energyCost": 1,
+        "powerPoints": 1,
+        "baseAtk": 3,
+        "initialDef": 6
+      },
+      {
+        "id": "C_R1_2",
+        "name": "Cultisti Neofita R1",
+        "faction": "CULTISTI",
+        "energyCost": 1,
+        "powerPoints": 1,
+        "baseAtk": 4,
+        "initialDef": 5
+      },
+      {
+        "id": "C_R1_3",
+        "name": "Cultisti Iniziato R1",
+        "faction": "CULTISTI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 3,
+        "initialDef": 7
+      }
+    ],
+    "2": [
+      {
+        "id": "C_R2_1",
+        "name": "Cultisti Fanatico R2",
+        "faction": "CULTISTI",
+        "energyCost": 2,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 8
+      },
+      {
+        "id": "C_R2_2",
+        "name": "Cultisti Zealota R2",
+        "faction": "CULTISTI",
+        "energyCost": 2,
+        "powerPoints": 3,
+        "baseAtk": 5,
+        "initialDef": 7
+      },
+      {
+        "id": "C_R2_3",
+        "name": "Cultisti Veggente R2",
+        "faction": "CULTISTI",
+        "energyCost": 2,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 9
+      }
+    ],
+    "3": [
+      {
+        "id": "C_R3_1",
+        "name": "Cultisti Sacerdote R3",
+        "faction": "CULTISTI",
+        "energyCost": 3,
+        "powerPoints": 3,
+        "baseAtk": 6,
+        "initialDef": 10
+      },
+      {
+        "id": "C_R3_2",
+        "name": "Cultisti Invocatore R3",
+        "faction": "CULTISTI",
+        "energyCost": 3,
+        "powerPoints": 4,
+        "baseAtk": 7,
+        "initialDef": 9
+      },
+      {
+        "id": "C_R3_3",
+        "name": "Cultisti Maestro R3",
+        "faction": "CULTISTI",
+        "energyCost": 3,
+        "powerPoints": 3,
+        "baseAtk": 5,
+        "initialDef": 11
+      }
+    ],
+    "4": [
+      {
+        "id": "C_R4_1",
+        "name": "Cultisti Ombra R4",
+        "faction": "CULTISTI",
+        "energyCost": 4,
+        "powerPoints": 4,
+        "baseAtk": 7,
+        "initialDef": 12
+      },
+      {
+        "id": "C_R4_2",
+        "name": "Cultisti Prescelto R4",
+        "faction": "CULTISTI",
+        "energyCost": 4,
+        "powerPoints": 5,
+        "baseAtk": 8,
+        "initialDef": 11
+      },
+      {
+        "id": "C_R4_3",
+        "name": "Cultisti Fanatico R4",
+        "faction": "CULTISTI",
+        "energyCost": 4,
+        "powerPoints": 4,
+        "baseAtk": 7,
+        "initialDef": 13
+      }
+    ],
+    "5": [
+      {
+        "id": "C_R5_1",
+        "name": "Cultisti Gran Sacerdote R5",
+        "faction": "CULTISTI",
+        "energyCost": 5,
+        "powerPoints": 5,
+        "baseAtk": 8,
+        "initialDef": 15
+      },
+      {
+        "id": "C_R5_2",
+        "name": "Cultisti Maestro R5",
+        "faction": "CULTISTI",
+        "energyCost": 5,
+        "powerPoints": 6,
+        "baseAtk": 9,
+        "initialDef": 14
+      },
+      {
+        "id": "C_R5_3",
+        "name": "Cultisti Ombra R5",
+        "faction": "CULTISTI",
+        "energyCost": 5,
+        "powerPoints": 5,
+        "baseAtk": 8,
+        "initialDef": 16
+      }
+    ]
+  },
+  "equipmentDeck": [
+    {
+      "id": "EQ_C_1",
+      "name": "Pugnale Rituale",
+      "atkBonus": 1,
+      "defBonus": 1
+    },
+    {
+      "id": "EQ_C_2",
+      "name": "Tomo dell'Occulto",
+      "atkBonus": 2,
+      "defBonus": 0
+    },
+    {
+      "id": "EQ_C_3",
+      "name": "Veste del Vuoto",
+      "atkBonus": 0,
+      "defBonus": 3
+    },
+    {
+      "id": "EQ_C_4",
+      "name": "Amuleto di Sangue",
+      "atkBonus": 1,
+      "defBonus": 2
+    },
+    {
+      "id": "EQ_C_5",
+      "name": "Reliquia Proibita",
+      "atkBonus": 2,
+      "defBonus": 1
+    }
+  ]
+}

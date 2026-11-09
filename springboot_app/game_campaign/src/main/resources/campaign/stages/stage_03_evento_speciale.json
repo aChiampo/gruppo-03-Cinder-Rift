@@ -1,0 +1,14 @@
+{
+  "stageId": "stage_03",
+  "stageNumber": 3,
+  "title": "Evento Speciale: Luna di Sangue",
+  "description": "Una forza arcana si risveglia sotto la Luna di Sangue. Richiede che l'evento speciale BLOOD_MOON sia attivo nel sistema.",
+  "enemyName": "Signore della Notte",
+  "enemyDeckPath": "campaign/decks/deck_stage_03.json",
+  "deterministic": false,
+  "tutorialHints": [
+    "[EVENTO SPECIALE] Questo stage richiede che l'evento speciale 'BLOOD_MOON' sia attivo nel database.",
+    "[ATTENZIONE] Il Signore della Notte schiera creature con alto attacco: difendi i tuoi punti vita!"
+  ],
+  "requiredEventCode": "BLOOD_MOON"
+}

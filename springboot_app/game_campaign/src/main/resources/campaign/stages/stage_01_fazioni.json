@@ -1,0 +1,15 @@
+{
+  "stageId": "stage_01",
+  "stageNumber": 1,
+  "title": "Tutorial: Il Vantaggio di Fazione",
+  "description": "Impara a sfruttare le debolezze di fazione per ottenere il bonus di +2 ATK in combattimento.",
+  "enemyName": "Recluta Cultista",
+  "enemyDeckPath": "campaign/decks/deck_stage_01.json",
+  "deterministic": true,
+  "tutorialHints": [
+    "[TUTORIAL] Benvenuto comandante! In Cinder Rift ogni fazione possiede un vantaggio strategico su due fazioni rivali.",
+    "[TUTORIAL] Quando una creatura attacca una fazione su cui ha vantaggio, riceve un bonus di +2 ATK per tutto lo scontro!",
+    "[TUTORIAL] Ricorda: i SAPIENS hanno vantaggio sui CULTISTI (+2 ATK) e sugli ALIENI. Approfittane per vincere i round!"
+  ],
+  "requiredEventCode": null
+}
