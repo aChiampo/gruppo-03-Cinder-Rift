@@ -1,0 +1,478 @@
+// Schema v1.0; complete DBML representation of database-schema-v1.0.md.
+Project cinder_rift_v1_0 {
+  database_type: 'PostgreSQL'
+  Note: 'Schema v1.0; PostgreSQL 18; auto-incrementing integer entity and artwork IDs; integer foreign keys and inherited association keys; timestamptz with UTC connections and serialization. Persistent trade reservations are distinct from short transaction locks. Backend validations enforce quantities, participants, offer versions and resource availability.'
+}
+
+Table ROLES {
+  id int [pk, not null, increment]
+  code varchar [not null, unique]
+}
+
+Table PASSWORD_RESET_TOKENS {
+  id int [pk, not null, increment]
+  id_user int [not null]
+  token_hash varchar [not null, unique]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+  used_at timestamptz
+}
+
+Table REFRESH_TOKENS {
+  id int [pk, not null, increment]
+  id_user int [not null]
+  token_hash varchar [not null, unique]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+  revoked_at timestamptz
+}
+
+Table USERS {
+  id int [pk, not null, increment]
+  first_name varchar
+  surname varchar
+  nickname varchar [not null, unique]
+  hash_password varchar [not null]
+  email varchar [not null, unique]
+  ranking_points int [not null, default: 1000]
+  registration_date timestamptz [not null, default: `now()`]
+  url_user_icon varchar
+  id_role int [not null]
+  is_deleted boolean [not null, default: false]
+
+  Note: 'USERS.id is the sole user identifier, including public references, notifications and private trade recipients. The backend canonicalizes email and creates the mandatory inventory in the user registration transaction. Resource-changing operations lock stable user rows in numeric ID order.'
+}
+
+Table DECKS {
+  id int [pk, not null, increment]
+  id_user int [not null]
+  is_challengeable boolean [not null, default: false, note: 'A challengeable deck can be selected during matchmaking.']
+}
+
+Table DECKS_CARDS {
+  id int [pk, not null, increment]
+  id_deck int [not null]
+  id_card int [not null]
+  id_card_art int [not null]
+  destination varchar [not null]
+  Note: 'Each row is one card copy with an explicitly selected artwork. The composite artwork FK ensures that the artwork belongs to the card. destination references ROUND_CONFIGURATIONS.round_name and indicates the round or equipment section. Ownership and copy availability are validated by the backend.'
+}
+
+Table ROUND_CONFIGURATIONS {
+  id int [pk, not null, increment]
+  round_name varchar [not null, unique, note: 'ROUND1, ROUND2, ROUND3, ROUND4, ROUND5, EQUIPMENT.']
+  round_number int [not null]
+  max_energy int [not null]
+  max_cards int [not null]
+
+  checks {
+    `round_number > 0` [name: 'round_configurations_round_number_check']
+    `max_energy > 0` [name: 'round_configurations_max_energy_check']
+    `max_cards > 0` [name: 'round_configurations_max_cards_check']
+  }
+  Note: 'Round configurations are immutable by application policy; no database trigger enforces immutability. The backend validates the required deck composition, the max_cards limit and total energy cost against max_energy. round_name values are documented labels, not an enum or CHECK constraint.'
+}
+
+Table CARDS {
+  id int [pk, not null, increment]
+  name varchar
+  description varchar
+  id_type int
+  energy_cost int
+  power int
+  id_rarity int
+  value_atk int
+  value_def int
+  id_faction int
+  id_expansion int
+  is_deleted boolean [not null, default: false]
+
+  Note: 'Artwork URLs are stored in CARDS_ARTS. Logical deletion of a card or expansion triggers a backend sharding service: cancel affected negotiations and release all their holds before removing affected collection/deck entries. Conversion values and fragment representation are DA DEFINIRE.'
+}
+
+Table FACTIONS {
+  id int [pk, not null, increment]
+  code varchar [unique]
+  name varchar [unique]
+  url_faction_icon varchar
+  is_deleted boolean [not null, default: false]
+}
+
+Table RARITIES {
+  id int [pk, not null, increment]
+  code varchar [unique]
+  name varchar [unique]
+  order_index int
+  is_deleted boolean [not null, default: false]
+}
+
+Table EXPANSIONS {
+  id int [pk, not null, increment]
+  code varchar [unique]
+  name varchar [unique]
+  released_at date
+  is_active boolean
+  url_expansion_icon varchar
+  is_deleted boolean [not null, default: false]
+
+  Note: 'is_active is distinct from is_deleted. Logical deletion invokes backend conversion and cleanup after reservation invalidation; no trigger is modeled.'
+}
+
+Table CARD_TYPES {
+  id int [pk, not null, increment]
+  name varchar [unique]
+  is_deleted boolean [not null, default: false]
+  code varchar [not null, unique]
+}
+
+Table KEYWORDS {
+  id int [pk, not null, increment]
+  code varchar [not null, unique]
+  max_value int
+  min_value int
+  description varchar
+  is_deleted boolean [not null, default: false]
+}
+
+Table CARDS_KEYWORDS {
+  id_card int [not null]
+  keyword_list jsonb [not null, note: 'A JSON array of {keywordId, keywordValue} objects for card abilities. keywordId identifies KEYWORDS.id (integer), not KEYWORDS.code. The backend validates the structure, keyword existence, duplicate keyword IDs and applicable min_value/max_value bounds; nested IDs have no FK.']
+
+  indexes {
+    (id_card) [pk]
+  }
+
+
+}
+
+Table NOTIFICATIONS {
+  id int [pk, not null, increment]
+  id_sender int [not null]
+  id_receiver int [not null]
+  message varchar [not null]
+  status varchar [not null, default: 'new']
+  created_at timestamptz [not null, default: `now()`]
+
+  checks {
+    `status IN ('new', 'read', 'archived')` [name: 'notifications_status_check']
+  }
+
+  Note: 'id_sender and id_receiver reference USERS.id (integer). An administrator may send mass notifications and giveaway gifts; authorization is checked by the backend.'
+}
+
+Table COLLECTIONS {
+  id_user int [not null]
+  id_card int [not null]
+  id_card_art int [not null]
+  owned_replica int [not null]
+  tradable_replica int [not null]
+
+  indexes {
+    (id_user, id_card, id_card_art) [pk]
+  }
+
+  checks {
+    `owned_replica > 0` [name: 'collections_owned_replica_check']
+    `tradable_replica >= 0 AND tradable_replica <= owned_replica` [name: 'collections_tradable_replica_check']
+  }
+
+  Note: 'One row per user, logical card and artwork variant. Missing triple means zero after a successful read. Delete the row when the last copy is transferred; first consume or release live holds on those copies. A normal decrease cannot reduce tradable/owned quantities below live reservations.'
+}
+
+Table INVENTORY {
+  id int [pk, not null, increment]
+  id_user int [not null, unique]
+  token_balance bigint [not null, default: 0]
+
+  Note: 'Tokens and credits are one currency. Spendable tokens equal token_balance minus the sum of unexpired token holds. No cached reserved balance or movement registry is modeled. All spenders follow the common resource locking protocol documented in database-schema-v1.0.md.'
+}
+
+Table PACKS {
+  id int [pk, not null, increment]
+  pack_name varchar [not null]
+  pack_description varchar [not null]
+  pack_image_url varchar
+  allowed_factions jsonb [not null]
+  allowed_types jsonb [not null]
+  allowed_expansions jsonb [not null]
+  allowed_rarities jsonb [not null]
+  slot_pulls jsonb [not null]
+
+  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. Source: user decision on 2026-11-04. price storage and the offer-to-pack mapping are DA DEFINIRE. Filters use FACTIONS.code, CARD_TYPES.code, EXPANSIONS.code and RARITIES.code. Slot probabilities may include common, rare, epic and legendary outcomes. JSON contracts are DA DEFINIRE.'
+}
+
+Table INVENTORY_PACKS {
+  id_inventory int [not null]
+  id_pack int [not null]
+  item_quantity int [not null, note: 'The backend deletes the row when the last pack is consumed, instead of storing zero.']
+
+  checks {
+    `item_quantity > 0` [name: 'inventory_packs_item_quantity_check']
+  }
+
+  indexes {
+    (id_inventory, id_pack) [pk]
+  }
+}
+
+Table BATTLE_HISTORY {
+  id int [pk, not null, increment]
+  player1_id int [not null]
+  player2_id int [not null]
+  winner_id int
+  deck_player1 jsonb [not null]
+  deck_player2 jsonb [not null]
+  battle_date timestamptz [not null, default: `now()`]
+  ranking_reward int
+
+  checks {
+    `winner_id IN (player1_id, player2_id)` [name: 'battle_history_winner_check']
+  }
+
+  Note: 'winner_id NULL means a draw. ranking_reward NULL means a friendly match; a signed non-null variation applies only to player1_id, never player2_id, in the result transaction.'
+}
+
+Table DAILY_QUESTS {
+  id int [pk, not null, increment]
+  name varchar [not null]
+  description varchar
+  progression_required int [not null, default: 1]
+  is_deleted boolean [not null, default: false]
+
+  checks {
+    `progression_required > 0` [name: 'daily_quests_progression_required_check']
+  }
+  Note: 'Quest definitions use integer auto-increment IDs as requested. Criteria and reward configuration are DA DEFINIRE. Catalogs are not cleared by progress reset.'
+}
+
+Table WEEKLY_QUESTS {
+  id int [pk, not null, increment]
+  name varchar [not null]
+  description varchar
+  progression_required int [not null, default: 1]
+  is_deleted boolean [not null, default: false]
+
+  checks {
+    `progression_required > 0` [name: 'weekly_quests_progression_required_check']
+  }
+  Note: 'Quest definitions use integer auto-increment IDs as requested. Criteria and reward configuration are DA DEFINIRE. Catalogs are not cleared by progress reset.'
+} 
+
+Table DAILY_REWARDS {
+  id_quest int [not null]
+  id_user int [not null]
+  progression_missing int [not null, note: 'Initialized by the backend from the linked quest progression_required; decremented until zero. No SQL default is modeled; initialization requires the linked quest.']
+  quest_completed boolean [not null, default: false]
+  reward_claimed boolean [not null, default: false]
+  reward_token_quantity int [not null, default: 0]
+
+  indexes {
+    (id_quest, id_user) [pk]
+  }
+
+  Note: 'One row per user and quest. progression_missing is initialized from progression_required and quest_completed tracks reaching zero; the backend keeps both consistent. reward_claimed is a boolean claim flag. The backend clears daily progress each period; exact reset time is DA DEFINIRE and coordinated with claims. Reward quantities and allowed claim counts are backend-validated.'
+}
+
+Table WEEKLY_REWARDS {
+  id_quest int [not null]
+  id_user int [not null]
+  progression_missing int [not null, note: 'Initialized by the backend from the linked quest progression_required; decremented until zero. No SQL default is modeled; initialization requires the linked quest.']
+  quest_completed boolean [not null, default: false]
+  reward_claimed boolean [not null, default: false]
+  reward_pack_quantity int [not null, default: 0]
+  reward_token_quantity int [not null, default: 0]
+
+  indexes {
+    (id_quest, id_user) [pk]
+  }
+
+  Note: 'One row per user and quest. progression_missing is initialized from progression_required and quest_completed tracks reaching zero; the backend keeps both consistent. reward_claimed is a boolean: at most one successful claim per period, set true atomically with payout. The backend clears weekly progress each period; exact reset time is DA DEFINIRE and coordinated with claims. Reward quantities and payout rules are backend-validated.'
+}
+
+Table FACTION_ADVANTAGES {
+  id_advantaged_faction int [not null]
+  id_disadvantaged_faction int [not null]
+  bonus_value int [not null]
+
+  indexes {
+    (id_advantaged_faction, id_disadvantaged_faction) [pk]
+  }
+
+  checks {
+    `id_advantaged_faction <> id_disadvantaged_faction` [name: 'faction_advantages_distinct_factions_check']
+  }
+}
+
+Table FRIENDSHIPS {
+  user_a_id int [not null]
+  user_b_id int [not null]
+  requested_by int [not null]
+  status text [not null]
+  created_at timestamptz [not null, default: `now()`]
+  accepted_at timestamptz
+
+  indexes {
+    (user_a_id, user_b_id) [pk]
+  }
+
+  checks {
+    `user_a_id < user_b_id` [name: 'friendships_ordered_pair_check']
+    `requested_by IN (user_a_id, user_b_id)` [name: 'friendships_requester_check']
+    `status IN ('pending', 'accepted')` [name: 'friendships_status_check']
+    `(status = 'pending' AND accepted_at IS NULL) OR (status = 'accepted' AND accepted_at IS NOT NULL)` [name: 'friendships_acceptance_check']
+  }
+}
+
+Table ORIGINAL_ANNOUNCES {
+  id int [pk, not null, increment]
+  publisher_id int [not null]
+  created_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz [not null, default: `now() + interval '2 days'`]
+  status varchar [not null]
+  is_private boolean [not null]
+  is_negotiable boolean [not null]
+  original_p_cards_offer jsonb [not null, default: `'[]'::jsonb`, note: 'Non-null JSON array of {cardId, cardArtId, quantity}; exact owned artwork variant, positive quantity and unique pair are validated by the backend. Empty array is allowed. P gives to R; R gives to P. Original R is the publisher request.']
+  original_p_token_offer bigint [not null, default: 0]
+  original_r_cards_offer jsonb [not null, default: `'[]'::jsonb`, note: 'Non-null JSON array of {cardId, cardArtId, quantity}; exact owned artwork variant, positive quantity and unique pair are validated by the backend. Empty array is allowed. P gives to R; R gives to P. Original R is the publisher request.']
+  original_r_token_offer bigint [not null, default: 0]
+
+  indexes {
+    (expires_at)
+  }
+
+  checks {
+    `status IN ('PUBLISHED', 'PENDING', 'EXPIRED', 'COMPLETED', 'CANCELLED')` [name: 'original_announces_status_check']
+  }
+
+  Note: 'Public publication creates no hold. Expiry is fixed at two days. Starting on the original offer reserves publisher resources before p_acceptance becomes true; direct acceptance can reserve both parties and complete atomically. A first counteroffer composes start and modification: final version 2, both acceptances false and no holds. Private requests are restricted to accepted friends and create the negotiation and publisher holds atomically. The complete protocol is defined in database-schema-v1.0.md.'
+}
+
+Table CURRENT_NEGOTIATIONS {
+  id int [pk, not null, increment]
+  announce_id int [not null, unique]
+  publisher_id int [not null]
+  responder_id int [not null]
+  is_private boolean [not null]
+  is_negotiable boolean [not null]
+  current_p_cards_offer jsonb [not null, default: `'[]'::jsonb`, note: 'Non-null JSON array of {cardId, cardArtId, quantity}; exact owned artwork variant, positive quantity and unique pair are validated by the backend. Empty array is allowed. P gives to R; R gives to P. Original R is the publisher request.']
+  current_p_token_offer bigint [not null, default: 0]
+  current_r_cards_offer jsonb [not null, default: `'[]'::jsonb`, note: 'Non-null JSON array of {cardId, cardArtId, quantity}; exact owned artwork variant, positive quantity and unique pair are validated by the backend. Empty array is allowed. P gives to R; R gives to P. Original R is the publisher request.']
+  current_r_token_offer bigint [not null, default: 0]
+  offer_version bigint [not null, default: 1]
+  p_acceptance boolean [not null, default: false]
+  r_acceptance boolean [not null, default: false]
+
+  Note: 'At most one active negotiation per announcement. Acceptance defaults are false; the backend sets publisher acceptance true only after reserving its initial outgoing offer when starting on the original proposal. A first counteroffer ends at version 2 with both flags false and no holds; original consent does not transfer to it. Later acceptances reserve that participant offer. Modifications release both sides holds, increment offer_version and reset both flags. Completion consumes holds and transfers cards/tokens atomically. Release on rejection, cancellation, expiry or forced catalog invalidation.'
+}
+
+Table TRADES_COMPLETED {
+  id int [pk, not null, increment]
+  announce_id int [not null, unique]
+  is_private boolean [not null]
+  publisher_id int [not null]
+  responder_id int [not null]
+  final_p_cards_offer jsonb [not null, default: `'[]'::jsonb`, note: 'Non-null JSON array of {cardId, cardArtId, quantity}; exact owned artwork variant, positive quantity and unique pair are validated by the backend. Empty array is allowed. P gives to R; R gives to P. Original R is the publisher request.']
+  final_p_token_offer bigint [not null, default: 0]
+  final_r_cards_offer jsonb [not null, default: `'[]'::jsonb`, note: 'Non-null JSON array of {cardId, cardArtId, quantity}; exact owned artwork variant, positive quantity and unique pair are validated by the backend. Empty array is allowed. P gives to R; R gives to P. Original R is the publisher request.']
+  final_r_token_offer bigint [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  completed_at timestamptz [not null, default: `now()`]
+
+  Note: 'Immutable final snapshot. announce_id is a unique historical integer ID without an announcement FK so cleanup does not erase history. Final card JSON includes exact art variant and quantity. No movement registry or negotiation revision history is modeled.'
+}
+
+Table CARDS_ARTS {
+  id_card int [not null]
+  art_code varchar [not null, note: 'Artwork variant code, for example STANDARD or LV2.']
+  id_art int [not null, unique, increment, note: 'Generated unique artwork identifier.']
+  url_card_art varchar [unique]
+
+  indexes {
+    (id_card, art_code) [pk]
+    (id_card, id_art) [unique]
+  }
+
+  Note: 'Artwork variants belong to a logical card. The composite unique key (id_card, id_art) supports collection referential integrity. The URL remains nullable as in the supplied artwork definition.'
+}
+
+Table TRADE_TOKEN_RESERVATIONS {
+  negotiation_id int [not null]
+  id_user int [not null]
+  offer_version bigint [not null]
+  token_amount bigint [not null]
+  created_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz [not null]
+
+  indexes {
+    (negotiation_id, id_user) [pk]
+    (id_user, expires_at)
+    (expires_at)
+  }
+
+  Note: 'Current outgoing token hold for an accepted offer version. Zero amounts have no row. expires_at equals the original announcement expiry. Owner, version, positive amount, availability and release are enforced by backend transactions. Balance is not debited until completion.'
+}
+
+Table TRADE_CARD_RESERVATIONS {
+  negotiation_id int [not null]
+  id_user int [not null]
+  id_card int [not null]
+  id_card_art int [not null]
+  offer_version bigint [not null]
+  quantity int [not null]
+  created_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz [not null]
+
+  indexes {
+    (negotiation_id, id_user, id_card, id_card_art) [pk]
+    (id_user, id_card, id_card_art, expires_at)
+    (expires_at)
+  }
+
+  Note: 'Current outgoing holds per exact card/art variant and accepted offer version. FKs identify the user and coherent catalog artwork; ownership and summed availability are checked against COLLECTIONS by backend transactions. No FK to the volatile collection row: expired holds must not block removal of zero-copy rows. Positive quantities, participant, version and expiry are backend invariants. Reservation does not change owned_replica or tradable_replica.'
+}
+
+Ref users_id_role_fk: USERS.id_role > ROLES.id
+Ref decks_id_user_fk: DECKS.id_user > USERS.id
+Ref cards_id_faction_fk: CARDS.id_faction > FACTIONS.id
+Ref cards_id_rarity_fk: CARDS.id_rarity > RARITIES.id
+Ref cards_id_type_fk: CARDS.id_type > CARD_TYPES.id
+Ref cards_id_expansion_fk: CARDS.id_expansion > EXPANSIONS.id
+Ref cards_keywords_id_card_fk: CARDS_KEYWORDS.id_card > CARDS.id
+Ref decks_cards_id_deck_fk: DECKS_CARDS.id_deck > DECKS.id
+Ref decks_cards_id_card_fk: DECKS_CARDS.id_card > CARDS.id
+Ref decks_cards_card_art_fk: DECKS_CARDS.(id_card, id_card_art) > CARDS_ARTS.(id_card, id_art)
+Ref decks_cards_destination_fk: DECKS_CARDS.destination > ROUND_CONFIGURATIONS.round_name
+Ref collections_id_user_fk: COLLECTIONS.id_user > USERS.id
+Ref collections_id_card_fk: COLLECTIONS.id_card > CARDS.id
+Ref friendships_user_a_id_fk: FRIENDSHIPS.user_a_id > USERS.id [delete: cascade]
+Ref friendships_user_b_id_fk: FRIENDSHIPS.user_b_id > USERS.id [delete: cascade]
+Ref friendships_requested_by_fk: FRIENDSHIPS.requested_by > USERS.id [delete: cascade]
+Ref password_reset_tokens_id_user_fk: PASSWORD_RESET_TOKENS.id_user > USERS.id
+Ref refresh_tokens_id_user_fk: REFRESH_TOKENS.id_user > USERS.id
+Ref inventory_id_user_fk: INVENTORY.id_user > USERS.id
+Ref inventory_packs_id_inventory_fk: INVENTORY_PACKS.id_inventory > INVENTORY.id
+Ref inventory_packs_id_pack_fk: INVENTORY_PACKS.id_pack > PACKS.id
+Ref original_announces_publisher_id_fk: ORIGINAL_ANNOUNCES.publisher_id > USERS.id
+Ref current_negotiations_announce_id_fk: CURRENT_NEGOTIATIONS.announce_id > ORIGINAL_ANNOUNCES.id
+Ref current_negotiations_publisher_id_fk: CURRENT_NEGOTIATIONS.publisher_id > USERS.id
+Ref current_negotiations_responder_id_fk: CURRENT_NEGOTIATIONS.responder_id > USERS.id
+Ref trades_completed_publisher_id_fk: TRADES_COMPLETED.publisher_id > USERS.id
+Ref trades_completed_responder_id_fk: TRADES_COMPLETED.responder_id > USERS.id
+Ref battle_history_player1_id_fk: BATTLE_HISTORY.player1_id > USERS.id
+Ref battle_history_player2_id_fk: BATTLE_HISTORY.player2_id > USERS.id
+Ref battle_history_winner_id_fk: BATTLE_HISTORY.winner_id > USERS.id
+Ref faction_advantages_id_advantaged_faction_fk: FACTION_ADVANTAGES.id_advantaged_faction > FACTIONS.id
+Ref faction_advantages_id_disadvantaged_faction_fk: FACTION_ADVANTAGES.id_disadvantaged_faction > FACTIONS.id
+Ref notifications_id_receiver_fk: NOTIFICATIONS.id_receiver > USERS.id
+Ref notifications_id_sender_fk: NOTIFICATIONS.id_sender > USERS.id
+Ref daily_rewards_id_user_fk: DAILY_REWARDS.id_user > USERS.id
+Ref daily_rewards_id_quest_fk: DAILY_REWARDS.id_quest > DAILY_QUESTS.id
+Ref weekly_rewards_id_user_fk: WEEKLY_REWARDS.id_user > USERS.id
+Ref weekly_rewards_id_quest_fk: WEEKLY_REWARDS.id_quest > WEEKLY_QUESTS.id
+Ref cards_arts_card_fk: CARDS_ARTS.id_card > CARDS.id
+Ref collections_card_art_fk: COLLECTIONS.(id_card, id_card_art) > CARDS_ARTS.(id_card, id_art)
+Ref trade_token_reservations_negotiation_fk: TRADE_TOKEN_RESERVATIONS.negotiation_id > CURRENT_NEGOTIATIONS.id [delete: cascade]
+Ref trade_token_reservations_inventory_fk: TRADE_TOKEN_RESERVATIONS.id_user > INVENTORY.id_user
+Ref trade_card_reservations_negotiation_fk: TRADE_CARD_RESERVATIONS.negotiation_id > CURRENT_NEGOTIATIONS.id [delete: cascade]
+Ref trade_card_reservations_user_fk: TRADE_CARD_RESERVATIONS.id_user > USERS.id
+Ref trade_card_reservations_art_fk: TRADE_CARD_RESERVATIONS.(id_card, id_card_art) > CARDS_ARTS.(id_card, id_art)

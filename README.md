@@ -21,7 +21,7 @@
 ## Funzionamento previsto
 
 1. Registrazione e accesso con email e password; un servizio nell'app Spring Boot gestisce JWT e ruoli `ADMIN`, `MANAGER`, `USER`.
-2. Acquisto con crediti di offerte contenenti più pacchetti, anche di tipi diversi; prezzi e composizione sono gestibili dal backoffice.
+2. Acquisto con crediti di offerte contenenti ciascuna esattamente un pacchetto; prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice.
 3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
 4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata standard da definire.
 5. Sfide con scelta dei mazzi, simulazione sul server e storico con risultati turno per turno.
@@ -32,11 +32,11 @@ Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pa
 
 | Termine | Significato | Esempio illustrativo, non configurazione approvata |
 | --- | --- | --- |
-| Offerta di pacchetti | Crediti in cambio di un insieme di pacchetti | 1.000 crediti → 2 pacchetti «Rare» + 1 «Ultra» |
+| Offerta di un pacchetto | Crediti in cambio di una sola unità di un pacchetto | 1.000 crediti → 1 pacchetto «Rare» |
 | Pacchetto | Contenitore di carte con composizione e apertura da definire | Un pacchetto del tipo «Rare» |
 | Carta | Elemento della collezione utilizzabile nei mazzi | Creatura con attacco, difesa e fazione |
 
-Il termine «bundle» indica un'offerta di pacchetti. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità definitive.
+Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti non rientrano nel perimetro. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità di carte definitive. Ultimo aggiornamento significativo di F03: **2026-11-04**, su istruzione dell'utente; riferimento canonico: [offerte e acquisto di pacchetti](docs/BackEnd/acquisto-pacchetti.md). Implementazione non iniziata; verifiche applicative non eseguite.
 
 ## Tecnologie
 

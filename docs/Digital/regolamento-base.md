@@ -1,6 +1,6 @@
 # Regolamento e svolgimento del gioco
 
-Versione 2.0 — Proposta per il prototipo e le prove di bilanciamento
+Versione 2.1 — Proposta per il prototipo e le prove di bilanciamento
 
 ## Scheda documentale
 
@@ -10,13 +10,13 @@ Versione 2.0 — Proposta per il prototipo e le prove di bilanciamento
 - **Specifica:** in approfondimento; proposta per il prototipo e le prove di bilanciamento.
 - **Implementazione:** non iniziata.
 - **Responsabile:** DA DEFINIRE (Digital Strategist).
-- **Fonte:** documento «Regolamento e svolgimento del gioco», Versione 2.0, fornito per l'integrazione nella documentazione.
-- **Data della bozza di integrazione:** 2026-10-27.
-- **Ultimo aggiornamento significativo nel repository:** 2026-10-27.
+- **Fonte:** documento Versione 2.0, + modifica aChiampo. 
+- **Data della bozza di integrazione:** 2026-11-02.
+- **Ultimo aggiornamento significativo nel repository:** 2026-10-27. Rimozione limite a numero di epiche e leggendarie durante la creazione del mazzo
 - **Ultima verifica del regolamento:** non eseguita; approvazione, prove di bilanciamento e verifiche applicative non documentate.
 
 
-La Versione 2.0 costituisce una proposta: la sua presenza nella documentazione non equivale all'approvazione definitiva delle regole o alla loro implementazione. Le decisioni ancora necessarie sono indicate nel testo, in particolare nelle sezioni 11 e 15.
+La Versione 2.1 costituisce una proposta: la sua presenza nella documentazione non equivale all'approvazione definitiva delle regole o alla loro implementazione. Le decisioni ancora necessarie sono indicate nel testo, in particolare nelle sezioni 11 e 15.
 
 ## 1. Descrizione del gioco
 
@@ -98,7 +98,6 @@ Ogni mazzetto di cinque creature deve inoltre rispettare un limite di 14 punti p
 | Epiche | Massimo 3 |
 | Leggendarie | Massimo 1 |
 | Copie della stessa creatura | Massimo 2 nell’insieme dei cinque mazzetti |
-| Epiche e leggendarie sommate per mazzetto | Massimo 1 |
 
 Le due copie della stessa creatura possono essere collocate nello stesso mazzetto oppure in mazzetti diversi, purché siano rispettati tutti gli altri vincoli.
 
