@@ -1,0 +1,17 @@
+/* Header */
+.header { display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--line-soft); padding-bottom: 10px; margin-bottom: 20px; }
+.brand img { height: 62px; width: auto; }
+.nav { display: flex; gap: 6px; margin-left: 8px; flex: 1; overflow-x: auto; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 14px 20px; font-weight: 600; letter-spacing: .5px; color: #CCD7DE; border-bottom: 3px solid transparent; white-space: nowrap; transition: color .15s; }
+.nav-item:hover { color: #fff; }
+.nav-item.active { color: var(--orange); border-bottom-color: var(--orange); background: linear-gradient(#0000, #44C3F422); }
+.userbox { display: flex; align-items: center; gap: 14px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.profile { display: flex; align-items: center; gap: 12px; }
+.profile img { width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--cyan); object-fit: cover; }
+.profile strong { display: block; font-size: 17px; line-height: 1.1; }
+.profile small { color: var(--muted); font-size: 14px; }
+.credits { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 14px; border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); }
+.credits b { font-size: 18px; margin-right: 6px; }
+.plus { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }
+.plus:hover, .icon-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.icon-btn { padding: 6px; border-radius: 8px; border: 1px solid transparent; color: #CCD7DE; }

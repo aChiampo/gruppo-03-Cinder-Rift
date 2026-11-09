@@ -1,0 +1,10 @@
+/* Mazzi */
+.col-side > .panel:last-child { flex: 1; display: flex; flex-direction: column; }
+.col-side > .panel:last-child .decks { flex: 1; justify-content: space-between; }
+.decks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.deck { display: flex; align-items: center; gap: 12px; width: 100%; padding: 4px 14px 4px 4px; border: 1px solid var(--line-soft); border-radius: 6px; background: #2b344c; transition: border-color .12s; }
+.deck:hover { border-color: var(--cyan); }
+.deck.active { border-color: var(--cyan); background: linear-gradient(90deg, #165DD966, #2b344c); box-shadow: 0 0 14px #44C3F433; }
+.deck-img { width: 84px; height: 50px; object-fit: cover; border-radius: 3px; border: 1px solid #44C3F466; }
+.deck strong { display: block; font-size: 16px; line-height: 1.15; }
+.in-use { padding: 3px 14px; font-size: 12px; font-weight: 700; color: #fff; background: #165DD9; border-radius: 4px; }

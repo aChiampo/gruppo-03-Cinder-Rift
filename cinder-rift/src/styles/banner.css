@@ -1,0 +1,8 @@
+/* Banner nuova sfida */
+.cta-banner { flex: 1; position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; overflow: hidden; min-height: 170px; padding: 24px 36px; border: 1px solid var(--line); border-radius: 10px; }
+.cta-banner img { position: absolute; top: 0; height: 100%; width: 50%; object-fit: cover; }
+.cta-l { left: 0; opacity: .75; object-position: 50% 30%; } .cta-r { right: 0; object-position: 50% 40%; }
+.cta-banner .hero-shade { background: linear-gradient(90deg, #151925f5 0%, #151925b0 45%, #15192560 100%); }
+.cta-body, .cta-banner .btn-primary { position: relative; }
+.cta-body h2 { font-size: 26px; letter-spacing: .6px; margin-bottom: 8px; }
+.cta-body p { color: #CCD7DE; max-width: 360px; font-size: 17px; line-height: 1.4; }
