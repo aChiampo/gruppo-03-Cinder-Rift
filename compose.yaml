@@ -1,0 +1,82 @@
+# React and game-engine require application sources before their images can build.
+services:
+  db:
+    image: postgres:18-alpine
+
+    environment:
+      POSTGRES_DB: cinder_rift
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - data
+
+  app:
+    build:
+      context: ./springboot_app/app
+
+    environment:
+      SPRING_APPLICATION_NAME: app
+      SERVER_PORT: "8080"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/cinder_rift
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - data
+
+  react:
+    build:
+      context: ./react_app
+      args:
+        NODE_VERSION: "24"
+        FRONTEND_BUILD_DIR: dist
+
+    ports:
+      - "127.0.0.1:3000:80"
+
+    depends_on:
+      app:
+        condition: service_started
+
+    networks:
+      - data
+
+  game-engine:
+    build:
+      context: ./springboot_app/game-engine
+
+    environment:
+      SPRING_APPLICATION_NAME: game-engine
+      SERVER_PORT: "8080"
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+
+    networks:
+      - data
+
+volumes:
+  postgres_data:
+
+networks:
+  data:
