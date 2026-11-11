@@ -4,7 +4,7 @@ ID funzionalità: **F13**; dipendenze: **F01** e **F06**.
 Perimetro: amicizie reciproche e richieste; specifica **in approfondimento**.
 Implementazione: **non iniziata**. Responsabile: **DA DEFINIRE**.
 Versione iniziale della specifica F13. Ultimo aggiornamento significativo: **2026-11-06**.
-Fonti dati e invarianti: [specifica canonica v1.0](Database/database-schema-v1.0.md) e [rappresentazione DBML](Database/db_schema-v1.0.dbml). La specifica del database prevale per dati e invarianti; i flussi e il contratto API sotto restano proposti dove non fissati dallo schema.
+Fonti dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md) e [rappresentazione DBML](Database/db_schema-v1.1.dbml). La specifica del database prevale per dati e invarianti; i flussi e il contratto API sotto restano proposti dove non fissati dallo schema.
 Verifiche applicative: **non eseguite**.
 
 ## Obiettivo, perimetro e dipendenze
@@ -45,7 +45,7 @@ La PK composta è `(user_a_id, user_b_id)`. Non esiste un ID autonomo dell'amici
 
 PK e ordinamento impediscono coppie duplicate, coppie inverse e autoamicizie. Le tre FK (`user_a_id`, `user_b_id`, `requested_by`) riferiscono `USERS.id` con `ON DELETE CASCADE` alla cancellazione fisica. La cancellazione logica non attiva la cascata.
 
-La PK indicizza la coppia a partire da `user_a_id`. La v1.0 non dichiara un indice secondario su `user_b_id`; la sua eventuale introduzione richiede una successiva modifica dello schema. La lettura dell'elenco deve comunque considerare entrambi i lati.
+La PK indicizza la coppia a partire da `user_a_id`. La v1.1 non dichiara un indice secondario su `user_b_id`; la sua eventuale introduzione richiede una successiva modifica dello schema. La lettura dell'elenco deve comunque considerare entrambi i lati.
 
 Il database verifica integrità della riga ed esistenza degli utenti; autenticazione, autorizzazione, account non eliminati e transizioni consentite sono responsabilità del backend. Non sono modellati scadenza delle richieste, periodi di attesa, storico o blocchi tra utenti.
 
@@ -96,7 +96,7 @@ Dopo l'eliminazione si può inviare una nuova richiesta, con una nuova `created_
 | `pending` | Rifiuto del destinatario o annullamento del mittente | Nessuna riga. |
 | `accepted` | Rimozione di un partecipante | Nessuna riga. |
 
-`none`, `incoming`, `outgoing`, `friends` sono stati di presentazione proposti, derivati rispetto all'attore; non sono valori della colonna `status`. I timestamp sono `timestamptz`, con connessioni e serializzazione UTC come previsto dalla v1.0; il JSON proposto usa ISO 8601, per esempio `2026-11-05T12:00:00Z`.
+`none`, `incoming`, `outgoing`, `friends` sono stati di presentazione proposti, derivati rispetto all'attore; non sono valori della colonna `status`. I timestamp sono `timestamptz`, con connessioni e serializzazione UTC come previsto dalla v1.1; il JSON proposto usa ISO 8601, per esempio `2026-11-05T12:00:00Z`.
 
 ## Contratto tecnico condiviso proposto
 
@@ -145,7 +145,7 @@ La PK composta impedisce duplicati anche per invii simultanei. Il backend gestis
 
 Accettazione e cancellazione usano scritture condizionali sulla coppia, lo stato e, quando pertinente, il mittente; il numero di righe modificate determina l'esito. In caso di accettazione concorrente con rifiuto o annullamento, il comando che non trova più lo stato richiesto rilegge la relazione e restituisce l'esito previsto dal contratto. Timeout o deadlock richiedono rollback; retry limitati soltanto per errori transitori e operazioni sicure.
 
-Per coordinare controllo di `is_deleted`, modifiche delle amicizie e avvio di scambi privati, si propone di bloccare le righe stabili `USERS` in ordine numerico crescente e rileggere lo stato dopo i lock. L'integrazione deve rispettare l'ordine del [protocollo transazionale comune](Database/database-schema-v1.0.md#protocollo-transazionale-comune) e concordare lo stesso coordinamento nel flusso di cancellazione dell'account. Lo schema non implementa automaticamente questi controlli.
+Per coordinare controllo di `is_deleted`, modifiche delle amicizie e avvio di scambi privati, si propone di bloccare le righe stabili `USERS` in ordine numerico crescente e rileggere lo stato dopo i lock. L'integrazione deve rispettare l'ordine del [protocollo transazionale comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune) e concordare lo stesso coordinamento nel flusso di cancellazione dell'account. Lo schema non implementa automaticamente questi controlli.
 
 ## Cancellazione degli account e notifiche
 

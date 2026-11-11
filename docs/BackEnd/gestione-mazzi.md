@@ -5,7 +5,7 @@
 - Ultimo aggiornamento significativo: **2026-11-05**, allineamento alla base di dati v1.0 su richiesta dell'utente.
 - Branch documentale richiesto: `docs/f05-deck-validation-v2`.
 
-Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.0](Database/database-schema-v1.0.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
+Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
 
 L'integrazione documentale è approvata; la proposta di riferimento è ora la V2.1, mentre regole definitive e bilanciamento restano da confermare. Le decisioni aggiornate dall'utente il 2026-10-29 prevedono una PK autonoma `DECKS_CARDS.id`, una destinazione testuale `ROUND1` … `ROUND5` oppure `EQUIPMENT` e nessuna quantità per riga. Questo modello sostituisce la precedente PK composta e risolve la rappresentazione delle due copie nello stesso round e del gruppo equipaggiamenti. Restano scelti i controlli distinti per operazione e l'atomicità di eventuali aggregati persistiti. Firme, errori e strategie transazionali restano **proposte da concordare**, non API o migrazioni implementate. Verifiche applicative e di bilanciamento: **non eseguite**.
 
@@ -13,21 +13,21 @@ L'integrazione documentale è approvata; la proposta di riferimento è ora la V2
 
 Adattare il flusso «aggiunta → raccolta regole e dati → validazione → salvataggio oppure errori» alla V2.1, mantenendo `submitDeck(userId, deckId)` come verifica completa prima dell'utilizzo. Ogni utente può comporre e salvare più mazzi; salvare una bozza incompleta non significa renderla utilizzabile.
 
-Questa pagina approfondisce il riferimento tecnico canonico F05 già esistente. Il precedente aggiornamento del 2026-11-02 resta la fonte delle proposte V2.1. La versione corrente recepisce invece la base di dati v1.0: destinazioni e limiti dei round sono persistiti in `ROUND_CONFIGURATIONS`, mentre le altre regole proposte devono ancora essere concordate. Restano lo pseudocodice descrittivo con l'eccezione preesistente dei commenti in italiano e l'assenza di revisioni/versioni di mazzi e catalogo. Il protocollo di accesso è comune fra servizi. Non sono eseguite migrazioni o prove applicative; regole di gioco e API ancora proposte restano riconoscibili come tali.
+Questa pagina approfondisce il riferimento tecnico canonico F05 già esistente. Il precedente aggiornamento del 2026-11-02 resta la fonte delle proposte V2.1. La versione corrente recepisce invece la base di dati v1.1: destinazioni e limiti dei round sono persistiti in `ROUND_CONFIGURATIONS`, mentre le altre regole proposte devono ancora essere concordate. Restano lo pseudocodice descrittivo con l'eccezione preesistente dei commenti in italiano e l'assenza di revisioni/versioni di mazzi e catalogo. Il protocollo di accesso è comune fra servizi. Non sono eseguite migrazioni o prove applicative; regole di gioco e API ancora proposte restano riconoscibili come tali.
 
 Dipendenze: F01 per l'identità, F04 per il possesso, F06 per gli scambi, F07 per validazione e snapshot prima della partita, F10 per catalogo e regole. Mescolamento, effetti e simulazione spettano a F07. Gli equipaggiamenti formano un gruppo separato: F05 non li assegna a round specifici.
 
 
 ## Requisiti di validazione derivati dalla V2.1
 
-La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di regole indipendente. I numeri proposti non sono seed o parametri già inseriti nella v1.0. Per persistenza, arti e limiti configurabili prevale la specifica della base di dati; il raccordo delle restanti regole di gioco richiede conferma. I valori restano governati dalle [sezioni 2–4 del regolamento](../Digital/regolamento-base.md#2-struttura-del-mazzo). Ogni occorrenza logica vale una copia; i totali si calcolano contando le occorrenze, non gli ID carta distinti. Ogni riga persistita rappresenta una copia, senza campo quantità, e ha un ID autonomo anche quando carta e destinazione coincidono con un'altra riga.
+La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di regole indipendente. I numeri proposti non sono seed o parametri già inseriti nella v1.1. Per persistenza, arti e limiti configurabili prevale la specifica della base di dati; il raccordo delle restanti regole di gioco richiede conferma. I valori restano governati dalle [sezioni 2–4 del regolamento](../Digital/regolamento-base.md#2-struttura-del-mazzo). Ogni occorrenza logica vale una copia; i totali si calcolano contando le occorrenze, non gli ID carta distinti. Ogni riga persistita rappresenta una copia, senza campo quantità, e ha un ID autonomo anche quando carta e destinazione coincidono con un'altra riga.
 
 | Ambito | Controllo |
 | --- | --- |
 | Mazzo | Esattamente 30 carte: 25 creature e 5 equipaggiamenti |
 | Creature | Cinque gruppi assegnati ai round 1–5, esattamente 5 carte per gruppo |
 | Equipaggiamenti | Un gruppo separato di 5 carte differenti, senza assegnazione al round |
-| Energia persistente v1.0 | Somma di `CARDS.energy_cost` per destinazione ≤ `ROUND_CONFIGURATIONS.max_energy`; valori iniziali DA DEFINIRE |
+| Energia persistente v1.1 | Somma di `CARDS.energy_cost` per destinazione ≤ `ROUND_CONFIGURATIONS.max_energy`; valori iniziali DA DEFINIRE |
 | Potenza | Totale ≤ 75; creature ≤ 65; equipaggiamenti ≤ 10; ogni gruppo creature ≤ 14 |
 | Rarità creature, intero mazzo | Comuni ≥ 13; rare ≤ 8; epiche ≤ 3; leggendarie ≤ 1 |
 | Copie creature | ≤ 2 per stessa carta nell'insieme dei cinque gruppi, anche divise fra round |
@@ -38,9 +38,9 @@ La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di r
 
 Nella V2.1 non si applica il precedente limite di un'epica o leggendaria per gruppo creature: più copie epiche e/o leggendarie possono condividere un round se rispettano tutti gli altri vincoli. Restano i massimi di rarità per categoria riportati nelle tabelle della sezione 4 del regolamento: creature epiche ≤ 3 e leggendarie ≤ 1; equipaggiamenti epici ≤ 1 e nessun leggendario nel primo set.
 
-I budget sono massimi indipendenti, non obiettivi esatti: risparmi in una categoria non aumentano il limite dell'altra. La v1.0 richiede il controllo della somma dei costi energetici per destinazione, distinto dalla potenza. L'accesso individuale proposto dalla V2.1 è una regola aggiuntiva da riconciliare, non sostituisce `max_energy`. La potenza è il costo fisso della carta, da caricare dal catalogo, non da dedurre dalla sola rarità. Le fasce V2.1 per carta sono: comune 1–2, rara 2–3, epica 3–4, leggendaria 5; valgono anche per gli equipaggiamenti ammessi.
+I budget sono massimi indipendenti, non obiettivi esatti: risparmi in una categoria non aumentano il limite dell'altra. La v1.1 richiede il controllo della somma dei costi energetici per destinazione, distinto dalla potenza. L'accesso individuale proposto dalla V2.1 è una regola aggiuntiva da riconciliare, non sostituisce `max_energy`. La potenza è il costo fisso della carta, da caricare dal catalogo, non da dedurre dalla sola rarità. Le fasce V2.1 per carta sono: comune 1–2, rara 2–3, epica 3–4, leggendaria 5; valgono anche per gli equipaggiamenti ammessi.
 
-Soglie e accesso delle creature meno costose ai round successivi restano proposti, come indicato nella [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Non introdurre limiti statistici o quote di fazione non definiti. Il controllo aggregato dell'energia è invece richiesto dalla v1.0; i numeri proposti non sono default di `ROUND_CONFIGURATIONS`. La restrizione sugli equipaggiamenti leggendari riguarda il primo set: la gestione di eventuali set successivi è **DA DEFINIRE**.
+Soglie e accesso delle creature meno costose ai round successivi restano proposti, come indicato nella [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Non introdurre limiti statistici o quote di fazione non definiti. Il controllo aggregato dell'energia è invece richiesto dalla v1.1; i numeri proposti non sono default di `ROUND_CONFIGURATIONS`. La restrizione sugli equipaggiamenti leggendari riguarda il primo set: la gestione di eventuali set successivi è **DA DEFINIRE**.
 
 ## Attori, autorizzazioni e precondizioni
 
@@ -50,9 +50,9 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 - Regole incomplete o letture fallite producono errori tecnici: nessun salvataggio né esito positivo. Una lettura fallita non equivale a una collezione vuota.
 - Una riga collezione assente vale zero copie solo dopo una lettura riuscita; valori presenti nulli, negativi o non interi indicano dati incoerenti.
 
-## Dati e vincoli della base di dati v1.0
+## Dati e vincoli della base di dati v1.1
 
-| Concetto | Base di dati v1.0 | Regola |
+| Concetto | Base di dati v1.1 | Regola |
 | --- | --- | --- |
 | Identificativi | PK autonome e `CARDS_ARTS.id_art`: `int` auto-incrementali | Le FK ereditano gli interi; il client non genera la PK |
 | Mazzo/proprietario | `DECKS.id`, `id_user` obbligatorio | Autorizzazione a ogni operazione |
@@ -65,7 +65,7 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 | Scambiabilità | `tradable_replica` meno hold non scaduti | Non coincide con la disponibilità per giocare |
 | Destinazioni e limiti | `ROUND_CONFIGURATIONS.round_name`, `round_number`, `max_energy`, `max_cards` | FK dalla destinazione; parametri positivi; aggregati verificati dal backend |
 | Parole chiave | `CARDS_KEYWORDS.id_card` PK e `keyword_list` JSONB | Al massimo una lista per carta; ID interi annidati senza FK |
-| Altre regole di gioco | Non sono colonne della v1.0 | Proposte V2.1 da concordare; nessun seed o valore implicito |
+| Altre regole di gioco | Non sono colonne della v1.1 | Proposte V2.1 da concordare; nessun seed o valore implicito |
 | Validazione precedente | Nessuno stato persistito di validazione | Nessuna revisione di mazzo/catalogo; rivalidare i dati correnti |
 
 
@@ -77,7 +77,7 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 
 La [sezione 4](../Digital/regolamento-base.md#4-budget-e-vincoli-di-composizione) ammette due copie della stessa creatura anche nello stesso mazzetto: il nuovo modello le rappresenta mediante due righe con ID distinti e la stessa destinazione. Il valore `EQUIPMENT` rappresenta esplicitamente il gruppo separato. I due precedenti problemi strutturali sono quindi risolti; le altre regole V2.1 richiedono comunque il validatore e non sono garantite dalla sola PK.
 
-Il DBML dichiara già le FK per proprietario, composizione, carte e collezione. Le quantità della collezione sono obbligatorie: `owned_replica > 0` e `0 <= tradable_replica <= owned_replica`; quando il possesso scende a zero la riga va eliminata. `DECKS.id_user`, carta, arte e destinazione sono obbligatori. Diversi metadati di `CARDS` restano nullable e devono essere verificati prima dell'uso. Un `CHECK` di riga non copre i limiti aggregati. La specifica e il DBML v1.0 sono allineati; non è stata creata o eseguita una migrazione database.
+Il DBML dichiara già le FK per proprietario, composizione, carte e collezione. Le quantità della collezione sono obbligatorie: `owned_replica > 0` e `0 <= tradable_replica <= owned_replica`; quando il possesso scende a zero la riga va eliminata. `DECKS.id_user`, carta, arte e destinazione sono obbligatori. Diversi metadati di `CARDS` restano nullable e devono essere verificati prima dell'uso. Un `CHECK` di riga non copre i limiti aggregati. La specifica e il DBML v1.1 sono allineati; non è stata creata o eseguita una migrazione database.
 
 ## Controlli per operazione e utilizzo
 
@@ -131,7 +131,7 @@ validateDeckChange(proposedDeck, context): ValidationResult;
 validateDeck(deck, context): ValidationResult;
 ```
 
-Gli ID sono interi positivi nel dominio `int` della v1.0; i campi numerici del contratto proposto devono rispettarlo. Ogni elemento di `entries` rappresenta una copia, senza proprietà `quantity`; `entryId` corrisponde alla PK `DECKS_CARDS.id` delle occorrenze salvate. L'aggiunta richiede carta, arte e destinazione e non permette al client di scegliere la PK. `destination` è obbligatoria e usa gli stessi valori testuali del DBML. Due elementi con stessi `cardId`, `cardArtId` e `destination` sono due copie distinte: non vengono deduplicati e, se altrimenti conformi, possono essere salvati con ID diversi. Ripetere lo stesso `entryId` in una composizione è invece un errore strutturale, perché identificherebbe due volte la stessa riga. I limiti di copie si contano per carta logica; il possesso si conta per coppia carta/arte in tutto il mazzo.
+Gli ID sono interi positivi nel dominio `int` della v1.1; i campi numerici del contratto proposto devono rispettarlo. Ogni elemento di `entries` rappresenta una copia, senza proprietà `quantity`; `entryId` corrisponde alla PK `DECKS_CARDS.id` delle occorrenze salvate. L'aggiunta richiede carta, arte e destinazione e non permette al client di scegliere la PK. `destination` è obbligatoria e usa gli stessi valori testuali del DBML. Due elementi con stessi `cardId`, `cardArtId` e `destination` sono due copie distinte: non vengono deduplicati e, se altrimenti conformi, possono essere salvati con ID diversi. Ripetere lo stesso `entryId` in una composizione è invece un errore strutturale, perché identificherebbe due volte la stessa riga. I limiti di copie si contano per carta logica; il possesso si conta per coppia carta/arte in tutto il mazzo.
 
 `summary` contiene almeno totale carte/potenza, conteggi e potenza per categoria, rarità per categoria, conteggio/potenza e somma energetica per destinazione e occorrenze per coppia carta/arte. Non richiede un contatore epiche + leggendarie per round, poiché nella V2.1 non esiste più quel vincolo. Serializzazione definitiva DA DEFINIRE. Il risultato non contiene token di revisione/versione e non autorizza utilizzi futuri.
 
@@ -311,10 +311,10 @@ Il flusso F07 è un'integrazione **proposta**, non un contratto già approvato. 
 1. Acquisire il guard condiviso sul catalogo e leggere configurazioni dei round e regole correnti dopo i lock, mantenendole immutabili per l'operazione; chi modifica carte o metadati prende lo stesso guard in esclusiva. La primitiva del guard è DA DEFINIRE e deve coordinare tutti i processi applicativi.
 2. Guard stabile per utente, ad esempio la riga `USERS`, per serializzare variazioni della collezione e controlli. Protegge anche righe `COLLECTIONS` assenti, che il lock delle sole righe esistenti non coprirebbe.
 3. Ordine unico: guard catalogo → utenti per ID numerico crescente → mazzi per ID crescente → annunci e trattative, se coinvolti, per ID crescente → dettagli in ordine deterministico. Ogni flusso prende i guard necessari prima di modificare le risorse protette.
-4. Leggere valori correnti **dopo** l'acquisizione dei guard e mantenerli fino a commit/rollback, con isolamento `READ COMMITTED` come nel protocollo v1.0. La primitiva comune del guard catalogo resta DA DEFINIRE; non riutilizzare una snapshot DB anteriore all'attesa dei lock.
+4. Leggere valori correnti **dopo** l'acquisizione dei guard e mantenerli fino a commit/rollback, con isolamento `READ COMMITTED` come nel protocollo v1.1. La primitiva comune del guard catalogo resta DA DEFINIRE; non riutilizzare una snapshot DB anteriore all'attesa dei lock.
 5. Conflitto/timeout: rollback e retry limitato soltanto se sicuro; non ripetere alla cieca un'aggiunta dopo un esito di commit sconosciuto.
 
-Il lock del mazzo evita aggiornamenti persi; quello della collezione coordina possesso e scambi; quello del catalogo evita variazioni dei metadati a metà verifica. Il protocollo usa lock e letture correnti, senza tracciamento di revisioni/versioni. Il DBML non implementa il protocollo: il solo lock del mazzo non è sufficiente e tutti i flussi interessati devono rispettare gli stessi guard. Le letture rispettano il [protocollo transazionale comune v1.0](Database/database-schema-v1.0.md#protocollo-transazionale-comune); la distribuzione delle sole regole aggiuntive non modellate resta DA DEFINIRE.
+Il lock del mazzo evita aggiornamenti persi; quello della collezione coordina possesso e scambi; quello del catalogo evita variazioni dei metadati a metà verifica. Il protocollo usa lock e letture correnti, senza tracciamento di revisioni/versioni. Il DBML non implementa il protocollo: il solo lock del mazzo non è sufficiente e tutti i flussi interessati devono rispettare gli stessi guard. Le letture rispettano il [protocollo transazionale comune v1.1](Database/database-schema-v1.1.md#protocollo-transazionale-comune); la distribuzione delle sole regole aggiuntive non modellate resta DA DEFINIRE.
 
 ### Effetti degli scambi
 
@@ -322,7 +322,7 @@ I lock DB brevi sono distinti dalle prenotazioni persistenti. La proposta base u
 
 Proposta minima: uno scambio può lasciare il mazzo non idoneo; le righe restano, con rivalidazione al controllo/uso successivo. Un controllo pre-scambio può informare sui mazzi interessati, ma non sostituisce la verifica atomica al trasferimento e non introduce automaticamente un veto. Rifiuto dello scambio o prenotazione delle copie dei mazzi sono alternative **DA DEFINIRE con F06**.
 
-La v1.0 modella `TRADE_TOKEN_RESERVATIONS` e `TRADE_CARD_RESERVATIONS`, collegati alle trattative e alla versione accettata. Occorre decidere se le copie prenotate restano utilizzabili per giocare: soltanto allora si può definire `availableForPlay`. Non inferirla dal solo `tradable_replica` o dal possesso. Prenotare non cambia possesso o composizione del mazzo.
+La v1.1 modella `TRADE_TOKEN_RESERVATIONS` e `TRADE_CARD_RESERVATIONS`, collegati alle trattative e alla versione accettata. Occorre decidere se le copie prenotate restano utilizzabili per giocare: soltanto allora si può definire `availableForPlay`. Non inferirla dal solo `tradable_replica` o dal possesso. Prenotare non cambia possesso o composizione del mazzo.
 
 Per la validazione sul possesso, uno scambio committato prima dello snapshot F07 modifica il possesso da verificare e può impedirne l'avvio. Se lo snapshot committa prima, la partita usa la composizione fissata; lo scambio successivo incide sugli utilizzi futuri. Questo comportamento e l'eventuale lock delle carte per tutta la partita richiedono accordo F06/F07.
 

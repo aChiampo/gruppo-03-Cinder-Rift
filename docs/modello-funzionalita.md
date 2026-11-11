@@ -53,7 +53,8 @@ Ultima verifica: non eseguita / data e riferimento alle evidenze.
 ```
 
 Esempio di perimetro: «F06 comprende scambi privati e pubblici di carte e crediti.
-Entrambe le parti devono accettare. Durata e sequenza del consenso sono da definire».
+Entrambe le parti devono accettare; la durata è due giorni dalla creazione dell’annuncio,
+secondo il [contratto F06](BackEnd/scambi-mercato.md)».
 
 ## Modello di approfondimento progressivo
 

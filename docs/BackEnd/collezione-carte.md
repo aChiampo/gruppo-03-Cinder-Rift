@@ -4,7 +4,7 @@ ID: F04 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Ultimo aggiornamento significativo: 2026-11-05, allineamento alla base di dati v1.0 su richiesta dell'utente. Verifiche applicative: non eseguite.
-Fonte dati: [specifica canonica v1.0](Database/database-schema-v1.0.md#dettaglio-struttura-delle-carte).
+Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
 
 ## Obiettivo e decisioni note
 
@@ -18,7 +18,7 @@ Fonte dati: [specifica canonica v1.0](Database/database-schema-v1.0.md#dettaglio
 - `owned_replica` è obbligatorio e maggiore di zero; `tradable_replica` è obbligatorio e compreso fra zero e il possesso. Una tripla assente significa zero solo dopo una lettura riuscita. Il trasferimento dell'ultima copia elimina la riga.
 - Le copie scambiabili disponibili sono `tradable_replica` meno la somma degli hold non scaduti della stessa tripla. Prenotare non modifica i due contatori. Prima di eliminare una riga occorre consumare o rilasciare gli hold attivi; non esiste una FK degli hold alla riga volatile di possesso.
 - I mazzi scelgono esplicitamente `id_card_art`. Possesso per variante, effetti dei trasferimenti sui mazzi e disponibilità per il gioco richiedono validazione backend; le prenotazioni economiche non decidono da sole la giocabilità.
-- Ogni modifica applica il [protocollo transazionale comune](Database/database-schema-v1.0.md#protocollo-transazionale-comune). La cancellazione logica di carte o espansioni invalida prima le trattative e rilascia entrambi i lati, poi converte le copie e ripulisce collezione e mazzi; tassi e frammenti restano da definire.
+- Ogni modifica applica il [protocollo transazionale comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune). La cancellazione logica di carte o espansioni invalida prima le trattative e rilascia entrambi i lati, poi converte le copie e ripulisce collezione e mazzi; tassi e frammenti restano da definire.
 
 ## Da definire
 

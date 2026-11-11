@@ -1,8 +1,8 @@
-# Specifica della base di dati — v1.0
+# Specifica della base di dati — v1.1
 
-**Versione:** v1.0. **Ultimo aggiornamento:** 2026-11-05. **Motore del modello:** PostgreSQL 18. Implementazione e migrazioni: non eseguite.
+**Versione:** v1.1. **Ultimo aggiornamento:** 2026-11-09. **Motore del modello:** PostgreSQL 18. Implementazione e migrazioni: non eseguite. Aggiornamento corrente: inventario con Scaglie, Nuclei Rift e Rotami e sistema mercy per aperture del pacchetto corrispondente; rimozione dei campi anagrafici dell’utente e conferma della durata degli scambi a due giorni, su istruzione dell’utente del 2026-11-09.
 
-Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.0.dbml](db_schema-v1.0.dbml).
+Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
 **Identificativi.** Tutti gli identificativi di entità e tutti i relativi riferimenti sono `int`. Le colonne autonome `id` e l'identificativo univoco `CARDS_ARTS.id_art` sono generati dal database con auto-incremento, rappresentato da `increment` nel DBML. Le FK, gli identificativi ereditati e le componenti delle PK associative ricevono invece gli ID dei record già esistenti, senza una sequenza propria. Questo vale anche per `CARDS_KEYWORDS.id_card` e per l'identificativo storico `TRADES_COMPLETED.announce_id`. Le PK associative restano semplici o composte secondo i diagrammi. Un ID generato non esprime un ordine temporale affidabile e la numerazione non è necessariamente consecutiva. L'applicazione usa interi positivi nel dominio di `int`; gli ID non sostituiscono i controlli di autorizzazione.
 
@@ -38,8 +38,6 @@ erDiagram
     }
     USERS {
         int id PK "NOT NULL; auto-incremento"
-        varchar first_name "NULL ammesso"
-        varchar surname "NULL ammesso"
         varchar nickname UK "NOT NULL"
         varchar hash_password "NOT NULL"
         varchar email UK "NOT NULL"
@@ -141,7 +139,9 @@ erDiagram
     INVENTORY {
         int id PK "NOT NULL; auto-incremento"
         int id_user FK,UK "NOT NULL"
-        bigint token_balance "NOT NULL; default 0"
+        int cobalt_shards "NOT NULL; default 0"
+        int rift_cores "NOT NULL; default 0"
+        int scraps "NOT NULL; default 0"
     }
     PACKS {
         int id PK "NOT NULL; auto-incremento"
@@ -152,7 +152,14 @@ erDiagram
         jsonb allowed_types "NOT NULL"
         jsonb allowed_expansions "NOT NULL"
         jsonb allowed_rarities "NOT NULL"
+        int mercy_threshold "NULL ammesso"
         jsonb slot_pulls "NOT NULL"
+    }
+    USER_MERCY {
+        int id_user PK,FK "NOT NULL"
+        int id_pack PK,FK "NOT NULL"
+        int mercy_counter "NOT NULL"
+        int mercy_rarity FK "NOT NULL"
     }
     INVENTORY_PACKS {
         int id_inventory PK,FK "NOT NULL"
@@ -299,6 +306,9 @@ erDiagram
     USERS ||..o| INVENTORY : "id_user -> id"
     INVENTORY ||--o{ INVENTORY_PACKS : "id_inventory -> id"
     PACKS ||--o{ INVENTORY_PACKS : "id_pack -> id"
+    USERS ||--o{ USER_MERCY : "id_user -> id"
+    PACKS ||--o{ USER_MERCY : "id_pack -> id"
+    RARITIES ||..o{ USER_MERCY : "mercy_rarity -> id"
     USERS ||..o{ ORIGINAL_ANNOUNCES : "publisher_id -> id"
     ORIGINAL_ANNOUNCES ||..o| CURRENT_NEGOTIATIONS : "announce_id -> id"
     USERS ||..o{ CURRENT_NEGOTIATIONS : "publisher_id -> id"
@@ -459,8 +469,6 @@ erDiagram
 erDiagram
     USERS {
         int id PK "NOT NULL; auto-incremento"
-        varchar first_name "NULL ammesso"
-        varchar surname "NULL ammesso"
         varchar nickname UK "NOT NULL"
         varchar hash_password "NOT NULL"
         varchar email UK "NOT NULL"
@@ -493,7 +501,7 @@ erDiagram
     USERS ||..o{ NOTIFICATIONS : "id_sender -> id"
 ```
 
-**Identità e dati.** `USERS.id` è l'unico identificativo dell'utente: `int` auto-incrementale, obbligatorio e PK, usato anche nei riferimenti pubblici. Nickname ed email sono obbligatori e univoci; hash della password e ruolo sono obbligatori. Nome, cognome e icona sono facoltativi. `id_role` riferisce `ROLES.id`; `ranking_points` parte da `1000`, `registration_date` da `now()` e `is_deleted` da `false`. Il backend normalizza l'email prima di scrittura e ricerca: il solo `UNIQUE` non ne normalizza la forma.
+**Identità e dati.** `USERS.id` è l'unico identificativo dell'utente: `int` auto-incrementale, obbligatorio e PK, usato anche nei riferimenti pubblici. Nickname ed email sono obbligatori e univoci; hash della password e ruolo sono obbligatori. L’icona è facoltativa. `id_role` riferisce `ROLES.id`; `ranking_points` parte da `1000`, `registration_date` da `now()` e `is_deleted` da `false`. Il backend normalizza l'email prima di scrittura e ricerca: il solo `UNIQUE` non ne normalizza la forma.
 
 **Inventario obbligatorio nel servizio.** La registrazione crea utente e inventario nella stessa transazione. La FK obbligatoria e univoca `INVENTORY.id_user` consente al massimo un inventario per utente; non ne impone da sola l'esistenza per ciascun utente.
 
@@ -542,7 +550,9 @@ erDiagram
     INVENTORY {
         int id PK "NOT NULL; auto-incremento"
         int id_user FK,UK "NOT NULL"
-        bigint token_balance "NOT NULL; default 0"
+        int cobalt_shards "NOT NULL; default 0"
+        int rift_cores "NOT NULL; default 0"
+        int scraps "NOT NULL; default 0"
     }
     PACKS {
         int id PK "NOT NULL; auto-incremento"
@@ -553,7 +563,14 @@ erDiagram
         jsonb allowed_types "NOT NULL"
         jsonb allowed_expansions "NOT NULL"
         jsonb allowed_rarities "NOT NULL"
+        int mercy_threshold "NULL ammesso"
         jsonb slot_pulls "NOT NULL"
+    }
+    USER_MERCY {
+        int id_user PK,FK "NOT NULL"
+        int id_pack PK,FK "NOT NULL"
+        int mercy_counter "NOT NULL"
+        int mercy_rarity FK "NOT NULL"
     }
     INVENTORY_PACKS {
         int id_inventory PK,FK "NOT NULL"
@@ -562,15 +579,34 @@ erDiagram
     }
     INVENTORY ||--o{ INVENTORY_PACKS : "id_inventory -> id"
     PACKS ||--o{ INVENTORY_PACKS : "id_pack -> id"
+    PACKS ||--o{ USER_MERCY : "id_pack -> id"
 ```
 
-**Saldo.** `INVENTORY` ha ID intero auto-incrementale, proprietario obbligatorio univoco e `token_balance` `bigint` obbligatorio con default `0`. Token e crediti sono la stessa valuta; lo schema usa “token”. I saldi spendibili sottraggono gli hold non scaduti. Limiti economici e disponibilità sono controlli transazionali del backend, senza registro dei movimenti o contatore duplicato di riservato.
+**Risorse economiche.** Le Scaglie sono la risorsa guadagnata nel mondo di gioco; i Nuclei Rift sono la riserva premium acquistabile; i Rotami sono residui recuperabili dai doppioni. Queste definizioni, confermate il 2026-11-09, distinguono tre concetti e non implicano equivalenza, conversione o trasferibilità fra le risorse. Il recupero dai doppioni non determina da solo la risorsa prodotta dalla cancellazione di una carta dal catalogo.
+
+**Struttura dell'inventario.** `INVENTORY` conserva ID intero auto-incrementale, proprietario intero obbligatorio univoco e tre saldi distinti: `cobalt_shards` per le Scaglie, `rift_cores` per i Nuclei Rift e `scraps` per i Rotami. Ciascun saldo è `int`, obbligatorio e con default `0`. Il precedente saldo unico è sostituito da queste tre colonne; i diagrammi integrale e di dettaglio riportano la stessa struttura. Non sono dichiarati nuovi `CHECK` di non negatività: il backend verifica saldi non negativi, quantità e risultati nel dominio `int`, anche nelle operazioni concorrenti.
+
+**Disponibilità e corrispondenze aperte.** Ogni addebito identifica la risorsa e aggiorna il relativo saldo sotto i guard comuni. I campi `*_token_offer`, `TRADE_TOKEN_RESERVATIONS.token_amount` e `reward_token_quantity` restano nello schema con i nomi e tipi attuali, ma non indicano quale delle tre risorse rappresentino. La tabella degli hold monetari non ha un discriminatore di risorsa: la FK al proprietario non risolve questa corrispondenza. Occorre definire una risorsa unica per il contratto monetario oppure estenderne la rappresentazione per distinguere le risorse; trasferibilità, prezzi, conversioni e risorsa dei premi restano **DA DEFINIRE**. Nessun campo generico è attribuito implicitamente alle Scaglie, ai Nuclei Rift o ai Rotami. Non sono aggiunti un registro dei movimenti o contatori duplicati di riservato.
 
 **Pacchetti.** `PACKS` ha ID auto-incrementale, nome e descrizione obbligatori, immagine facoltativa e JSONB obbligatori `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`, `slot_pulls`. I filtri usano codici dei rispettivi cataloghi, senza FK interne al JSON. Gli slot possono indicare probabilità per rarità o carte fisse identificate da interi; struttura definitiva, probabilità, significato dei filtri vuoti e scelta delle arti restano da definire. Il backend verifica configurazione, codici e risultati prima di aggiornare il possesso.
 
+**Soglia mercy.** `PACKS.mercy_threshold` è un intero nullable senza default. `NULL` disabilita il sistema per quel pacchetto; un valore non nullo deve essere positivo tramite `packs_mercy_threshold_check`. Il valore indica quante aperture del pacchetto corrispondente possono trascorrere prima di una pesca garantita. `10` è un esempio di configurazione, non un default aggiunto allo schema.
+
+**Progressi per utente e pacchetto.** `USER_MERCY` usa un'unica PK composta `(id_user, id_pack)`, con FK intere obbligatorie a `USERS.id` e `PACKS.id`. I due identificativi non si auto-incrementano. Una riga registra il progresso di quella sola coppia; le aperture di un altro pacchetto usano una riga diversa. `mercy_rarity` è obbligatorio e riferisce `RARITIES.id`: è la rarità minima richiesta, con ammissione delle rarità superiori. La verifica usa un ordinamento di rarità esplicito e valido per il catalogo, mai il confronto numerico degli ID; `order_index`, se adottato come ordinamento, deve essere configurato per le rarità coinvolte. La policy backend che assegna inizialmente `mercy_rarity` resta da definire: `PACKS` non contiene una colonna con la rarità mercy predefinita.
+
+Il progresso non riferisce la riga volatile di `INVENTORY_PACKS`: consumare l'ultimo pacchetto elimina la riga di possesso ma conserva `USER_MERCY`, così le aperture successive riprendono il conto salvato.
+
+**Inizializzazione e decremento.** `mercy_counter` è un intero obbligatorio senza default SQL. Alla prima apertura di quel pacchetto con mercy abilitato, il backend crea la riga mancante copiando la soglia corrente `T = PACKS.mercy_threshold`, poi applica anche l'apertura in corso. Per ogni apertura calcola `remaining = max(mercy_counter - 1, 0)`. Se il risultato è zero, la composizione generata deve includere almeno una carta di rarità pari o superiore a `mercy_rarity`; altrimenti usa la normale estrazione. Ogni pesca qualificante, naturale o garantita, reimposta il contatore a `T`. Senza una pesca qualificante, il contatore salvato è `remaining`. Un valore zero già presente forza la garanzia nell'apertura corrente; non scende sotto zero e non assegna carte senza consumo del pacchetto.
+
+**Esempio.** Con soglia `10`, senza pesche qualificanti, le prime nove aperture lasciano il contatore a `9, 8, …, 1`; la decima lo porta a zero, assegna la carta richiesta e salva nuovamente `10`. Una pesca qualificante alla terza apertura salva subito `10`: il conteggio riparte da quella pesca. Contano solo le aperture riuscite del pacchetto corrispondente. Se la soglia è `NULL`, il backend non inizializza o avanza i progressi mercy.
+
+**Garanzie del database e del backend.** `user_mercy_counter_check` impedisce contatori negativi. L'inizializzazione dalla soglia e il limite superiore `mercy_counter <= PACKS.mercy_threshold` dipendono da un'altra tabella e sono controlli backend, non un default dinamico o un `CHECK` di riga. La garanzia deve avere almeno una carta/arte valida che rispetti anche i filtri del pacchetto: una configurazione incompatibile causa errore e rollback, senza consumare il pacchetto o il progresso. Un contatore, da solo, non genera carte.
+
+**Atomicità e configurazione.** Dopo aver acquisito i guard comuni, il backend rilegge configurazione e possesso, inizializza il progresso se necessario e genera la composizione con l'eventuale garanzia. Consumo di `INVENTORY_PACKS`, decremento/reset di `USER_MERCY` e accredito delle carte in `COLLECTIONS` condividono un solo commit. Un errore ripristina tutti gli effetti, anche una nuova riga mercy. Due aperture concorrenti dello stesso utente sono serializzate dal guard utente. La deduplicazione di una richiesta di apertura dopo un commit incerto richiede una chiave o un registro ancora da definire: la PK del progresso non identifica la richiesta. Modifiche di soglia o rarità e riattivazione dopo `NULL` devono riconciliare i progressi esistenti secondo una policy ancora da definire; non si azzerano silenziosamente a ogni apertura.
+
 **Offerte acquistabili.** Ogni offerta del negozio contiene esattamente una unità di un pacchetto. Non è modellata una colonna prezzo o una tabella delle offerte: fonte del prezzo e collegamento offerta/pacchetto restano da definire. Lo schema non supporta implicitamente offerte composte da più pacchetti.
 
-**Pacchetti posseduti.** `INVENTORY_PACKS` ha PK `(id_inventory, id_pack)`, due FK obbligatorie e `item_quantity` intero obbligatorio senza default. Il `CHECK` impone quantità maggiore di zero. Una coppia assente significa zero dopo una lettura riuscita. Il consumo dell'ultimo pacchetto elimina la riga, senza memorizzare zero. Acquisto e apertura sono operazioni atomiche: l'acquisto addebita token spendibili e incrementa i pacchetti; l'apertura decrementa i pacchetti e incrementa `COLLECTIONS` per carta/arte estratta. Errori annullano tutti gli effetti dell'operazione.
+**Pacchetti posseduti.** `INVENTORY_PACKS` ha PK `(id_inventory, id_pack)`, due FK obbligatorie e `item_quantity` intero obbligatorio senza default. Il `CHECK` impone quantità maggiore di zero. Una coppia assente significa zero dopo una lettura riuscita. Il consumo dell'ultimo pacchetto elimina la riga, senza memorizzare zero. Acquisto e apertura sono operazioni atomiche: l'acquisto, dopo la definizione di prezzo e risorsa ammessa, addebita la disponibilità della risorsa identificata e incrementa i pacchetti; l'apertura decrementa i pacchetti e incrementa `COLLECTIONS` per carta/arte estratta. Errori annullano tutti gli effetti dell'operazione.
 
 **Disponibilità.** Gli acquisti, i regali, le aperture, gli scambi e le rimozioni seguono il protocollo transazionale comune descritto sotto. Prenotare non modifica saldo, possesso o scambiabilità; una riduzione ordinaria deve preservare tutte le prenotazioni vive.
 
@@ -618,6 +654,8 @@ erDiagram
 **Progressi.** `DAILY_REWARDS` e `WEEKLY_REWARDS` hanno PK `(id_quest, id_user)`, con FK al catalogo pertinente e a `USERS.id`: una riga per utente/missione nel periodo corrente. `progression_missing` è obbligatorio senza default; il backend lo inizializza dal `progression_required` della missione e lo decrementa fino a zero. `quest_completed`, obbligatorio con default `false`, viene mantenuto coerente dal backend. Nessuna FK copia automaticamente il progresso e nessun `CHECK` garantisce questa coerenza.
 
 **Riscossione.** Entrambe le tabelle hanno `reward_claimed` booleano obbligatorio con default `false`: una sola riscossione per periodo, senza contatore. Il backend verifica completamento e flag ancora falso e aggiorna inventario e flag nella stessa transazione, proteggendo dalle richieste concorrenti. `reward_token_quantity` è intero obbligatorio con default `0`; il settimanale aggiunge `reward_pack_quantity` con lo stesso tipo e default. Quantità, configurazione dei premi e pacchetto settimanale da attribuire restano da definire; non è presente una FK al pacchetto premio.
+
+La risorsa accreditata da `reward_token_quantity` deve essere definita esplicitamente rispetto ai tre saldi dell'inventario. Il campo conserva una sola quantità generica, senza selettore della risorsa o quantità separate per Scaglie, Nuclei Rift e Rotami; il modello corrente non esprime implicitamente un premio in più risorse.
 
 **Reset.** Il backend svuota i progressi giornalieri e settimanali al cambio di periodo, coordinandosi con avanzamenti e riscossioni; non svuota i cataloghi. Ora giornaliera e giorno/ora settimanali UTC sono da definire. Non sono conservati progressi o riscossioni dei periodi precedenti. Modifiche ai requisiti durante il periodo, eventi di avanzamento e recupero dopo guasto restano aperti.
 
@@ -713,6 +751,8 @@ erDiagram
 
 **Offerte.** `P` è il pubblicatore e `R` il rispondente. Ogni lato descrive ciò che darà all'altro; `original_r_*` è la richiesta iniziale del pubblicatore. Tutti i campi carte sono JSONB obbligatori con default `[]`, costituiti da oggetti `{cardId, cardArtId, quantity}`: ID interi di carta e arte, quantità positiva e una sola voce per coppia. Gli importi sono `bigint` obbligatori con default `0`. Il backend controlla struttura, quantità, importi non negativi, appartenenza dell'arte e disponibilità. Le FK non validano gli identificativi annidati. Non è prevista una sostituzione implicita dell'arte richiesta.
 
+I nomi monetari `*_token_offer` e `token_amount` sono mantenuti nello schema, ma la loro corrispondenza con Scaglie, Nuclei Rift o Rotami è **DA DEFINIRE**, insieme alla trasferibilità delle risorse. Il protocollo monetario seguente richiede questa decisione prima dell'implementazione: una quantità generica non rappresenta tre saldi separati. Gli importi delle offerte e degli hold restano `bigint`, mentre i saldi di inventario sono `int`; i risultati degli aggiornamenti devono rispettare il dominio dei saldi.
+
 **Annuncio pubblico.** `ORIGINAL_ANNOUNCES` conserva proposta iniziale immutabile, pubblicatore, flag e scadenza a due giorni. Pubblicare crea `PUBLISHED` e non crea hold o una trattativa. La disponibilità può cambiare prima della risposta: sarà verificata sotto lock quando occorre prenotare. La scadenza non viene rinnovata.
 
 **Avvio e richiesta privata.** L'avvio pubblico acquisisce un annuncio ancora pubblicato e valido, crea una sola `CURRENT_NEGOTIATIONS` e imposta `PENDING` nella stessa transazione. Sull'originale, versione `1`: prenota il lato uscente del pubblicatore prima di porre `p_acceptance = true`; `r_acceptance` resta falso. Un'accettazione diretta del rispondente può prenotare entrambi e completare nello stesso commit. La prima controproposta, se negoziabile, compone avvio e modifica: stato finale versione `2`, entrambi i flag falsi e nessun hold. Il consenso all'originale non passa alla controproposta. Una richiesta privata verso un amico accettato crea annuncio `PENDING`, trattativa versione `1` e hold del pubblicatore atomicamente; non compare nel marketplace.
@@ -741,8 +781,9 @@ Ogni scrittore di saldo, collezione, hold e composizione deve applicare lo stess
 Per ciascun utente, con somme vuote pari a zero:
 
 ```text
-reservedTokens = SUM(token_amount WHERE id_user = userId AND expires_at > cutoff)
-spendableTokens = token_balance - reservedTokens
+// Conceptual monetary calculation after the resource mapping is defined.
+reservedAmount = SUM(token_amount WHERE id_user = userId AND expires_at > cutoff)
+spendableAmount = balanceOfMappedResource(userId) - reservedAmount
 
 reservedCopies = SUM(quantity WHERE id_user = userId
                      AND id_card = cardId AND id_card_art = artId
@@ -750,7 +791,7 @@ reservedCopies = SUM(quantity WHERE id_user = userId
 tradableCopies = tradable_replica - reservedCopies
 ```
 
-Si contano tutti gli hold non scaduti. Incoerenze di versione, partecipante o offerta bloccano l'operazione; non si ignorano righe anomale per liberare risorse. Prenotare non addebita i contatori. Al completamento si consumano i propri hold e si preserva la copertura di quelli altrui, evitando un doppio addebito della propria prenotazione.
+`balanceOfMappedResource` è un segnaposto concettuale, non una colonna o funzione SQL dello schema. Deve risolvere il saldo della risorsa concordata. La somma monetaria non può essere sottratta indiscriminatamente da ciascuno dei tre saldi; prenotazioni simultanee di risorse diverse richiederebbero un modello che le distingua. Si contano tutti gli hold non scaduti. Incoerenze di versione, partecipante o offerta bloccano l'operazione; non si ignorano righe anomale per liberare risorse. Prenotare non addebita i contatori. Al completamento si consumano i propri hold e si preserva la copertura di quelli altrui, evitando un doppio addebito della propria prenotazione.
 
 Un retry di accettazione della stessa versione verifica il flag e l'esatto insieme di hold senza duplicarli. Una modifica con versione superata viene rifiutata. Dopo un esito di commit incerto si rilegge lo stato; lo storico unico per `announce_id` impedisce un secondo completamento soltanto insieme alla transazione atomica. La deduplicazione generale della creazione di annunci, degli acquisti e delle partite resta da definire; le PK auto-incrementali non identificano una richiesta ripetuta.
 
@@ -768,6 +809,8 @@ I diagrammi riportano PK, FK, unicità delle colonne, default e auto-incremento.
 | NOTIFICATIONS | `status IN ('new', 'read', 'archived')` | `notifications_status_check` |
 | COLLECTIONS | `owned_replica > 0` | `collections_owned_replica_check` |
 | COLLECTIONS | `tradable_replica >= 0 AND tradable_replica <= owned_replica` | `collections_tradable_replica_check` |
+| PACKS | `mercy_threshold IS NULL OR mercy_threshold > 0` | `packs_mercy_threshold_check` |
+| USER_MERCY | `mercy_counter >= 0` | `user_mercy_counter_check` |
 | INVENTORY_PACKS | `item_quantity > 0` | `inventory_packs_item_quantity_check` |
 | BATTLE_HISTORY | `winner_id IN (player1_id, player2_id)` | `battle_history_winner_check` |
 | DAILY_QUESTS | `progression_required > 0` | `daily_quests_progression_required_check` |
@@ -787,7 +830,9 @@ L'unicità composta aggiuntiva di `CARDS_ARTS.(id_card, id_art)` sostiene le FK 
 - **Controlli applicativi.** Esistenza dell'inventario per ogni utente, email normalizzate, proprietà, composizioni aggregate, disponibilità e transizioni non sono garantite dalle sole PK/FK. Non sono introdotti trigger o servizi già implementati.
 - **Contratti JSON.** JSONB valida la sintassi JSON; non impone forma, chiavi, quantità, unicità interna o riferimenti ai cataloghi. Filtri, slot, fotografie e dati storici definitivi restano da completare.
 - **Mazzi e gioco.** Definire valori iniziali delle configurazioni, minimi e limiti di gioco aggiuntivi, regole di `EQUIPMENT`, riutilizzo delle copie in più mazzi, utilizzo delle copie prenotate e riparazione dopo trasferimenti. Un flag di matchmaking non certifica la validità.
-- **Negozio.** Definire fonte del prezzo, offerta acquistabile e collegamento al pacchetto, mantenendo una sola unità per offerta; precisare probabilità, filtri vuoti e scelta delle arti.
+- **Risorse economiche.** `cobalt_shards`, `rift_cores` e `scraps` sono saldi distinti `int` con default `0`. Definire risorse ammesse nei prezzi, trasferibilità, conversioni e corrispondenza dei campi monetari di offerte, hold e ricompense; gli hold attuali non distinguono la risorsa. Condizioni e quantità di recupero dei Rotami dai doppioni restano aperte.
+- **Negozio.** Definire fonte del prezzo, risorsa richiesta, offerta acquistabile e collegamento al pacchetto, mantenendo una sola unità per offerta; precisare probabilità, filtri vuoti e scelta delle arti.
+- **Mercy.** La progressione avviene sulle aperture del pacchetto corrispondente e si resetta a ogni pesca della rarità richiesta o superiore. Definire la policy iniziale di `mercy_rarity`, l'ordinamento completo delle rarità, lo slot usato per la garanzia, la deduplicazione delle aperture e la riconciliazione dei progressi quando soglia, rarità o abilitazione cambiano. Non è modellato un registro delle singole richieste di apertura.
 - **Missioni.** Definire eventi di avanzamento, configurazione e pacchetto premio, modifiche dei requisiti nel periodo, effetti della cancellazione logica e orari di reset UTC con coordinamento delle riscossioni.
 - **Autenticazione e conservazione.** Definire matrice dei permessi, algoritmi, scadenze e rotazioni dei token, revoca dopo cancellazione logica, conservazione e anonimizzazione. Le FK possono impedire cancellazioni fisiche; solo amicizie e hold hanno le cascate dichiarate.
 - **Scambi e operatività.** Definire primitiva del guard catalogo, timeout e retry, deduplicazione delle creazioni, consegna delle notifiche, conservazione e statistiche. Non esiste un registro dei movimenti, delle revisioni o delle aggregazioni.

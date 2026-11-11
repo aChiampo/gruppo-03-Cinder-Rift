@@ -3,8 +3,8 @@
 ID: D01 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Digital Strategist).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Fonte dell'approfondimento: regolamento Versione 2.0, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-10-27. Validazione dei contenuti definitivi: non eseguita.
+Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
+Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente. Validazione dei contenuti definitivi: non eseguita.
 
 ## Obiettivo e decisioni note
 
@@ -13,7 +13,7 @@ Ultimo aggiornamento significativo: 2026-10-27. Validazione dei contenuti defini
 
 ## Riferimenti alla proposta di regolamento
 
-- La Versione 2.0 propone le [caratteristiche delle creature](regolamento-base.md#5-caratteristiche-delle-creature), le [fazioni e i loro vantaggi](regolamento-base.md#6-fazioni) e il comportamento degli [equipaggiamenti](regolamento-base.md#7-equipaggiamenti).
+- La Versione 2.1 propone le [caratteristiche delle creature](regolamento-base.md#5-caratteristiche-delle-creature), le [fazioni e i loro vantaggi](regolamento-base.md#6-fazioni) e il comportamento degli [equipaggiamenti](regolamento-base.md#7-equipaggiamenti).
 - Nomi e relazioni di gioco restano nel regolamento senza copie concorrenti. La proposta non definisce automaticamente lore, identità visiva o asset finali.
 - Statistiche, punti potenza ed effetti precisi delle carte devono ancora essere definiti e bilanciati secondo gli [elementi da completare e testare](regolamento-base.md#15-elementi-da-completare-e-testare).
 

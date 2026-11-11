@@ -12,7 +12,7 @@ Versione 2.1 — Proposta per il prototipo e le prove di bilanciamento
 - **Responsabile:** DA DEFINIRE (Digital Strategist).
 - **Fonte:** documento Versione 2.0, + modifica aChiampo. 
 - **Data della bozza di integrazione:** 2026-11-02.
-- **Ultimo aggiornamento significativo nel repository:** 2026-10-27. Rimozione limite a numero di epiche e leggendarie durante la creazione del mazzo
+- **Ultimo aggiornamento documentale nel repository:** 2026-11-09, allineamento dei riferimenti alla Versione 2.1 su richiesta dell’utente. La V2.1 rimuove il limite combinato di epiche e leggendarie per mazzetto di creature; restano i limiti complessivi per categoria della sezione 4.
 - **Ultima verifica del regolamento:** non eseguita; approvazione, prove di bilanciamento e verifiche applicative non documentate.
 
 

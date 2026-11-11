@@ -173,6 +173,6 @@ Le protezioni di `main` e `dev` devono essere configurate in GitHub: i documenti
 - [Documentazione](.github/ISSUE_TEMPLATE/documentazione.md)
 - [Pull request](.github/pull_request_template.md)
 
-Esempio di descrizione in una pull request: «Documentati gli scambi pubblici e privati; durata e sequenza del consenso restano da definire».
+Esempio di descrizione in una pull request: «Documentati gli scambi pubblici e privati con durata di due giorni e consenso secondo il contratto F06; API e payload definitivi restano da concordare».
 
 [README](README.md) · [Indice documentazione](docs/README.md)

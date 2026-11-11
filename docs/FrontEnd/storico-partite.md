@@ -3,8 +3,8 @@
 ID: F08 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Fonte dell'approfondimento: regolamento Versione 2.0, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-10-27. Verifiche applicative: non eseguite.
+Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
+Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 

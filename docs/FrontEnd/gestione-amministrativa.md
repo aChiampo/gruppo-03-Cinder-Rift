@@ -3,8 +3,8 @@
 ID: F10 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Fonte dell'approfondimento: regolamento Versione 2.0, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-04, per l'allineamento alla decisione dell'utente su F03: un solo pacchetto per offerta. Il riferimento al regolamento resta datato 2026-10-27. Verifiche applicative: non eseguite.
+Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
+Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente. La decisione F03 del 2026-11-04 conferma un solo pacchetto per offerta. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 
@@ -25,5 +25,5 @@ Ultimo aggiornamento significativo: 2026-11-04, per l'allineamento alla decision
 - [Servizio backoffice](../BackEnd/gestione-amministrativa.md)
 - [Accesso](accesso-utenti.md)
 - [Offerte di pacchetti](acquisto-pacchetti.md)
-- [Regolamento Versione 2.0](../Digital/regolamento-base.md)
+- [Regolamento Versione 2.1](../Digital/regolamento-base.md)
 - [Indice FrontEnd](README.md)

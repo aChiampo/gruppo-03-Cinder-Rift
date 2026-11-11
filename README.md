@@ -23,7 +23,7 @@
 1. Registrazione e accesso con email e password; un servizio nell'app Spring Boot gestisce JWT e ruoli `ADMIN`, `MANAGER`, `USER`.
 2. Acquisto con crediti di offerte contenenti ciascuna esattamente un pacchetto; prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice.
 3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
-4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata standard da definire.
+4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata di due giorni dalla creazione dell’annuncio, secondo il [contratto F06](docs/BackEnd/scambi-mercato.md).
 5. Sfide con scelta dei mazzi, simulazione sul server e storico con risultati turno per turno.
 
 Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pagamenti reali sono esclusi dallo sviluppo previsto dalla traccia.
@@ -61,17 +61,17 @@ La traccia prevede GitHub, GitHub Projects, Swagger, JSDoc per JS/TS e motore Ja
 **Team Leader:** @Raffo-DSG1
 ## Lore
 
-**DA DEFINIRE:** nome, ambientazione, personaggi e asset definitivi. Le fazioni e le caratteristiche delle carte sono descritte nella proposta di regolamento Versione 2.0, ancora da confermare. Le carte non saranno interamente generate con intelligenza artificiale.
+**DA DEFINIRE:** nome, ambientazione, personaggi e asset definitivi. Le fazioni e le caratteristiche delle carte sono descritte nella proposta di regolamento Versione 2.1, ancora da confermare. Le carte non saranno interamente generate con intelligenza artificiale.
 
 Riferimento: [Lore, identità e carte](docs/Digital/lore-identita-carte.md).
 
 ## Regole del gioco
 
-È disponibile la **Versione 2.0 — Proposta per il prototipo e le prove di bilanciamento**, integrata nella documentazione il **2026-10-27**. Descrive composizione dei mazzi, energia e punti potenza, fazioni, equipaggiamenti, combattimento automatico, round e conclusione della partita. Il testo del regolamento è riportato senza modifiche; metadati e collegamenti sono separati dalle regole.
+È disponibile la **Versione 2.1 — Proposta per il prototipo e le prove di bilanciamento**. L’integrazione documentale iniziale risale al **2026-10-27**; i riferimenti correnti sono allineati alla Versione 2.1 su richiesta dell’utente del **2026-11-09**. Il regolamento descrive composizione dei mazzi, energia e punti potenza, fazioni, equipaggiamenti, combattimento automatico, round e conclusione della partita.
 
 L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Le applicazioni non sono inizializzate e non sono state eseguite verifiche applicative.
 
-Riferimento: [Regolamento e svolgimento del gioco — Versione 2.0](docs/Digital/regolamento-base.md), con [elementi da completare e testare](docs/Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Le modalità aggiuntive non sono confermate.
+Riferimento: [Regolamento e svolgimento del gioco — Versione 2.1](docs/Digital/regolamento-base.md), con [elementi da completare e testare](docs/Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Le modalità aggiuntive non sono confermate.
 
 ## Struttura del repository
 
