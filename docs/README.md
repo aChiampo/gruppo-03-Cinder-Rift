@@ -11,6 +11,7 @@ Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'al
 - [Digital](Digital/README.md)
 - [FrontEnd](FrontEnd/README.md)
 - [BackEnd](BackEnd/README.md)
+- [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
 - [Configurazione locale con Docker Compose nel workspace](../../docker-docs.md)
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
