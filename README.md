@@ -128,6 +128,8 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
+La [guida Docker Compose del workspace](../docker-docs) descrive configurazione locale, porte, reti, persistenza, accesso con DBeaver e limiti delle verifiche eseguite.
+
 Le applicazioni non sono inizializzate: non sono disponibili comandi applicativi o test eseguibili. Prerequisiti, configurazione, migrazioni, build e test saranno documentati dopo lo stack definitivo.
 
 Non inserire credenziali reali. Gli esempi di ambiente, i lockfile e i wrapper di build restano versionabili secondo la `.gitignore`.

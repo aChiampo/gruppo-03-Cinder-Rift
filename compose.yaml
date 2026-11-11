@@ -1,82 +1,220 @@
-# React and game-engine require application sources before their images can build.
-services:
-  db:
-    image: postgres:18-alpine
+# `name` sets the project name used by Docker Compose.
+name: cinder-rift 
 
-    environment:
-      POSTGRES_DB: cinder_rift
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-
-    ports:
-      - "127.0.0.1:5432:5432"
-
-    volumes:
+# `services` contains the containers managed by this Compose project.
+services: 
+  # `postgres` is the service name used for internal DNS and dependencies.
+  postgres: 
+    # `image` selects the PostgreSQL 18 Alpine container image.
+    image: postgres:18-alpine 
+    
+    
+    # `environment` passes variables into the PostgreSQL container.
+    environment: 
+      # `POSTGRES_DB` creates the initial database when the data directory is empty.
+      POSTGRES_DB: ${POSTGRES_DB:-cinder_rift}
+      # `${NAME:-value}` uses the fallback when NAME is unset or empty.
+      POSTGRES_USER: ${POSTGRES_USER:-postgres} 
+      # WARNING: the default password is insecure and should not be used in production.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres} 
+    
+    
+    # `ports` publishes the database on host loopback for local tools such as DBeaver.
+    ports: 
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    
+    
+    # `volumes` mounts named volumes into the container.
+    volumes: 
+      # PostgreSQL 18 stores PGDATA under /var/lib/postgresql/18/docker by default.
       - postgres_data:/var/lib/postgresql
-
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
-    networks:
-      - data
-
-  app:
+    
+    
+    # `healthcheck` defines how Compose determines service readiness.
+    healthcheck: 
+      # `CMD-SHELL` executes the command through the container shell.
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""] # Escaped $$ defers variables to the container; valid syntax.
+      # `interval` is the delay between health checks.
+      interval: 5s 
+      # `timeout` is the maximum duration of one health check.
+      timeout: 5s 
+      # `retries` is the number of failures before the service is unhealthy.
+      retries: 10 
+      # `start_period` gives the service time to initialize.
+      start_period: 10s 
+    # `restart` controls automatic container restarts.
+    restart: unless-stopped 
+    
+    
+    # `networks` attaches the service to named networks.
+    networks: 
+      - data 
+    
+    
+  # `spring_app` is the backend application service.
+  spring_app: 
+    # `build` configures image creation from a Dockerfile.
     build:
-      context: ./springboot_app/app
+      # `context` is the directory sent to Docker during the build.
+      context: ./springboot_app/app # Relative path from this Compose file
+      # `dockerfile` selects the Dockerfile within the context.
+      dockerfile: Dockerfile 
+    
+    
+    # `image` names the locally built backend image.
+    image: cinder-rift/backend-app:local
+   
+    
+    # `environment` configures Spring Boot env variables inside the container.
+    environment: 
+      # Sets the Spring application name.
+      SPRING_APPLICATION_NAME: app 
+      # Uses the postgres service name as the database hostname.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-cinder_rift} 
+      # Reuses the configured PostgreSQL username.
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres} 
+      # Reuses the configured PostgreSQL password.
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres} # Interpolation is valid, but inherits the insecure fallback.
+      # Disables Spring Boot's Docker Compose integration inside the container.
+      SPRING_DOCKER_COMPOSE_ENABLED: "false" # Quoted string prevents YAML boolean conversion.
+    
+    
+    # `ports` publishes the backend on host loopback; application.properties sets container port 8081.
+    ports: 
+      - "127.0.0.1:${APPLICATION_PORT:-8081}:8081" # APPLICATION_PORT controls only the host port.
+    # `depends_on` controls startup ordering and readiness dependencies.
+    depends_on: 
+      # The backend depends on PostgreSQL.
+      postgres: 
+        # Wait until PostgreSQL's healthcheck succeeds.
+        condition: service_healthy 
+    
+    
+    # `healthcheck` checks the Spring Actuator endpoint.
+    healthcheck: 
+      # `CMD` executes the command directly without a shell.
+      test: [CMD, curl, --fail, --silent, http://localhost:8081/actuator/health] # Valid list form if curl and this endpoint exist in the image.
+      # Health-check timing options.
+      interval: 5s 
+      timeout: 5s 
+      retries: 10 
+      start_period: 30s 
+    # `read_only` makes the container root filesystem read-only.
+    read_only: true 
+    # `tmpfs` provides a writable temporary filesystem.
+    tmpfs: 
+      - /tmp # Temporary mount target
+    # `security_opt` adds container security options.
+    security_opt: 
+      - no-new-privileges:true # Prevents privilege escalation
+    
+    
+    # Attach the backend to the database, frontend, and game-engine networks.
+    networks: 
+      - data # Database network.
+      - web # Frontend network.
+      - engine # Game-engine network.
 
-    environment:
-      SPRING_APPLICATION_NAME: app
-      SERVER_PORT: "8080"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/cinder_rift
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      SPRING_DOCKER_COMPOSE_ENABLED: "false"
-
-    ports:
-      - "127.0.0.1:8080:8080"
-
-    depends_on:
-      db:
-        condition: service_healthy
-
-    networks:
-      - data
-
-  react:
+    # Restart the backend unless it was explicitly stopped.
+    restart: unless-stopped 
+    
+    
+  # `react` is the frontend service.
+  react: 
+    # `build` configures the frontend image build.
     build:
+      # `context` selects the React application directory; application files are still pending.
       context: ./react_app
-      args:
-        NODE_VERSION: "24"
-        FRONTEND_BUILD_DIR: dist
-
-    ports:
-      - "127.0.0.1:3000:80"
-
-    depends_on:
-      app:
-        condition: service_started
-
-    networks:
-      - data
-
-  game-engine:
+      # `dockerfile` selects the Dockerfile name within the context.
+      dockerfile: Dockerfile
+    # `image` names the frontend image.
+    image: cinder-rift/react:local
+    # `environment` is an explicit empty placeholder for future container runtime variables.
+    environment: {} # Static frontend build variables require separate build configuration.
+    
+    
+    # `ports` publishes the frontend on host loopback; its server must listen on container port 8082.
+    ports: 
+      - "127.0.0.1:${REACT_PORT:-8082}:8082" # Quoted host-to-container mapping
+    # Start the frontend after the backend becomes healthy.
+    depends_on: 
+      spring_app: 
+        condition: service_healthy 
+        
+    # Make the frontend root filesystem read-only.
+    read_only: true 
+    # Provide writable temporary storage.
+    tmpfs: 
+      - /tmp # Temporary mount target; valid syntax.
+    # Prevent privilege escalation.
+    security_opt: 
+      - no-new-privileges:true 
+    # Restart the frontend unless explicitly stopped.
+    restart: unless-stopped 
+    # Attach the frontend to the web network.
+    networks: 
+      - web 
+    
+    
+  # `game-engine` is the game engine service.
+  game-engine: 
+    # Build the engine image from its application directory.
     build:
       context: ./springboot_app/game-engine
-
-    environment:
-      SPRING_APPLICATION_NAME: game-engine
-      SERVER_PORT: "8080"
-      SPRING_DOCKER_COMPOSE_ENABLED: "false"
-
-    networks:
-      - data
-
-volumes:
-  postgres_data:
-
+      dockerfile: Dockerfile # Selects the Dockerfile within the engine build context.
+    # Name the local engine image.
+    image: cinder-rift/game-engine:local
+    
+    # Configure the Spring game engine.
+    environment: 
+      SPRING_APPLICATION_NAME: game-engine 
+      SERVER_PORT: "8083" # Configures the engine's container listening port.
+      SPRING_DOCKER_COMPOSE_ENABLED: "false" # Quoted string; valid syntax.
+    
+    
+    # Publish the engine on host loopback for local debugging; internal clients use game-engine:8083.
+    ports: 
+      - "127.0.0.1:${ENGINE_PORT:-8083}:8083"
+    # Wait for the backend to become healthy.
+    depends_on: 
+      spring_app: 
+        condition: service_healthy
+    # Check engine readiness.
+    healthcheck: 
+      # The health check runs inside the engine container and uses its listening port.
+      test: [CMD, curl, --fail, --silent, http://localhost:8083/actuator/health] # Requires curl and an accessible Actuator health endpoint.
+      # Health-check timing options.
+      interval: 5s 
+      timeout: 5s 
+      retries: 10 
+      start_period: 30s 
+    # Make the engine root filesystem read-only.
+    read_only: true 
+    # Provide writable temporary storage.
+    tmpfs: 
+      - /tmp # Temporary mount target
+    # Prevent privilege escalation.
+    security_opt: 
+      - no-new-privileges:true 
+    # Restart the engine unless explicitly stopped.
+    restart: unless-stopped 
+    # Attach the engine to its network.
+    networks: 
+      - engine 
+    
+    
+# `networks` declares the named networks referenced by the services.
 networks:
-  data:
+  # Only PostgreSQL and the backend share this network.
+  data: {}
+  # Only the frontend and the backend share this network.
+  web: {}
+  # Only the backend and the game engine share this network.
+  engine: {}
+
+# `volumes` declares named volumes used by services.
+volumes: # Top-level Compose mapping
+  # `postgres_data` is the persistent PostgreSQL volume.
+  postgres_data: # Named-volume key
+    # `name` sets the actual Docker volume name.
+    name: cinder-rift-postgres-data # Explicit volume name

@@ -9,6 +9,7 @@ Ultimo aggiornamento significativo dell'indice: **2026-11-05**, per la base di d
 - [Digital](Digital/README.md)
 - [FrontEnd](FrontEnd/README.md)
 - [BackEnd](BackEnd/README.md)
+- [Configurazione locale con Docker Compose nel workspace](../../docker-docs)
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
 - [Modello di funzionalità](modello-funzionalita.md)
