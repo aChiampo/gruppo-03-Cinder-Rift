@@ -1,8 +1,8 @@
-import { Home, Layers, BookCopy, Swords, ShoppingBag, Settings, Plus, Coins } from 'lucide-react'
+import { Home, Layers, BookCopy, Swords, ShoppingBag, Settings, Plus, Coins, Bell, UserRound } from 'lucide-react'
 import { user } from '../../data/user.js'
 import { navItems } from '../../data/navigation.js'
 
-const icons = { Home, Layers, BookCopy, Swords, ShoppingBag }
+const icons = { Home, Layers, BookCopy, Swords, ShoppingBag, Bell, UserRound }
 
 export default function Header({ page, setPage, credits }) {
   return (

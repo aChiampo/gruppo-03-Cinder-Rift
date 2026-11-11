@@ -1,9 +1,10 @@
 export const navItems = [
   { id: 'home', label: 'HOME', icon: 'Home' },
+  { id: 'gioca', label: 'GIOCA', icon: 'Swords' },
+  { id: 'deck-builder', label: 'DECK BUILDER', icon: 'BookCopy' },
   { id: 'collezione', label: 'COLLEZIONE', icon: 'Layers' },
-  { id: 'mazzi', label: 'MAZZI', icon: 'BookCopy' },
-  { id: 'sfide', label: 'SFIDE', icon: 'Swords' },
-  { id: 'negozio', label: 'NEGOZIO', icon: 'ShoppingBag' },
+  { id: 'profilo', label: 'PROFILO', icon: 'UserRound' },
+  { id: 'notifiche', label: 'NOTIFICHE', icon: 'Bell' },
 ]
 
 // Sezioni non ancora realizzate: contenuti previsti dal documento di progetto
