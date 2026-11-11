@@ -128,7 +128,7 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
-La [guida Docker Compose del workspace](../docker-docs) descrive configurazione locale, porte, reti, persistenza, accesso con DBeaver e limiti delle verifiche eseguite.
+La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida Docker Compose del workspace](../docker-docs.md) descrive porte, reti, persistenza e accesso con DBeaver.
 
 Le applicazioni non sono inizializzate: non sono disponibili comandi applicativi o test eseguibili. Prerequisiti, configurazione, migrazioni, build e test saranno documentati dopo lo stack definitivo.
 

@@ -1,6 +1,6 @@
 # Applicazione backend
 
-Ultimo aggiornamento significativo: **2026-11-06**. Fonte: dipendenze dichiarate nel [POM](pom.xml) e selezione dello stack nella conversazione con il gruppo.
+Ultimo aggiornamento significativo il **2026-11-11** con l'aggiunta del Dockerfile del backend. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React.
 
@@ -76,11 +76,25 @@ Le dipendenze forniscono l'infrastruttura. L'applicazione deve comunque implemen
 
 La selezione di PostgreSQL differisce dal database MySQL indicato nella traccia originale. Il punto è riportato nelle [differenze rispetto alla traccia](../../docs/README.md#differenze-rispetto-alla-traccia).
 
+## Build dell'immagine Docker
+
+Il servizio `spring_app` usa Java 21 su Alpine e il Maven Wrapper del progetto. BuildKit riutilizza i download di Maven e delle dipendenze. Il comando di packaging salta l'esecuzione dei test, da eseguire a parte con l'infrastruttura richiesta. [Dockerfile](Dockerfile) · [Configurazione del Maven Wrapper](.mvn/wrapper/maven-wrapper.properties).
+
+L'immagine esegue `/app/app.jar` con UID e GID `10001`. Il Dockerfile seleziona `target/app-0.0.1-SNAPSHOT.jar`. Se cambiano l'identificativo o la versione dell'artefatto nel POM, aggiornare il percorso del JAR nel Dockerfile.
+
+Spring Boot legge la porta `8081` da [application.properties](src/main/resources/application.properties). Il Dockerfile include `curl` e verifica `/actuator/health` ogni 10 secondi per l'avvio diretto con Docker. Compose usa il proprio controllo ogni 5 secondi. [Configurazione Compose](../../compose.yaml).
+
+Con Docker avviato, eseguire dalla radice del repository:
+
+```sh
+docker compose build spring_app
+```
+
 ## Verifiche e limiti
 
 La revisione documentale del **2026-11-06** riguarda corrispondenza con il POM, collegamenti relativi e formattazione Markdown. Non attesta risoluzione delle dipendenze Maven, compilazione, avvio, integrazioni o test applicativi.
 
-Prerequisiti operativi, variabili di configurazione e comandi verificati di avvio, compilazione e test sono **DA DEFINIRE** e saranno documentati quando disponibili.
+Il **2026-11-11** Compose ha validato la configurazione e risolto il Dockerfile e il contesto di build di `spring_app`. Il motore Linux di Docker Desktop era indisponibile durante il tentativo di build. Restano da verificare la build dell'immagine, l'avvio del servizio e l'accesso all'endpoint di salute con la configurazione effettiva del database e della sicurezza.
 
 ## Collegamenti
 
