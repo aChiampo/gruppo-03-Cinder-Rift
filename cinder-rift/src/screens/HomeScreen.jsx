@@ -23,14 +23,14 @@ export default function HomeScreen({ go, toast }) {
       <div className="col-main">
         <Campaign onStart={() => toast('Campagna in arrivo: parte dal tutorial di SENTINEL.')} />
         <div className="two">
-          <PendingChallenges items={challenges} onAccept={accept} onAll={() => go('sfide')} />
-          <LastMatch match={lastMatch} onDetails={() => go('sfide')} />
+          <PendingChallenges items={challenges} onAccept={accept} onAll={() => go('gioca')} />
+          <LastMatch match={lastMatch} onDetails={() => go('gioca')} />
         </div>
-        <NewChallengeBanner onClick={() => go('sfide')} />
+        <NewChallengeBanner onClick={() => go('gioca')} />
       </div>
       <aside className="col-side">
         <News onAll={() => toast('Pagina novità non ancora disponibile.')} />
-        <Decks activeId={activeDeck} setActive={setActiveDeck} onManage={() => go('mazzi')} />
+        <Decks activeId={activeDeck} setActive={setActiveDeck} onManage={() => go('deck')} />
       </aside>
     </main>
   )

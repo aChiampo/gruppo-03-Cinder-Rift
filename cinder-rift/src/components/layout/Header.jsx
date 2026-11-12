@@ -1,10 +1,11 @@
-import { Home, Layers, BookCopy, Swords, ShoppingBag, Settings, Plus, Coins, Bell, UserRound } from 'lucide-react'
-import { user } from '../../data/user.js'
+import { Home, Layers, BookCopy, Swords, ShoppingBag, Settings, Plus, Coins, LogOut } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { navItems } from '../../data/navigation.js'
 
-const icons = { Home, Layers, BookCopy, Swords, ShoppingBag, Bell, UserRound }
+const icons = { Home, Layers, BookCopy, Swords, ShoppingBag }
 
 export default function Header({ page, setPage, credits }) {
+  const { user, logout } = useAuth()
   return (
     <header className="header">
       <button className="brand" onClick={() => setPage('home')} aria-label="Cinder-Rift home">
@@ -33,6 +34,7 @@ export default function Header({ page, setPage, credits }) {
           <button className="plus" onClick={() => setPage('negozio')} aria-label="Acquista crediti"><Plus size={16} /></button>
         </div>
         <button className="icon-btn" onClick={() => setPage('impostazioni')} aria-label="Impostazioni"><Settings size={22} /></button>
+        <button className="icon-btn" onClick={logout} aria-label="Esci" title="Esci"><LogOut size={22} /></button>
       </div>
     </header>
   )

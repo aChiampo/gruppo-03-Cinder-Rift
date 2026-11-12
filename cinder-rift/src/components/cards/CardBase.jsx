@@ -1,7 +1,8 @@
+// Colori rarità: palette del progetto (#CCD7DE, #44C3F4, #165DD9); la leggendaria resta oro per distinguerla.
 const rarityColors = {
-  Comune: '#64d0ff',
-  Rara: '#8a7dff',
-  Epica: '#ff8a3d',
+  Comune: '#CCD7DE',
+  Rara: '#44C3F4',
+  Epica: '#165DD9',
   Leggendaria: '#ffd166',
 }
 
@@ -14,7 +15,7 @@ export default function CardBase({
   compact = false,
   children,
 }) {
-  const borderColor = error ? '#f04455' : rarityColors[card?.rarity] || '#64d0ff'
+  const borderColor = error ? '#f04455' : rarityColors[card?.rarity] || '#CCD7DE'
 
   return (
     <div
@@ -35,19 +36,6 @@ export default function CardBase({
         <div className="card-base__body">
           <div className="card-base__title-row">
             <strong>{card?.name}</strong>
-            {onRemove && (
-              <button
-                type="button"
-                className="card-base__remove"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  onRemove(card)
-                }}
-                aria-label={`Rimuovi ${card?.name}`}
-              >
-                ×
-              </button>
-            )}
           </div>
 
           <div className="card-base__meta">
@@ -58,6 +46,17 @@ export default function CardBase({
           <div className="card-base__stats">{children}</div>
         </div>
       </button>
+
+      {onRemove && (
+        <button
+          type="button"
+          className="card-base__remove"
+          onClick={() => onRemove(card)}
+          aria-label={`Rimuovi ${card?.name}`}
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }

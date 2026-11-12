@@ -6,6 +6,7 @@
 @import './news.css';
 @import './decks.css';
 @import './placeholder.css';
+@import './collection.css';
 @import './deck-builder.css';
 @import './responsive.css';
-@import './collection.css';
+@import './login.css';
