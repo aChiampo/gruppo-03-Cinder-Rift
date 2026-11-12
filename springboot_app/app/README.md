@@ -1,10 +1,10 @@
 # Applicazione backend
 
-Ultimo aggiornamento significativo il **2026-11-11** con l'aggiunta del Dockerfile del backend. Le dipendenze sono dichiarate nel [POM](pom.xml).
+Ultimo aggiornamento significativo il **2026-11-12** con l’allineamento del prefisso F01 a `/api/auth` e la pulizia programmata delle sessioni, su richiesta e scelte dell’utente. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React.
 
-Questo documento descrive le dipendenze dell'applicazione. La loro presenza non attesta l'implementazione delle funzionalità, il corretto avvio o il funzionamento delle integrazioni.
+Questo documento descrive dipendenze, configurazione e stato del backend. F01 è implementato con JWT emessi localmente e verificati da Spring Security; il [contratto F01](../../docs/BackEnd/accesso-utenti.md) riporta comportamento ed evidenze. La sola presenza di una dipendenza non attesta l’implementazione delle altre funzionalità o il funzionamento delle integrazioni.
 
 ## Dipendenze
 
@@ -18,7 +18,8 @@ Nelle tabelle seguenti, `starter-*` indica `org.springframework.boot:spring-boot
 
 | Dipendenza | Scope Maven | Scopo |
 | --- | --- | --- |
-| `starter-data-jpa` | `compile` | Persistenza tramite JPA e repository per utenti, inventari, collezioni, mazzi, scambi, amicizie e storico delle partite. |
+| `starter-webmvc` | `compile` | API REST tramite Spring MVC e server HTTP integrato. |
+| `starter-data-jpa` | `compile` | Infrastruttura di persistenza JPA e accesso JDBC transitivo. F01 usa `JdbcClient` con SQL esplicito in `AccountRepository`; non usa entità o repository JPA. |
 | `org.postgresql:postgresql` | `runtime` | Driver JDBC per la connessione a PostgreSQL. |
 | `starter-flyway` | `compile` | Integrazione Spring Boot per la gestione delle migrazioni versionate del database. |
 | `org.flywaydb:flyway-database-postgresql` | `runtime` | Supporto specifico di Flyway per PostgreSQL. Affianca il driver JDBC senza sostituirlo. |
@@ -37,7 +38,7 @@ Mail, Thymeleaf, Actuator, integrazione Docker Compose e Lombok rispondono a esi
 
 La dichiarazione di `starter-websocket` è attualmente commentata nel POM e non è una dipendenza applicativa attiva. Il suo impiego per notifiche in tempo reale rimane da decidere; la modalità base del gioco prevede una simulazione automatica lato server.
 
-Il POM non dichiara direttamente `starter-webmvc`. Poiché il backend previsto espone API REST, prima dell'avvio occorre verificare la composizione delle dipendenze applicative e rendere esplicita la scelta dello starter MVC. La presenza di librerie nello scope `test` non ne garantisce la disponibilità nell'applicazione distribuita.
+Il POM dichiara `starter-webmvc` direttamente per le API REST del backend.
 
 ### Dipendenze transitive
 
@@ -59,7 +60,7 @@ Tutte le dipendenze seguenti utilizzano lo scope Maven `test`.
 | `starter-validation-test` | Test dei comportamenti di validazione. |
 | `starter-websocket-test` | Supporto ai test WebSocket; resta dichiarato anche se lo starter applicativo è commentato. La coerenza di questa scelta va rivalutata quando viene deciso il canale di comunicazione. |
 
-I test devono essere implementati. Swagger UI permette di esplorare manualmente le API, ma non sostituisce i test automatici.
+Sono presenti test F01 per profilo protetto e CSRF, restrizioni del namespace amministrativo, scheduler e cancellazione delle sessioni. I report esistenti e i limiti sono descritti nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#verifiche-ed-evidenze). I test delle altre funzionalità restano da implementare; Swagger UI non sostituisce i test automatici.
 
 Il motore di gioco deve restare un componente Java isolato e coperto da test JUnit, come richiesto dalla [traccia](../../Laboratorio-Integrato-TRACCIA.md). I suoi test unitari devono verificare le regole senza richiedere Spring o un database. Se organizzato come modulo separato, il motore deve dichiarare autonomamente le proprie dipendenze di test.
 
@@ -67,7 +68,7 @@ Il motore di gioco deve restare un componente Java isolato e coperto da test JUn
 
 Le dipendenze forniscono l'infrastruttura. L'applicazione deve comunque implementare:
 
-- Registrazione, accesso, emissione, rinnovo e revoca dei token e controllo dei permessi.
+- Integrazione FrontEnd di registrazione, accesso, profilo, rinnovo e uscita. Il backend F01 è descritto nel [contratto di accesso](../../docs/BackEnd/accesso-utenti.md).
 - Controlli sulla proprietà delle risorse e validazioni di dominio, inclusa la conformità dei mazzi.
 - Acquisti e scambi atomici, rispettando il protocollo di lock documentato nella specifica del database.
 - Migrazioni, mapping delle entità e mapping dei campi PostgreSQL JSONB.
@@ -90,6 +91,33 @@ Con Docker avviato, eseguire dalla radice del repository:
 docker compose build spring_app
 ```
 
+## Configurazione F01
+
+Gli endpoint di autenticazione usano il prefisso `/api/auth`, allineato al controller su richiesta dell’utente del **2026-11-12**. Metodi, percorsi e requisiti di accesso sono definiti nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#contratto-tecnico-condiviso); i client devono usare i nuovi percorsi.
+
+`AuthenticationService` verifica le password con BCrypt ed emette JWT HS256 tramite `JwtEncoder`. Il resource server Spring Security verifica questi JWT e carica a ogni richiesta profilo, ruolo e sessione dal database. La dipendenza OAuth2 resource server non introduce un provider esterno o un flusso di accesso OAuth2. Non vengono create sessioni HTTP servlet.
+
+Prima dell’avvio, predisporre il database PostgreSQL secondo la [specifica v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md) e inserire il ruolo `USER` attraverso il processo di provisioning concordato. L’applicazione ha Flyway, DDL Hibernate e inizializzazione SQL automatica disabilitati per questo rilascio.
+
+Impostare `APP_SECURITY_JWT_SECRET` con una chiave casuale in Base64 di almeno 32 byte. Compose passa la variabile al servizio `spring_app`. L’applicazione verifica il formato e la lunghezza della chiave all’avvio. Per l’accesso da React, `APP_SECURITY_ALLOWED_ORIGINS` accetta le origini esatte separate da virgola e usa `http://localhost:8082` come valore predefinito. [Contratto di accesso e configurazione dei cookie](../../docs/BackEnd/accesso-utenti.md#configurazione-e-operatività).
+
+Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token-lifetime` hanno default `15m` e `14d`. Spring le legge anche da `APP_SECURITY_ACCESS_TOKEN_LIFETIME` e `APP_SECURITY_REFRESH_TOKEN_LIFETIME`; queste due variabili non sono inoltrate dal file Compose corrente e, per modificarle nel container, vanno aggiunte alla configurazione del servizio. La durata di accesso deve essere almeno un secondo e quella di rinnovo almeno pari alla durata di accesso.
+
+### Pulizia delle sessioni F01
+
+Il job [SessionTokenCleanup](src/main/java/webapp/auth/SessionTokenCleanup.java) usa lo scheduler Spring già incluso nelle dipendenze e il clock UTC condiviso con l’autenticazione. Il comportamento di cancellazione è definito nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#ciclo-di-vita-dati-e-concorrenza).
+
+| Proprietà | Variabile d’ambiente inoltrata da Compose | Predefinito |
+| --- | --- | --- |
+| `app.security.session-token-cleanup-cron` | `APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON` | `0 0 3 * * *` (ogni giorno alle 03:00) |
+| `app.security.session-token-cleanup-zone` | `APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE` | `UTC` |
+
+Il formato cron Spring comprende i secondi: secondo, minuto, ora, giorno del mese, mese, giorno della settimana. Impostare `APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON=-` per disabilitare il job. Con più repliche, questa impostazione permette di lasciarlo attivo su una sola istanza. Le modifiche alle variabili richiedono il riavvio o la ricreazione del servizio.
+
+Non occorrono servizi cron separati, estensioni PostgreSQL o migrazioni. Il backend deve rimanere avviato all’ora prevista; dopo un arresto la pulizia riprende al successivo orario del cron. Il log contiene il numero di righe eliminate, senza token, hash o identificativi degli utenti.
+
+I test [dello scheduler](src/test/java/webapp/auth/SessionTokenCleanupTests.java) non richiedono PostgreSQL. Il [test di cancellazione](src/test/java/webapp/auth/SessionTokenCleanupDatabaseTests.java) richiede la stessa connessione PostgreSQL dei test applicativi e usa una tabella temporanea locale alla connessione, eliminata al termine, senza modificare le sessioni persistenti. Per eseguire l’intera suite, configurare `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `APP_SECURITY_JWT_SECRET` e `SPRING_DOCKER_COMPOSE_ENABLED=false`, quindi eseguire `mvnw.cmd verify` dalla cartella dell’applicazione.
+
 ## Verifiche e limiti
 
 La revisione documentale del **2026-11-06** riguarda corrispondenza con il POM, collegamenti relativi e formattazione Markdown. Non attesta risoluzione delle dipendenze Maven, compilazione, avvio, integrazioni o test applicativi.
@@ -101,6 +129,6 @@ Il **2026-11-11** Compose ha validato la configurazione e risolto il Dockerfile 
 - [POM dell'applicazione](pom.xml)
 - [Indice della documentazione BackEnd](../../docs/BackEnd/README.md)
 - [Accesso utenti e autenticazione — F01](../../docs/BackEnd/accesso-utenti.md)
-- [Specifica della base di dati v1.0](../../docs/BackEnd/Database/database-schema-v1.0.md)
+- [Specifica della base di dati v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md)
 - [Sfide e simulazione — F07](../../docs/BackEnd/sfide-simulazione.md)
 - [README del progetto](../../README.md)

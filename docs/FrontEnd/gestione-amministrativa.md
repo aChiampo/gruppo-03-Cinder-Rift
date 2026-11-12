@@ -10,6 +10,7 @@ Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al 
 
 - Interfacce di gestione delle carte e dei pacchetti.
 - Consentire agli utenti autorizzati di gestire prezzo e configurazione del singolo pacchetto, secondo i contratti canonici BackEnd di F03/F10; ogni offerta contiene un solo pacchetto.
+- Il backend riserva il namespace amministrativo ad `ADMIN`, come indicato nel [contratto F10](../BackEnd/gestione-amministrativa.md#obiettivo-e-decisioni-note). Il client deve gestire `401` e `403`; nascondere le funzioni nell’interfaccia non sostituisce il controllo server. Allineamento documentale: **2026-11-12**, su richiesta dell’utente.
 
 ## Implicazioni della proposta di regolamento
 
@@ -18,7 +19,7 @@ Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al 
 
 ## Da definire
 
-- Permessi ADMIN/MANAGER/USER, schermate, validazioni e operazioni disponibili.
+- Permessi di dettaglio per le operazioni amministrative, schermate e validazioni; accesso di `USER` al namespace amministrativo escluso.
 
 ## Collegamenti
 

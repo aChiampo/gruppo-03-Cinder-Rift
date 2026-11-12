@@ -1,6 +1,6 @@
 # Gioco di carte collezionabili digitale
 
-> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: documentazione iniziale; applicazioni non inizializzate.
+> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: backend F01 implementato; frontend e integrazione di autenticazione da avviare. Revisione documentale dello stack F01: **2026-11-12**, su richiesta dell’utente.
 
 ## Indice generale
 
@@ -20,7 +20,7 @@
 
 ## Funzionamento previsto
 
-1. Registrazione e accesso con email e password; un servizio nell'app Spring Boot gestisce JWT e ruoli `ADMIN`, `MANAGER`, `USER`.
+1. Registrazione e accesso con email e password. Il backend Spring Boot implementa JWT locali, rinnovo tramite cookie e ruoli `ADMIN` e `USER`; gli endpoint usano `/api/auth`. [Contratto F01](docs/BackEnd/accesso-utenti.md).
 2. Acquisto con crediti di offerte contenenti ciascuna esattamente un pacchetto; prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice.
 3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
 4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata di due giorni dalla creazione dell’annuncio, secondo il [contratto F06](docs/BackEnd/scambi-mercato.md).
@@ -40,9 +40,9 @@ Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti no
 
 ## Tecnologie
 
-Stack inizialmente indicato: React, Java/Spring Boot e PostgreSQL. Il gruppo comunicherà lo **stack definitivo** in seguito: versioni, librerie, linguaggio frontend, build e distribuzione restano da definire.
+Il backend F01 usa Java 21, Spring Boot 4.1.2, Spring MVC, Spring Security e PostgreSQL tramite JDBC; il POM e Compose definiscono rispettivamente dipendenze e PostgreSQL 18. L’autenticazione è gestita nell’applicazione: password BCrypt, access token JWT HS256 e token di rinnovo opachi persistiti come hash. Il frontend previsto è React; versione, strumenti e integrazione client restano da completare. [Stack e configurazione backend](springboot_app/app/README.md).
 
-La traccia prevede GitHub, GitHub Projects, Swagger, JSDoc per JS/TS e motore Java isolato con test JUnit. Gli strumenti non sono ancora configurati.
+La traccia prevede GitHub, GitHub Projects, Swagger, JSDoc per JS/TS e motore Java isolato con test JUnit.
 
 ## Componenti del gruppo
 
@@ -69,7 +69,7 @@ Riferimento: [Lore, identità e carte](docs/Digital/lore-identita-carte.md).
 
 È disponibile la **Versione 2.1 — Proposta per il prototipo e le prove di bilanciamento**. L’integrazione documentale iniziale risale al **2026-10-27**; i riferimenti correnti sono allineati alla Versione 2.1 su richiesta dell’utente del **2026-11-09**. Il regolamento descrive composizione dei mazzi, energia e punti potenza, fazioni, equipaggiamenti, combattimento automatico, round e conclusione della partita.
 
-L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Le applicazioni non sono inizializzate e non sono state eseguite verifiche applicative.
+L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Le verifiche del backend F01 non verificano il regolamento o il motore di gioco.
 
 Riferimento: [Regolamento e svolgimento del gioco — Versione 2.1](docs/Digital/regolamento-base.md), con [elementi da completare e testare](docs/Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Le modalità aggiuntive non sono confermate.
 
@@ -98,7 +98,7 @@ Riferimento: [Regolamento e svolgimento del gioco — Versione 2.1](docs/Digital
 ├── react_app/
 │   └── .gitkeep
 └── springboot_app/
-	├── applicazione/
+    ├── app/
     └── game-engine/
 ```
 
@@ -128,8 +128,8 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
-La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida Docker Compose del workspace](../docker-docs.md) descrive porte, reti, persistenza e accesso con DBeaver.
+La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida di avvio locale](guida-avvio.md) e [Compose](compose.yaml) descrivono avvio e configurazione dei servizi. Prima dell’avvio servono la chiave JWT e un database v1.1 predisposto con il ruolo `USER`.
 
-Le applicazioni non sono inizializzate: non sono disponibili comandi applicativi o test eseguibili. Prerequisiti, configurazione, migrazioni, build e test saranno documentati dopo lo stack definitivo.
+Con il backend avviato sulla porta locale predefinita `8081`, puoi consultare e provare le API in [Swagger UI](http://localhost:8081/swagger-ui/index.html). Se hai impostato `APPLICATION_PORT` in Compose, usa quella porta. [Configurazione del backend](springboot_app/app/README.md#configurazione-f01).
 
 Non inserire credenziali reali. Gli esempi di ambiente, i lockfile e i wrapper di build restano versionabili secondo la `.gitignore`.

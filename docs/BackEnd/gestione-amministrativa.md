@@ -4,14 +4,15 @@ ID: F10 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-09, allineamento alle risorse in inventario, alla configurazione mercy dei pacchetti e ai riferimenti al regolamento Versione 2.1 su richiesta dell’utente. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: 2026-11-12, correzione della protezione del namespace amministrativo su richiesta dell’utente. L’allineamento alle risorse in inventario, alla configurazione mercy dei pacchetti e al regolamento Versione 2.1 risale al 2026-11-09. Verifiche delle funzionalità di backoffice: non eseguite.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
 
 ## Obiettivo e decisioni note
 
 - Backoffice per il catalogo delle carte e dei pacchetti.
 - Prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice; ogni offerta contiene una sola unità, secondo il contratto canonico F03.
-- Accesso riservato agli utenti autorizzati; non sono ancora assegnati privilegi ai tre ruoli.
+- L’accesso al namespace amministrativo è riservato ad `ADMIN`; `USER` non può accedervi. La matrice dei permessi per le singole operazioni di backoffice resta **DA DEFINIRE**. [Ruoli F01](accesso-utenti.md#attori-autorizzazioni-e-precondizioni).
+- Il namespace `/api/admin/**` richiede il ruolo `ADMIN` per tutti i metodi HTTP. La regola di sicurezza è stata corretta il **2026-11-12**, su richiesta dell’utente di verificare le restrizioni amministrative in `SecurityConfiguration.java`. Gli endpoint amministrativi non sono ancora implementati; la matrice dei permessi per le singole operazioni resta **DA DEFINIRE**.
 
 ## Cataloghi, vincoli e cancellazione
 
@@ -27,6 +28,10 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio
 
 - Il catalogo delle carte dovrà considerare, dopo la conferma delle regole, i concetti descritti nelle sezioni su [energia e punti potenza](../Digital/regolamento-base.md#3-energia-e-punti-potenza), [caratteristiche delle creature](../Digital/regolamento-base.md#5-caratteristiche-delle-creature), [fazioni](../Digital/regolamento-base.md#6-fazioni) ed [equipaggiamenti](../Digital/regolamento-base.md#7-equipaggiamenti).
 - Questi riferimenti sono requisiti di dominio proposti, non uno schema dati o un contratto amministrativo approvato. Statistiche, costi delle carte ed effetti precisi degli equipaggiamenti restano da definire nella documentazione Digital.
+
+## Verifica della protezione del namespace
+
+Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha superato 21 casi sulla copia di lavoro con Java 21: accesso consentito ad `ADMIN`, rifiuto con `403` per `USER` e con `401` senza autenticazione, per `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE` e `OPTIONS`. I [test della catena di sicurezza](../../springboot_app/app/src/test/java/webapp/auth/SecurityConfigurationTests.java) usano un controller di prova e identità simulate; non verificano l’emissione dei JWT, il database o funzionalità amministrative reali.
 
 ## Da definire
 

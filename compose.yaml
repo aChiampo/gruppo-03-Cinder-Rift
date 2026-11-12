@@ -75,6 +75,13 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres} 
       # Reuses the configured PostgreSQL password.
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres} # Interpolation is valid, but inherits the insecure fallback.
+      # Supply the signing key at runtime so it stays out of the image and the repository.
+      APP_SECURITY_JWT_SECRET: ${APP_SECURITY_JWT_SECRET:-}
+      # Credentialed browser requests require explicit frontend origins.
+      APP_SECURITY_ALLOWED_ORIGINS: ${APP_SECURITY_ALLOWED_ORIGINS:-http://localhost:8082}
+      # Delete expired or revoked sessions daily at 03:00 UTC; '-' disables the job.
+      APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON: ${APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON:-0 0 3 * * *}
+      APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE: ${APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE:-UTC}
       # Disables Spring Boot's Docker Compose integration inside the container.
       SPRING_DOCKER_COMPOSE_ENABLED: "false" # Quoted string prevents YAML boolean conversion.
     

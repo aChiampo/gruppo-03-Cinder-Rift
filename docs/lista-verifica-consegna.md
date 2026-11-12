@@ -2,10 +2,12 @@
 
 Le caselle sono inizialmente aperte: il documento non certifica verifiche eseguite. Collegare le evidenze nelle relative issue o pull request.
 
+Revisione documentale F01 del **2026-11-12**, su richiesta dell’utente: backend, test e report locali esistono; stato ed evidenze sono nel [contratto di autenticazione](BackEnd/accesso-utenti.md#verifiche-ed-evidenze). Le caselle di consegna restano distinte dai test già presenti: integrazione React e verifica su PostgreSQL 18 tramite Compose non sono completate da questa revisione.
+
 ## Identità e perimetro
 
-- [ ] Definire nome progetto, numero gruppo, Team Leader, nove membri e account GitHub.
-- [ ] Confermare stack definitivo e differenza database rispetto alla traccia.
+- [x] Definire nome progetto, numero gruppo, Team Leader, nove membri e account GitHub.
+- [x] Confermare stack definitivo e differenza database rispetto alla traccia.
 - [ ] Completare lore, regolamento e valori numerici.
 - [ ] Risolvere F09 e decidere se confermare O01.
 
@@ -14,7 +16,7 @@ Le caselle sono inizialmente aperte: il documento non certifica verifiche esegui
 - [ ] Includere sorgenti frontend e backend con istruzioni effettive di avvio/build/test.
 - [ ] Includere export database ripristinabile e istruzioni di importazione.
 - [ ] Fornire configurazione di esempio senza credenziali o dati personali reali.
-- [ ] Verificare accesso JWT e permessi ADMIN/MANAGER/USER.
+- [ ] Verificare accesso JWT e permessi per `ADMIN` e `USER`.
 - [ ] Verificare offerte di pacchetti, apertura, collezione e backoffice.
 - [ ] Verificare mazzi e vincoli lato server.
 - [ ] Verificare scambi privati/pubblici, carte/crediti, consenso, durata e coerenza dei trasferimenti.

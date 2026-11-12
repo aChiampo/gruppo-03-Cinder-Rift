@@ -537,11 +537,11 @@ erDiagram
     }
 ```
 
-**Ruoli.** `ROLES` ha ID intero auto-incrementale e codice obbligatorio univoco. Ogni utente ha un ruolo tramite `USERS.id_role`; non sono modellati ruoli multipli, gerarchie o una tabella di permessi. La matrice dei permessi resta da definire.
+**Ruoli.** `ROLES` ha ID intero auto-incrementale e codice obbligatorio univoco. Ogni utente ha un ruolo tramite `USERS.id_role`; non sono modellati ruoli multipli, gerarchie o una tabella di permessi. Il backend F01 accetta solo account non eliminati con codice `ADMIN` o `USER` e assegna una sola autorità corrente `ROLE_ADMIN` o `ROLE_USER`, come descritto nel [contratto F01](../accesso-utenti.md#attori-autorizzazioni-e-precondizioni). Il namespace amministrativo richiede `ADMIN`; la matrice delle singole operazioni resta da definire in F10. Allineamento documentale applicativo del **2026-11-12**, su richiesta dell’utente; nessuna modifica allo schema.
 
 **Token di autenticazione.** `PASSWORD_RESET_TOKENS` e `REFRESH_TOKENS` hanno ID intero auto-incrementale, `id_user` obbligatorio, hash obbligatorio univoco, scadenza obbligatoria e creazione con default `now()`. Il primo registra `used_at` nullable, il secondo `revoked_at` nullable. Ogni tabella può contenere più record per utente e le due tabelle non sono collegate fra loro.
 
-**Responsabilità applicative.** Algoritmi di hash, verifica, durata, uso singolo, rotazione, revoca, errori e conservazione sono da definire. Il backend controlla scadenza e utilizzo in transazione. Non sono modellati trigger, controlli temporali aggiuntivi, catene di rotazione o sessioni. Un ID numerico non è il segreto del token: il materiale di autenticazione resta distinto dall'identificativo del record.
+**Responsabilità applicative.** Per `REFRESH_TOKENS`, hash, verifica, durata, rotazione, revoca, errori e pulizia sono definiti nel [contratto F01](../accesso-utenti.md#ciclo-di-vita-dati-e-concorrenza); la pulizia giornaliera senza conservazione è stata scelta dall’utente il **2026-11-12**. Le regole applicative di `PASSWORD_RESET_TOKENS` restano da definire. Il backend controlla scadenza e utilizzo in transazione. Non sono modellati trigger, controlli temporali aggiuntivi, catene di rotazione o tabelle di sessione separate. Un ID numerico non è il segreto del token: il materiale di autenticazione resta distinto dall'identificativo del record.
 
 ### Inventario e pacchetti
 

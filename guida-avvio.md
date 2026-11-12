@@ -1,6 +1,6 @@
 # Avviare Cinder Rift sul proprio computer
 
-Guida aggiornata il **2026-11-11** per l'avvio locale dalla versione di sviluppo (`dev`).
+Guida aggiornata il **2026-11-12** per allineare i prerequisiti di autenticazione allo stack corrente, su richiesta dell’utente. L’avvio locale descritto usa la versione di sviluppo (`dev`), quando i relativi componenti sono disponibili su quel branch.
 
 ## Scaricare e installare Docker Desktop
 
@@ -19,6 +19,10 @@ Guida aggiornata il **2026-11-11** per l'avvio locale dalla versione di sviluppo
 ## Avviare il progetto con un doppio clic
 
 Ti servono una connessione a Internet, Git installato e l'accesso al progetto su GitHub. [Download di Git](https://git-scm.com/install/)
+
+Prima di avviare il backend, configura `APP_SECURITY_JWT_SECRET` nel file locale `.env` della cartella del repository o nell’ambiente da cui lanci Compose. Il database usato da Compose deve essere già predisposto secondo la v1.1 e contenere il ruolo `USER`. [Configurazione F01](springboot_app/app/README.md#configurazione-f01).
+
+La chiave JWT deve essere casuale, codificata in Base64 e rappresentare almeno 32 byte; non esiste una chiave predefinita utilizzabile. Il backend non crea automaticamente lo schema o il ruolo. Le chiamate di autenticazione usano `/api/auth`; per una porta frontend diversa da `8082`, aggiorna anche `APP_SECURITY_ALLOWED_ORIGINS` all’origine esatta del client. Usa lo stesso nome host nei due URL locali. La [pulizia delle sessioni](springboot_app/app/README.md#pulizia-delle-sessioni-f01) è attiva ogni giorno alle 03:00 UTC mentre il backend è avviato.
 
 Se ti manca una copia del progetto o hai scaricato un file ZIP, apri il terminale nella cartella in cui vuoi salvarlo ed esegui questo comando.
 

@@ -65,9 +65,9 @@ Esempio Java:
 ```java
 /**
  * Validates a deck against the selected rule set.
- *
+//  *
  * @param deck the deck to validate
- * @return the validation result and any rule violations
+//  * @return the validation result and any rule violations
  */
 ValidationResult validate(Deck deck);
 ```
@@ -81,10 +81,10 @@ Usare il formato `TODO [riferimento]: azione in inglese`. Collegare un'attività
 ## Regole generali di sviluppo
 
 
-- Verificare autenticazione, permessi e proprietà delle risorse; nessuna gerarchia implicita tra `ADMIN`, `MANAGER`, `USER`.
+- Verificare autenticazione, permessi e proprietà delle risorse. Assegnare i permessi di `ADMIN` e `USER` in modo esplicito.
 - Non conservare password in chiaro e non inserire segreti nei sorgenti o nei log.
 - Coprire il motore con JUnit; scegliere per gli altri componenti verifiche proporzionate al rischio.
-- Aspettare lo stack definitivo prima di introdurre librerie, versioni o strumenti applicativi.
+- Rispettare lo stack backend F01 già configurato nel [POM](springboot_app/app/pom.xml); concordare nuove librerie, versioni o strumenti nell’incarico pertinente.
 
 ## Nomi e convenzioni
 
@@ -112,6 +112,7 @@ Ultimo aggiornamento significativo della sezione: **2026-10-28**. Fonte: selezio
 - **Identificativi:** collocare l'identificativo dopo la risorsa e usare segnaposto descrittivi in camelCase, ad esempio `/api/decks/{deckId}`.
 - **Parametri di query:** usare nomi in camelCase per filtri, ordinamento e paginazione, ad esempio `/api/cards?faction=fire&pageSize=20`. Definire i parametri supportati nel contratto della funzionalità.
 - **Prefisso comune:** tutti gli endpoint API usano il prefisso `/api`. La politica di versionamento resta **DA DEFINIRE**.
+- **Raggruppamento F01:** dal **2026-11-12**, su richiesta dell’utente, gli endpoint di autenticazione usano `/api/auth` come prefisso comune del controller, mantenendo i nomi di risorsa e i metodi del [contratto F01](docs/BackEnd/accesso-utenti.md#contratto-tecnico-condiviso).
 
 Gli esempi illustrano le convenzioni di naming: non definiscono endpoint implementati, operazioni disponibili o valori di dominio approvati. I contratti effettivi restano nelle pagine BackEnd pertinenti, secondo le regole del [contratto condiviso tra aree](#contratto-condiviso-tra-aree).
 

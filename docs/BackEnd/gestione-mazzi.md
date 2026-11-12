@@ -46,7 +46,7 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 
 - `userId` deriva dall'identità autenticata, non da un campo client arbitrario.
 - Caricamento e modifica verificano `DECKS.id_user == userId`. Identità assente, mazzo inesistente o non autorizzato interrompono il flusso prima di esporre composizione e collezione. Status HTTP e politica di visibilità sono DA DEFINIRE.
-- Nessuna gerarchia o privilegio implicito fra `ADMIN`, `MANAGER` e `USER`.
+- I privilegi di `ADMIN` e `USER` richiedono un’assegnazione esplicita.
 - Regole incomplete o letture fallite producono errori tecnici: nessun salvataggio né esito positivo. Una lettura fallita non equivale a una collezione vuota.
 - Una riga collezione assente vale zero copie solo dopo una lettura riuscita; valori presenti nulli, negativi o non interi indicano dati incoerenti.
 
@@ -150,7 +150,7 @@ Esempio: aggiungere una creatura comune posseduta da 1 punto, energia 1, con des
 | `RULESET_UNAVAILABLE`, `VALIDATION_UNAVAILABLE` | Errori tecnici di configurazione/lettura, distinti dalle violazioni del mazzo |
 | `CONCURRENT_MODIFICATION` | Conflitto di accesso concorrente o timeout dei lock, nessun salvataggio parziale |
 
-Gli errori riportano scope, riferimenti e valori pertinenti; il client localizza le descrizioni senza sostituire i codici. Formato degli errori tecnici e di autenticazione DA DEFINIRE con F01, senza simulare una validazione riuscita.
+Gli errori riportano scope, riferimenti e valori pertinenti; il client localizza le descrizioni senza sostituire i codici. Per autenticazione Bearer, risposte `401` e relativi header fare riferimento al [contratto F01](accesso-utenti.md#contratto-tecnico-condiviso), già disponibile. Il formato degli errori tecnici e di dominio specifici di F05 resta DA DEFINIRE, senza simulare una validazione riuscita. Riferimento F01 allineato il **2026-11-12**, su richiesta dell’utente.
 
 ## Flusso in pseudocodice
 

@@ -1,10 +1,14 @@
 # Indice della documentazione
 
-Le pagine documentano decisioni confermate, proposte e punti aperti, senza fissare dettagli ancora mancanti. Il modello definisce l'approfondimento progressivo da applicare quando le informazioni saranno disponibili; le pagine esistenti non vengono espanse in anticipo. Il regolamento Versione 2.1 è disponibile come proposta per il prototipo e le prove di bilanciamento. Tutte le applicazioni e funzionalità software sono **non implementate**.
+Le pagine documentano decisioni confermate, proposte e punti aperti. Il modello definisce l'approfondimento progressivo delle specifiche. Il regolamento Versione 2.1 è disponibile come proposta per il prototipo e le prove di bilanciamento. La tabella delle funzionalità riporta lo stato corrente, compreso il backend F01 implementato il **2026-11-11**.
 
-Ultimo aggiornamento significativo dell'indice: **2026-11-09**, per il significato di Scaglie, Nuclei Rift e Rotami riportato nel [glossario economico](Digital/economia-crediti-pacchetti.md#risorse-economiche) e per il [sistema mercy sulle aperture](BackEnd/acquisto-pacchetti.md#mercy-sulle-aperture) confermato dall'utente. Il DBML e i diagrammi di inventario distinguono `cobalt_shards`, `rift_cores` e `scraps`, tutti `int` obbligatori con default `0`. `USER_MERCY` usa PK `(id_user, id_pack)`, FK a utenti/pacchetti/rarità e un contatore inizializzato dalla soglia del pacchetto, con garanzia allo zero e reset su ogni pesca qualificante. La risorsa dei campi monetari generici di offerte, prenotazioni e premi resta da definire. Lo stesso aggiornamento, su richiesta dell’utente, rimuove i campi anagrafici dal modello utente, conferma la durata di due giorni degli annunci di scambio pubblici e privati e allinea i riferimenti correnti al regolamento Versione 2.1. La versione corrente della specifica e del DBML è **v1.1**, con file e riferimenti rinominati su richiesta dell’utente del **2026-11-09**. Non sono eseguite migrazioni o verifiche applicative.
+Aggiornamento F01 dell’indice del **2026-11-12**, su richiesta e scelte dell’utente: contratto e backend allineati al prefisso `/api/auth`; pulizia Spring delle sessioni scadute o revocate ogni giorno alle 03:00 UTC, senza conservazione. Le evidenze e i limiti di verifica sono nella scheda F01.
 
-Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'allineamento di tutte le funzionalità BackEnd su richiesta dell'utente. La [specifica autonoma v1.1](BackEnd/Database/database-schema-v1.1.md) è la fonte canonica di dati e invarianti; la rappresentazione completa è [db_schema-v1.1.dbml](BackEnd/Database/db_schema-v1.1.dbml). Gli ID generati sono interi auto-incrementali; gli annunci pubblici non prenotano alla pubblicazione e le modifiche delle trattative rilasciano tutti gli hold. Resta la decisione del **2026-11-04** su un solo pacchetto per offerta. L'integrazione documentale della proposta di regolamento resta datata **2026-10-27**. FrontEnd e Digital non sono modificati da questo allineamento. Implementazione non iniziata e verifiche applicative non eseguite: l'aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
+Revisione documentale finale dello stesso giorno, su richiesta dell’utente: stack F01, configurazione, ruoli e riferimenti sono stati confrontati con i sorgenti correnti. I report Surefire locali già presenti riportano 27 test senza errori o fallimenti; non sono stati rieseguiti in questa revisione. PostgreSQL 18 tramite Compose e l’integrazione React restano da verificare.
+
+Aggiornamento storico dell?indice del **2026-11-09**, per il significato di Scaglie, Nuclei Rift e Rotami riportato nel [glossario economico](Digital/economia-crediti-pacchetti.md#risorse-economiche) e per il [sistema mercy sulle aperture](BackEnd/acquisto-pacchetti.md#mercy-sulle-aperture) confermato dall'utente. Il DBML e i diagrammi di inventario distinguono `cobalt_shards`, `rift_cores` e `scraps`, tutti `int` obbligatori con default `0`. `USER_MERCY` usa PK `(id_user, id_pack)`, FK a utenti/pacchetti/rarità e un contatore inizializzato dalla soglia del pacchetto, con garanzia allo zero e reset su ogni pesca qualificante. La risorsa dei campi monetari generici di offerte, prenotazioni e premi resta da definire. Lo stesso aggiornamento, su richiesta dell’utente, rimuove i campi anagrafici dal modello utente, conferma la durata di due giorni degli annunci di scambio pubblici e privati e allinea i riferimenti correnti al regolamento Versione 2.1. La versione corrente della specifica e del DBML è **v1.1**, con file e riferimenti rinominati su richiesta dell’utente del **2026-11-09**. Quell?aggiornamento documentale non ha eseguito migrazioni o verifiche applicative.
+
+Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'allineamento di tutte le funzionalità BackEnd su richiesta dell'utente. La [specifica autonoma v1.1](BackEnd/Database/database-schema-v1.1.md) è la fonte canonica di dati e invarianti; la rappresentazione completa è [db_schema-v1.1.dbml](BackEnd/Database/db_schema-v1.1.dbml). Gli ID generati sono interi auto-incrementali; gli annunci pubblici non prenotano alla pubblicazione e le modifiche delle trattative rilasciano tutti gli hold. Resta la decisione del **2026-11-04** su un solo pacchetto per offerta. L'integrazione documentale della proposta di regolamento resta datata **2026-10-27**. FrontEnd e Digital non sono modificati da questo allineamento. In quella revisione l?implementazione non era iniziata e non erano state eseguite verifiche applicative: l?aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
 
 ## Aree e strumenti comuni
 
@@ -12,7 +16,7 @@ Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'al
 - [FrontEnd](FrontEnd/README.md)
 - [BackEnd](BackEnd/README.md)
 - [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
-- [Configurazione locale con Docker Compose nel workspace](../../docker-docs.md)
+- [Configurazione locale dei servizi Docker Compose](../compose.yaml)
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
 - [Modello di funzionalità](modello-funzionalita.md)
@@ -24,7 +28,7 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 
 | ID  | Oggetto                                                                    | Perimetro                                   | Specifica   | Implementazione | Verifica     | Riferimento principale                               |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------- | ----------- | --------------- | ------------ | ---------------------------------------------------- |
-| F01 | Email/password, JWT, ruoli ADMIN/MANAGER/USER                              | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Accesso](BackEnd/accesso-utenti.md)                 |
+| F01 | Registrazione, accesso, profilo, rinnovo, uscita e ruoli `ADMIN` e `USER`     | Confermato                                  | Contratto backend con prefisso `/api/auth`, aggiornato il 2026-11-12 | Backend e pulizia sessioni implementati, FrontEnd da avviare | 27 test nei report locali consultati; nessuna riesecuzione, Compose e browser da verificare | [Accesso](BackEnd/accesso-utenti.md) |
 | F03 | Offerte di un solo pacchetto; risorsa del prezzo da definire                      | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
 | F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
 | F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Mazzi](BackEnd/gestione-mazzi.md)                   |
@@ -60,7 +64,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 
 | Tema | Traccia | Decisione o chiarimento del gruppo |
 | --- | --- | --- |
-| Database | MySQL | PostgreSQL inizialmente indicato; stack definitivo atteso e differenza da verificare |
+| Database | MySQL | PostgreSQL 18 configurato in Compose; F01 usa lo schema v1.1 via JDBC. Verifica su PostgreSQL 18 tramite Compose ancora da eseguire |
 | Scambi | Solo carte | Carte e crediti, privati/pubblici; approvazione del committente confermata dal gruppo |
 | Offerte del negozio | Acquisto di pacchetti | Ogni offerta contiene un solo pacchetto; prezzo e configurazione del pacchetto gestibili dal backoffice |
 | Carte | Creazione con strumenti di intelligenza artificiale | Carte non interamente generate; ripartizione del contributo umano da definire |
@@ -71,7 +75,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 Da approfondire successivamente nelle pagine interessate:
 
 - Stack definitivo, versioni, strumenti e differenza PostgreSQL/MySQL.
-- Permessi dei tre ruoli e dettagli del ciclo di vita JWT.
+- Permessi di `ADMIN` e `USER` nelle altre funzionalità e recupero password F01.
 - Regole di assegnazione delle Scaglie, acquisto dei Nuclei Rift e recupero dei Rotami; risorse ammesse nei prezzi e negli scambi.
 - Offerte di un solo pacchetto: prezzi, limiti, contenuto del pacchetto, apertura e disponibilità.
 - Scambi: API, integrazione delle prenotazioni con gli altri servizi, giocabilità delle copie prenotate e operatività della pulizia; durata, consenso, modifica e annullamento sono descritti nel [contratto F06](BackEnd/scambi-mercato.md).

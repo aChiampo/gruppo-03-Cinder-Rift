@@ -62,7 +62,7 @@ Tutte le operazioni proposte richiedono autenticazione e consentono di leggere o
 | Annullamento | Solo mittente della richiesta `pending`. |
 | Rimozione | Ciascuno dei partecipanti alla relazione `accepted`. |
 
-La matrice per `ADMIN`, `MANAGER`, `USER` resta **DA DEFINIRE**, coerentemente con F01. Non si presume una gerarchia né un diritto amministrativo di agire sulle amicizie altrui. I permessi di ciascuna rotta devono essere concordati prima dell'implementazione.
+La matrice per `ADMIN` e `USER` resta **DA DEFINIRE**, coerentemente con F01. I permessi di ciascuna rotta, compresa la possibilità di intervenire sulle amicizie altrui, devono essere concordati esplicitamente prima dell'implementazione.
 
 ## Flussi e transizioni proposte
 
