@@ -2,14 +2,14 @@
 
 ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita e base del recupero password.
 Implementazione: backend disponibile nel branch `feature/f01-accesso-utenti`; integrazione FrontEnd da avviare. Responsabile: DA DEFINIRE.
-Ultimo aggiornamento significativo: 2026-11-12, su richiesta dell’utente: base backend del recupero password, token di 10 minuti, richieste successive senza invalidazione dei token precedenti e transazione di completamento con revoca delle sessioni. Invio email e interfaccia esclusi dall’implementazione corrente. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
+Ultimo aggiornamento significativo il 2026-11-12 con le migrazioni Flyway F01 per PostgreSQL 18. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-autenticazione-e-autorizzazione).
 
 ## Stack implementato
 
 F01 usa Java 21, Spring Boot 4.1.2, Spring MVC, Bean Validation e Spring Security con il supporto OAuth2 resource server per verificare i bearer token. `AuthenticationService` emette i JWT nell’applicazione con `JwtEncoder`; non sono configurati un provider di identità esterno o un flusso di accesso OAuth2. Le password sono verificate con BCrypt.
 
-`AccountRepository` accede a PostgreSQL con `JdbcClient` e SQL esplicito, senza entità JPA per F01. Lo schema v1.1 è predisposto esternamente: Flyway, DDL Hibernate e inizializzazione SQL automatica sono disabilitati. Compose configura PostgreSQL 18; le prove HTTP storiche indicate sotto usavano PostgreSQL 17.10. La catena di sicurezza è stateless rispetto a `HttpSession`, ma verifica nel database account e sessione a ogni richiesta Bearer. [Dipendenze e configurazione backend](../../springboot_app/app/README.md).
+`AccountRepository` accede a PostgreSQL con `JdbcClient` e SQL esplicito, senza entità JPA per F01. Flyway gestisce il perimetro F01 dello schema v1.1 su PostgreSQL 18. La catena di sicurezza è stateless rispetto a `HttpSession`, ma verifica nel database account e sessione a ogni richiesta Bearer. [Dipendenze e configurazione backend](../../springboot_app/app/README.md).
 
 ## Attori, autorizzazioni e precondizioni
 
@@ -114,7 +114,9 @@ I cookie `__Host-cinder-csrf` e `__Host-cinder-refresh` usano `Secure`, `HttpOnl
 ## Configurazione e operatività
 
 - Configurare una chiave casuale di almeno 32 byte in Base64 tramite `APP_SECURITY_JWT_SECRET`. Fornire lo stesso valore alle istanze che devono verificare gli stessi JWT.
-- Impostare `APP_SECURITY_ALLOWED_ORIGINS` come elenco di origini esatte separate da virgola. Il valore predefinito è `http://localhost:8082`. Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token-lifetime` controllano le durate, con default `15m` e `14d`: la prima deve essere almeno un secondo, la seconda almeno pari alla prima. Le relative variabili `APP_SECURITY_ACCESS_TOKEN_LIFETIME` e `APP_SECURITY_REFRESH_TOKEN_LIFETIME` sono lette da Spring, ma non sono inoltrate dal Compose corrente. Il backend richiede un database v1.1 già predisposto con il ruolo `USER`. [Configurazione backend](../../springboot_app/app/README.md).
+- Impostare `APP_SECURITY_ALLOWED_ORIGINS` come elenco di origini esatte separate da virgola. Il valore predefinito è `http://localhost:8082`. Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token-lifetime` controllano le durate, con default `15m` e `14d`: la prima deve essere almeno un secondo, la seconda almeno pari alla prima. Le relative variabili `APP_SECURITY_ACCESS_TOKEN_LIFETIME` e `APP_SECURITY_REFRESH_TOKEN_LIFETIME` sono lette da Spring, ma non sono inoltrate dal Compose corrente. [Configurazione backend](../../springboot_app/app/README.md).
+- Su un database vuoto, all’avvio V1 crea `roles`, `users`, `inventory`, `refresh_tokens` e `password_reset_tokens`. V2 inserisce i codici `USER` e `ADMIN` con ID generati dal database e conserva le righe dei ruoli già presenti.
+- Per adottare un database F01 esistente, eseguire un backup e confrontare lo schema con V1 su un database di riferimento isolato. Riconciliare le differenze prima di registrare esplicitamente la baseline a 1. Applicare V2 e verificare i dati e gli ID esistenti. Baseline automatica, DDL Hibernate e inizializzazione SQL Spring sono disabilitati. [Procedura operativa](../../springboot_app/app/README.md#migrazioni-flyway-f01).
 - Il documento OpenAPI è disponibile su `GET /v3/api-docs`. Swagger UI è disponibile su `/swagger-ui/index.html`. Il controllo di salute usato da Compose è `GET /actuator/health`.
 - `app.security.session-token-cleanup-cron` usa il formato cron Spring a sei campi e vale `0 0 3 * * *`; `app.security.session-token-cleanup-zone` vale `UTC`. Le corrispondenti variabili `APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON` e `APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE` sono inoltrate da Compose. Impostare il cron a `-` per disabilitare il job su un’istanza. [Configurazione e verifiche](../../springboot_app/app/README.md#pulizia-delle-sessioni-f01).
 - Il job opera mentre il backend è avviato; un’esecuzione persa durante un arresto non viene recuperata all’avvio. Il passaggio successivo elimina tutte le righe allora inutilizzabili. Ogni istanza abilitata esegue il job: con più repliche si può abilitarlo su una sola, senza necessità di coordinamento per la correttezza della cancellazione. Il log riporta solo il numero di righe eliminate; gli errori sono registrati dal scheduler e il tentativo successivo segue il cron.
@@ -162,7 +164,7 @@ Il job separato `PasswordResetTokenCleanup` elimina i record con `expires_at <= 
 | `app.security.password-reset-token-cleanup-cron` | `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_CRON` | `0 0 3 * * *` |
 | `app.security.password-reset-token-cleanup-zone` | `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_ZONE` | `UTC` |
 
-Il cron `-` disabilita solo questa pulizia. Valgono gli stessi limiti operativi del job sessioni: backend avviato, nessun recupero immediato delle esecuzioni perse e possibili esecuzioni su più repliche. Non sono necessarie modifiche allo schema v1.1 o migrazioni automatiche; la tabella deve essere già predisposta.
+Il cron `-` disabilita solo questa pulizia. Valgono gli stessi limiti operativi del job sessioni: backend avviato, nessun recupero immediato delle esecuzioni perse e possibili esecuzioni su più repliche. Il job usa la tabella `PASSWORD_RESET_TOKENS` inclusa in V1.
 
 ## Controlli esclusi su richiesta esplicita dell’utente
 
@@ -171,6 +173,16 @@ Il **2026-11-12** l’utente ha chiesto esplicitamente di omettere i controlli p
 Costruzione e validazione dell’URL HTTPS di recupero sono rinviate insieme all’intero invio email in [Invio mail](invio-mail.md), senza attribuire loro un’implementazione corrente. Restano le regole richieste nei punti 1, 2 e 4: risposta generica, token casuali memorizzati come hash, scadenza di 10 minuti, uso singolo, transazione atomica, revoca delle sessioni e nessuna emissione automatica di una nuova sessione. L’attività non implementa il frontend.
 
 ## Verifiche ed evidenze
+
+### Migrazioni F01
+
+Il **2026-11-12**, su PostgreSQL 18.1 isolato e Java 21.0.11, sono passati tutti i **44 test** di `mvnw.cmd verify` e le prove di avvio del JAR. Le verifiche sono state ripetute dopo l’attivazione predefinita di Flyway, con nuovi database isolati.
+
+- **Avvio da zero.** Flyway ha applicato V1 e V2. Le prove HTTP hanno verificato registrazione, creazione dell’inventario con saldi a zero e della prima sessione, accesso, rinnovo e revoca del token precedente. Sono stati verificati richiesta di recupero, completamento con un token di prova e revoca delle sessioni. Il riavvio ha mantenuto una riga per ruolo e la stessa cronologia Flyway.
+- **Adozione.** Lo schema F01 predisposto separatamente coincideva con V1 nel confronto di `pg_dump --schema-only`. Il backend ha rifiutato l’avvio prima della baseline. Dopo la baseline esplicita a 1, l’avvio ha applicato V2 e preservato i dati di tutte e cinque le tabelle. Nelle due prove è stato conservato prima l’ID di un ruolo `USER` preesistente e poi l’ID di un ruolo `ADMIN` preesistente.
+- **Compose.** `docker compose config --quiet` è passato. Il motore Linux di Docker Desktop era indisponibile durante le prove di avvio. [Verifiche e limiti del backend](../../springboot_app/app/README.md#verifiche-e-limiti).
+
+### Verifica precedente della base del recupero password
 
 Per la base del recupero del **2026-11-12**, sulla copia di lavoro di `feature/f01-accesso-utenti`, Java 21.0.11 e Maven Wrapper hanno compilato sorgenti e test con `mvnw.cmd -o -DskipTests test-compile`. Il comando `mvnw.cmd -o "-Dtest=SecurityConfigurationTests,SessionTokenCleanupTests,PasswordResetTokenCleanupTests" test` ha superato **31 test**, senza fallimenti, errori o casi saltati: 25 su catena di sicurezza/contratto HTTP con servizio simulato e 6 sugli scheduler. Questi controlli non attestano le query o la transazione completa.
 

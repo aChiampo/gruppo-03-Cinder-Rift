@@ -33,6 +33,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.server.ResponseStatusException;
+import webapp.AppApplication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
 /** Real PostgreSQL commits, locks and rollbacks in an isolated, disposable schema. */
-@SpringBootTest(properties = {"app.security.session-token-cleanup-cron=-",
+@SpringBootTest(classes = AppApplication.class, properties = {"app.security.session-token-cleanup-cron=-",
         "app.security.password-reset-token-cleanup-cron=-"})
 class PasswordResetDatabaseTests {
     private static final Instant NOW = Instant.parse("2026-11-12T12:00:00Z");

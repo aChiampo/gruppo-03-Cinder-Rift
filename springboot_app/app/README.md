@@ -1,6 +1,6 @@
 # Applicazione backend
 
-Ultimo aggiornamento significativo il **2026-11-12** con la base del recupero password F01, su richiesta e scelte dell’utente; restano il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
+Ultimo aggiornamento significativo il **2026-11-12** con le migrazioni Flyway F01 e la verifica su PostgreSQL 18.1. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React.
 
@@ -97,11 +97,28 @@ Gli endpoint di autenticazione usano il prefisso `/api/auth`, allineato al contr
 
 `AuthenticationService` verifica le password con BCrypt ed emette JWT HS256 tramite `JwtEncoder`. Il resource server Spring Security verifica questi JWT e carica a ogni richiesta profilo, ruolo e sessione dal database. La dipendenza OAuth2 resource server non introduce un provider esterno o un flusso di accesso OAuth2. Non vengono create sessioni HTTP servlet.
 
-Prima dell’avvio, predisporre il database PostgreSQL secondo la [specifica v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md) e inserire il ruolo `USER` attraverso il processo di provisioning concordato. L’applicazione ha Flyway, DDL Hibernate e inizializzazione SQL automatica disabilitati per questo rilascio.
-
 Impostare `APP_SECURITY_JWT_SECRET` con una chiave casuale in Base64 di almeno 32 byte. Compose passa la variabile al servizio `spring_app`. L’applicazione verifica il formato e la lunghezza della chiave all’avvio. Per l’accesso da React, `APP_SECURITY_ALLOWED_ORIGINS` accetta le origini esatte separate da virgola e usa `http://localhost:8082` come valore predefinito. [Contratto di accesso e configurazione dei cookie](../../docs/BackEnd/accesso-utenti.md#configurazione-e-operatività).
 
 Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token-lifetime` hanno default `15m` e `14d`. Spring le legge anche da `APP_SECURITY_ACCESS_TOKEN_LIFETIME` e `APP_SECURITY_REFRESH_TOKEN_LIFETIME`; queste due variabili non sono inoltrate dal file Compose corrente e, per modificarle nel container, vanno aggiunte alla configurazione del servizio. La durata di accesso deve essere almeno un secondo e quella di rinnovo almeno pari alla durata di accesso.
+
+### Migrazioni Flyway F01
+
+Usare PostgreSQL 18 e configurare la connessione con `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`. Con Compose, la connessione è configurata a partire dalle variabili `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`. L’utente che esegue Flyway deve poter creare oggetti nello schema e inserire righe in `roles` usando il relativo generatore di ID. DDL Hibernate, inizializzazione SQL Spring e baseline automatica di Flyway sono disabilitati. [Specifica v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md) · [Configurazione applicativa](src/main/resources/application.properties).
+
+**Database nuovo.** Creare un database vuoto e avviare normalmente il backend. Flyway applica V1 per creare le cinque tabelle F01 e V2 per inserire i ruoli `USER` e `ADMIN`. I ruoli sono gli unici dati inseriti dalle migrazioni. Con Compose, dalla radice del repository eseguire `docker compose up --build -d spring_app` con un database vuoto. Verificare V1 e V2 in `flyway_schema_history` e lo stato di `GET /actuator/health`. [V1](src/main/resources/db/migration/V1__create_f01_schema.sql) · [V2](src/main/resources/db/migration/V2__seed_f01_roles.sql).
+
+**Database esistente senza cronologia Flyway.**
+
+1. Identificare il database e lo schema effettivamente usati dall’applicazione. Impostare `PGHOST`, `PGPORT`, `PGDATABASE` e `PGUSER` per la destinazione ed eseguire un backup prima di apportare modifiche, ad esempio con `pg_dump --format=custom --file=f01-before-flyway.dump`.
+2. Applicare V1 in un database di riferimento vuoto e isolato, ad esempio con `psql -d "$REFERENCE_DATABASE" -v ON_ERROR_STOP=1 -f src/main/resources/db/migration/V1__create_f01_schema.sql` dalla cartella del backend. Impostare `REFERENCE_DATABASE` al nome del database isolato, oppure a una stringa di connessione se usa un’altra istanza. Confrontare le definizioni delle cinque tabelle nello schema effettivo con quelle del riferimento, ad esempio usando `pg_dump --schema-only --schema=public --no-owner --no-privileges` su entrambi. Verificare tipi, nullabilità, valori predefiniti, generatori di ID, vincoli, azioni delle chiavi esterne e indici. Controllare che i generatori siano allineati agli ID esistenti e che i dati rispettino il contratto F01. Riconciliare qualsiasi differenza e ripetere il confronto prima di procedere alla baseline.
+3. Dalla cartella del backend, impostare `FLYWAY_URL`, `FLYWAY_USER` e `FLYWAY_PASSWORD` per la destinazione dell’adozione. Con una CLI Flyway compatibile con la versione risolta dal POM, eseguire la baseline esplicita a 1 e poi la migrazione. Adattare lo schema `public` dell’esempio a quello effettivo dell’applicazione. [Comando baseline di Flyway](https://documentation.red-gate.com/flyway/reference/commands/baseline).
+
+   ```sh
+   flyway -defaultSchema=public -schemas=public -baselineVersion=1 -baselineOnMigrate=false -locations=filesystem:src/main/resources/db/migration baseline
+   flyway -defaultSchema=public -schemas=public -baselineOnMigrate=false -locations=filesystem:src/main/resources/db/migration migrate
+   ```
+
+4. Verificare in `flyway_schema_history` la baseline a 1 e l’applicazione di V2. Verificare i dati esistenti, gli ID dei ruoli già presenti e la presenza dei due ruoli richiesti, quindi avviare il backend e verificare `GET /actuator/health`.
 
 ### Pulizia delle sessioni F01
 
@@ -114,7 +131,7 @@ Il job [SessionTokenCleanup](src/main/java/webapp/auth/SessionTokenCleanup.java)
 
 Il formato cron Spring comprende i secondi: secondo, minuto, ora, giorno del mese, mese, giorno della settimana. Impostare `APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON=-` per disabilitare il job. Con più repliche, questa impostazione permette di lasciarlo attivo su una sola istanza. Le modifiche alle variabili richiedono il riavvio o la ricreazione del servizio.
 
-Non occorrono servizi cron separati, estensioni PostgreSQL o migrazioni. Il backend deve rimanere avviato all’ora prevista; dopo un arresto la pulizia riprende al successivo orario del cron. Il log contiene il numero di righe eliminate, senza token, hash o identificativi degli utenti.
+Il job usa la tabella `REFRESH_TOKENS` dello schema F01. Il backend deve rimanere avviato all’ora prevista; dopo un arresto la pulizia riprende al successivo orario del cron. Il log contiene il numero di righe eliminate, senza token, hash o identificativi degli utenti.
 
 I test [dello scheduler](src/test/java/webapp/auth/SessionTokenCleanupTests.java) non richiedono PostgreSQL. Il [test di cancellazione](src/test/java/webapp/auth/SessionTokenCleanupDatabaseTests.java) richiede la stessa connessione PostgreSQL dei test applicativi e usa una tabella temporanea locale alla connessione, eliminata al termine, senza modificare le sessioni persistenti. Per eseguire l’intera suite, configurare `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `APP_SECURITY_JWT_SECRET` e `SPRING_DOCKER_COMPOSE_ENABLED=false`, quindi eseguire `mvnw.cmd verify` dalla cartella dell’applicazione.
 
@@ -122,7 +139,7 @@ I test [dello scheduler](src/test/java/webapp/auth/SessionTokenCleanupTests.java
 
 Le due rotte pubbliche di recupero, i payload e il requisito CSRF sono nel [contratto canonico](../../docs/BackEnd/accesso-utenti.md#recupero-password-base-backend). `AuthenticationService` genera token opachi con validità fissa di **10 minuti**, ne persiste soltanto SHA-256 e preserva quelli precedenti alla richiesta di un nuovo token. Il completamento transazionale aggiorna la password BCrypt, consuma il token, elimina gli altri link non usati dello stesso utente e revoca tutte le sue sessioni. Login, richiesta di recupero e rinnovo condividono il lock utente.
 
-Il database v1.1 deve includere `PASSWORD_RESET_TOKENS`. La base non richiede procedure memorizzate o migrazioni automatiche. Il token in chiaro non viene restituito o consegnato: l’invio e il rendering hanno soltanto commenti `TODO` e sono documentati in [Invio mail](../../docs/BackEnd/invio-mail.md). Senza questa integrazione il recupero non è ancora disponibile all’utente finale. Non sono state aggiunte schermate React.
+V1 include `PASSWORD_RESET_TOKENS`. Il backend conserva soltanto l’hash del token; l’invio e il rendering hanno commenti `TODO` e sono documentati in [Invio mail](../../docs/BackEnd/invio-mail.md). Invio email e interfaccia React sono prerequisiti per rendere disponibile il flusso di recupero all’utente finale.
 
 La pulizia separata [PasswordResetTokenCleanup](src/main/java/webapp/auth/PasswordResetTokenCleanup.java) elimina token scaduti o usati senza conservazione, con default giornaliero alle 03:00 UTC:
 
@@ -143,7 +160,9 @@ mvnw.cmd -o "-Dtest=SecurityConfigurationTests,SessionTokenCleanupTests,Password
 
 ## Verifiche e limiti
 
-Il **2026-11-12**, sulla copia di lavoro di `feature/f01-accesso-utenti`, con Java 21.0.11, sono stati compilati sorgenti e test e sono passati **31 test** senza fallimenti, errori o casi saltati: 25 della catena di sicurezza/contratto HTTP e 6 degli scheduler. Le verifiche HTTP usano il servizio di autenticazione simulato; non provano le query o il reset completo. I nuovi test PostgreSQL sono compilati ma **non eseguiti**: il tentativo in sandbox non ha avviato il server e l’autorizzazione a un’istanza locale isolata è stata rifiutata. Non è stata eseguita l’intera suite né una nuova verifica tramite Compose. Invio email, Thymeleaf e integrazione frontend restano non implementati e non verificati.
+Il **2026-11-12**, su PostgreSQL 18.1 isolato e Java 21.0.11, `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **44 test** senza fallimenti, errori o casi saltati. La suite e le prove di avvio del JAR sono passate sia con l’attivazione Flyway di prova sia con la configurazione predefinita. Sono stati verificati installazione da zero, riavvio, autenticazione e adozione di uno schema F01 predisposto separatamente. [Evidenze F01](../../docs/BackEnd/accesso-utenti.md#verifiche-ed-evidenze).
+
+`docker compose config --quiet` ha validato la configurazione. Il motore Linux di Docker Desktop era indisponibile, quindi le prove PostgreSQL 18.1 sono state eseguite con il JAR e un’istanza PostgreSQL locale isolata. Restano da verificare l’avvio tramite Compose e l’integrazione frontend. Invio email e template Thymeleaf restano da implementare.
 
 La revisione documentale del **2026-11-06** riguarda corrispondenza con il POM, collegamenti relativi e formattazione Markdown. Non attesta risoluzione delle dipendenze Maven, compilazione, avvio, integrazioni o test applicativi.
 

@@ -128,7 +128,7 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
-La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida di avvio locale](guida-avvio.md) e [Compose](compose.yaml) descrivono avvio e configurazione dei servizi. Prima dell’avvio servono la chiave JWT e un database v1.1 predisposto con il ruolo `USER`.
+La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida di avvio locale](guida-avvio.md) e [Compose](compose.yaml) descrivono avvio e configurazione dei servizi. Prima dell’avvio configurare la chiave JWT e seguire la procedura Flyway per un database nuovo o esistente. [Migrazioni Flyway F01](springboot_app/app/README.md#migrazioni-flyway-f01).
 
 Con il backend avviato sulla porta locale predefinita `8081`, puoi consultare e provare le API in [Swagger UI](http://localhost:8081/swagger-ui/index.html). Se hai impostato `APPLICATION_PORT` in Compose, usa quella porta. [Configurazione del backend](springboot_app/app/README.md#configurazione-f01).
 
