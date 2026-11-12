@@ -10,7 +10,7 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 
 ## Funzionalità
 
-- [F01 — Registrazione e accesso](accesso-utenti.md)
+- [F01 — Registrazione, accesso e recupero password](accesso-utenti.md) — interfaccia da avviare; invio email rinviato.
 - [F03 — Negozio delle offerte di pacchetti](acquisto-pacchetti.md)
 - [F04 — Consultazione della collezione](collezione-carte.md)
 - [F05 — Composizione dei mazzi](gestione-mazzi.md)

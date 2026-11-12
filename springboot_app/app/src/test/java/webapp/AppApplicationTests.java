@@ -43,7 +43,8 @@ class AppApplicationTests {
 
 	@Test
 	void cookieChangingEndpointsRequireCsrf() throws Exception {
-		for (String path : new String[] {"/api/auth/users", "/api/auth/sessions", "/api/auth/session-renewals", "/api/auth/session-revocations"}) {
+		for (String path : new String[] {"/api/auth/users", "/api/auth/sessions", "/api/auth/session-renewals", "/api/auth/session-revocations",
+                "/api/auth/password-reset-requests", "/api/auth/password-resets"}) {
 			mvc.perform(post(path)).andExpect(status().isForbidden());
 		}
 

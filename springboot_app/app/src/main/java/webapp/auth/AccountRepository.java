@@ -28,20 +28,21 @@ class AccountRepository {
     }
 
     /**
-     * Looks up an active account for password verification.
+     * Locks an active account before password verification or reset-token issuance.
      *
      * @param email normalized email address
      * @return the account and its password hash, or empty if the account cannot sign in
      */
-    Optional<Account> findByEmail(String email) {
-        return jdbc.sql("SELECT " + PROFILE_COLUMNS + ", u.hash_password " + ACTIVE_ACCOUNTS + " AND u.email = :email")
+    Optional<Account> lockByEmail(String email) {
+        return jdbc.sql("SELECT " + PROFILE_COLUMNS + ", u.hash_password " + ACTIVE_ACCOUNTS
+                + " AND u.email = :email FOR UPDATE OF u")
                 .param("email", email)
                 .query(AccountRepository::mapAccount)
                 .optional();
     }
 
     /**
-     * Takes a write lock on an active user's row for the caller's refresh transaction.
+     * Takes the common user lock for refresh and password-reset transactions.
      *
      * @param userId the user that owns the refresh token
      * @return the current profile, or empty if the account is inactive or missing
@@ -184,6 +185,62 @@ class AccountRepository {
                 """)
                 .param("now", utc(now))
                 .update();
+    }
+
+    /** Stores only the digest; issuing another token preserves all earlier tokens. */
+    void insertPasswordResetToken(int userId, String tokenHash, Instant now, Instant expiresAt) {
+        jdbc.sql("""
+                INSERT INTO password_reset_tokens (id_user, token_hash, created_at, expires_at)
+                VALUES (:userId, :tokenHash, :now, :expiresAt)
+                """)
+                .param("userId", userId).param("tokenHash", tokenHash)
+                .param("now", utc(now)).param("expiresAt", utc(expiresAt)).update();
+    }
+
+    /** Finds the stable user row to lock before consuming the token. */
+    Optional<Integer> findPasswordResetTokenOwner(String tokenHash) {
+        return jdbc.sql("SELECT id_user FROM password_reset_tokens WHERE token_hash = :tokenHash")
+                .param("tokenHash", tokenHash).query(Integer.class).optional();
+    }
+
+    /** Consumes a token only once, including when concurrent requests present the same secret. */
+    boolean consumePasswordResetToken(int userId, String tokenHash, Instant now) {
+        return jdbc.sql("""
+                UPDATE password_reset_tokens SET used_at = :now
+                WHERE id_user = :userId AND token_hash = :tokenHash
+                  AND used_at IS NULL AND expires_at > :now
+                """)
+                .param("userId", userId).param("tokenHash", tokenHash).param("now", utc(now)).update() == 1;
+    }
+
+    /** Updates the password while the caller holds the user's lock. */
+    void updatePassword(int userId, String passwordHash) {
+        int updated = jdbc.sql("UPDATE users SET hash_password = :passwordHash WHERE id = :userId")
+                .param("userId", userId).param("passwordHash", passwordHash).update();
+        if (updated != 1) {
+            throw new IllegalStateException("The locked account is missing");
+        }
+    }
+
+    /** Other outstanding recovery links stop working only after a successful password reset. */
+    void deleteOtherPasswordResetTokens(int userId, String consumedHash) {
+        jdbc.sql("""
+                DELETE FROM password_reset_tokens
+                WHERE id_user = :userId AND token_hash <> :consumedHash AND used_at IS NULL
+                """)
+                .param("userId", userId).param("consumedHash", consumedHash).update();
+    }
+
+    /** Invalidates all of the user's sessions and their linked access JWTs. */
+    void revokeAllRefreshTokens(int userId, Instant now) {
+        jdbc.sql("UPDATE refresh_tokens SET revoked_at = :now WHERE id_user = :userId AND revoked_at IS NULL")
+                .param("userId", userId).param("now", utc(now)).update();
+    }
+
+    /** Cleanup does not determine validity: consumption always checks expiration and use. */
+    int deleteExpiredOrUsedPasswordResetTokens(Instant now) {
+        return jdbc.sql("DELETE FROM password_reset_tokens WHERE expires_at <= :now OR used_at IS NOT NULL")
+                .param("now", utc(now)).update();
     }
 
     private static Account mapAccount(ResultSet row, int rowNumber) throws SQLException {

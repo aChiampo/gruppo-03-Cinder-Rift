@@ -81,6 +81,27 @@ class AuthController {
         return sessionResponse(authentication.login(request.email(), request.password()), HttpStatus.OK);
     }
 
+    /** Acknowledges the request without exposing account eligibility or a recovery secret. */
+    @PostMapping("/password-reset-requests")
+    @Operation(summary = "Request password recovery (email delivery is not implemented)",
+            description = "Creates a ten-minute token for an eligible account. Earlier tokens remain valid. "
+                    + "The acknowledgement does not indicate email delivery.")
+    @Parameter(name = SecurityConfiguration.CSRF_HEADER, in = ParameterIn.HEADER, required = true)
+    ResponseEntity<PasswordResetAcknowledgement> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        authentication.requestPasswordReset(request.email());
+        return ResponseEntity.accepted().body(new PasswordResetAcknowledgement(
+                "If the account is eligible, the password reset request has been accepted."));
+    }
+
+    /** Completes recovery without creating a session or changing browser cookies. */
+    @PostMapping("/password-resets")
+    @Operation(summary = "Reset a password and revoke all existing sessions")
+    @Parameter(name = SecurityConfiguration.CSRF_HEADER, in = ParameterIn.HEADER, required = true)
+    ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetConfirmation request) {
+        authentication.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * Uses the authenticated principal as the sole source of the profile identity.
      *
@@ -156,4 +177,22 @@ class AuthController {
     }
 
     record CsrfResponse(String headerName, String token) {}
+
+    record PasswordResetRequest(@NotBlank @Email @Size(max = 254) String email) {
+        @Override
+        public String toString() {
+            return "PasswordResetRequest";
+        }
+    }
+
+    record PasswordResetConfirmation(
+            @NotBlank @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String token,
+            @NotBlank @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String newPassword) {
+        @Override
+        public String toString() {
+            return "PasswordResetConfirmation";
+        }
+    }
+
+    record PasswordResetAcknowledgement(String message) {}
 }

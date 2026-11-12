@@ -1,6 +1,6 @@
 # Gioco di carte collezionabili digitale
 
-> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: backend F01 implementato; frontend e integrazione di autenticazione da avviare. Revisione documentale dello stack F01: **2026-11-12**, su richiesta dell’utente.
+> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: backend F01 e base del recupero password implementati; invio email, frontend e integrazione di autenticazione da avviare. Aggiornamento F01: **2026-11-12**, su richiesta dell’utente.
 
 ## Indice generale
 
@@ -20,7 +20,7 @@
 
 ## Funzionamento previsto
 
-1. Registrazione e accesso con email e password. Il backend Spring Boot implementa JWT locali, rinnovo tramite cookie e ruoli `ADMIN` e `USER`; gli endpoint usano `/api/auth`. [Contratto F01](docs/BackEnd/accesso-utenti.md).
+1. Registrazione e accesso con email e password. Il backend Spring Boot implementa JWT locali, rinnovo tramite cookie e ruoli `ADMIN` e `USER`; gli endpoint usano `/api/auth`. È disponibile anche la base del recupero password; la consegna email e l’interfaccia sono rinviate, quindi il flusso di recupero completo non è disponibile. [Contratto F01](docs/BackEnd/accesso-utenti.md) · [Invio mail futuro con Thymeleaf](docs/BackEnd/invio-mail.md).
 2. Acquisto con crediti di offerte contenenti ciascuna esattamente un pacchetto; prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice.
 3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
 4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata di due giorni dalla creazione dell’annuncio, secondo il [contratto F06](docs/BackEnd/scambi-mercato.md).

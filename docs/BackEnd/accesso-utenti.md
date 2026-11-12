@@ -1,8 +1,8 @@
 # Accesso utenti
 
-ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo e uscita.
+ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita e base del recupero password.
 Implementazione: backend disponibile nel branch `feature/f01-accesso-utenti`; integrazione FrontEnd da avviare. Responsabile: DA DEFINIRE.
-Ultimo aggiornamento significativo: 2026-11-12, su richiesta dell’utente: prefisso `/api/auth` e pulizia giornaliera delle sessioni tramite Spring alle 03:00 UTC, senza conservazione delle righe inutilizzabili. Flussi, durate, cookie e ruoli `ADMIN` e `USER` restano quelli confermati il 2026-11-11.
+Ultimo aggiornamento significativo: 2026-11-12, su richiesta dell’utente: base backend del recupero password, token di 10 minuti, richieste successive senza invalidazione dei token precedenti e transazione di completamento con revoca delle sessioni. Invio email e interfaccia esclusi dall’implementazione corrente. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-autenticazione-e-autorizzazione).
 
 ## Stack implementato
@@ -32,6 +32,8 @@ Tutti gli endpoint F01 del controller usano il prefisso `/api/auth`. La modifica
 | `GET /api/auth/users/me` | `Authorization: Bearer <accessToken>` | Assente | `200` con il profilo. |
 | `POST /api/auth/session-renewals` | Cookie di rinnovo, cookie CSRF e header `X-XSRF-TOKEN` | Assente | `200` con una nuova risposta di sessione e il cookie di rinnovo sostitutivo. |
 | `POST /api/auth/session-revocations` | Cookie CSRF e header `X-XSRF-TOKEN`. Cookie di rinnovo, se presente. | Assente | `204` con scadenza immediata del cookie di rinnovo. Ripetere la richiesta produce lo stesso esito. |
+| `POST /api/auth/password-reset-requests` | Cookie CSRF e header `X-XSRF-TOKEN`; nessun JWT richiesto | `email` | `202` con `message` generico; nessun token o cookie di rinnovo. Invio email non implementato. |
+| `POST /api/auth/password-resets` | Cookie CSRF e header `X-XSRF-TOKEN`; nessun JWT richiesto | `token`, `newPassword` | `204`, senza credenziali o cookie di rinnovo. |
 
 - `nickname` è una stringa non vuota e non composta soltanto da spazi bianchi (`@NotBlank`). Il server rimuove gli spazi iniziali e finali e confronta il valore conservando maiuscole e minuscole.
 - `email` è una stringa in formato email di massimo 254 caratteri. Dopo la validazione il server rimuove gli spazi esterni e usa la forma minuscola per il salvataggio e la ricerca.
@@ -69,7 +71,7 @@ Esempio illustrativo di una risposta di sessione.
 
 | Stato | Condizione |
 | --- | --- |
-| `400` | Campi obbligatori mancanti, formato non valido o limite della password superato. |
+| `400` | Campi obbligatori mancanti, formato non valido o limite della password superato. Anche token di recupero malformato, sconosciuto, scaduto, usato o associato a un account non ammesso: `Invalid password reset token`. |
 | `401` | Credenziali errate, cookie di rinnovo mancante o inutilizzabile, oppure JWT mancante o inutilizzabile su una risorsa protetta. L’accesso con password usa lo stesso messaggio per email sconosciuta, account cancellato, ruolo non ammesso e password errata. |
 | `403` | Token CSRF mancante o errato oppure origine CORS non ammessa. |
 | `409` | Email o nickname già in uso. |
@@ -101,7 +103,7 @@ Gli errori applicativi di validazione, credenziali e conflitto usano `applicatio
 
 ## Comportamento del client
 
-1. Richiedere `GET /api/auth/csrf-tokens` all’avvio del flusso con `credentials: 'include'` quando l’origine del client è diversa. Inviare il valore `token` ricevuto nell’header `X-XSRF-TOKEN` e includere le credenziali nelle quattro richieste `POST` di sessione o registrazione.
+1. Richiedere `GET /api/auth/csrf-tokens` all’avvio del flusso con `credentials: 'include'` quando l’origine del client è diversa. Inviare il valore `token` ricevuto nell’header `X-XSRF-TOKEN` e includere le credenziali nelle sei richieste `POST` F01, comprese richiesta e conferma del recupero password.
 2. Tenere il JWT di accesso in memoria e aggiungerlo alle richieste protette. Per ricostruire la sessione dopo un ricaricamento o una scadenza, chiamare l’endpoint di rinnovo con i cookie e il token CSRF. Omettere l’header `Authorization` sulle richieste di rinnovo e uscita. Sostituire il JWT in memoria dopo ogni rinnovo riuscito.
 3. Scartare il JWT all’uscita. Se il rinnovo restituisce `401`, tornare alla schermata di accesso.
 
@@ -117,13 +119,70 @@ I cookie `__Host-cinder-csrf` e `__Host-cinder-refresh` usano `Secure`, `HttpOnl
 - `app.security.session-token-cleanup-cron` usa il formato cron Spring a sei campi e vale `0 0 3 * * *`; `app.security.session-token-cleanup-zone` vale `UTC`. Le corrispondenti variabili `APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON` e `APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE` sono inoltrate da Compose. Impostare il cron a `-` per disabilitare il job su un’istanza. [Configurazione e verifiche](../../springboot_app/app/README.md#pulizia-delle-sessioni-f01).
 - Il job opera mentre il backend è avviato; un’esecuzione persa durante un arresto non viene recuperata all’avvio. Il passaggio successivo elimina tutte le righe allora inutilizzabili. Ogni istanza abilitata esegue il job: con più repliche si può abilitarlo su una sola, senza necessità di coordinamento per la correttezza della cancellazione. Il log riporta solo il numero di righe eliminate; gli errori sono registrati dal scheduler e il tentativo successivo segue il cron.
 
+## Recupero password: base backend
+
+Decisioni confermate dall’utente il **2026-11-12**. Gli endpoint sono implementati; l’invio email ha soltanto commenti `TODO [issue-pending]` nel servizio e l’interfaccia React non è inclusa nell’attività. Il recupero non è ancora utilizzabile dall’utente finale: il segreto generato non viene consegnato né restituito dall’API e non esiste una rotta di debug per leggerlo.
+
+### Richiesta e contratto
+
+`POST /api/auth/password-reset-requests` accetta JSON con `email`, validata e normalizzata come per l’accesso. Per account attivi `ADMIN` e `USER` genera 32 byte con `SecureRandom`, codificati Base64 URL senza padding (43 caratteri); salva soltanto SHA-256 esadecimale in `PASSWORD_RESET_TOKENS`, con creazione UTC, scadenza dopo esattamente **10 minuti** e `used_at = NULL`. Una richiesta successiva aggiunge un token senza eliminare o invalidare i precedenti; non cambia password o sessioni. Email sconosciute, account eliminati e ruoli non ammessi non ricevono token.
+
+Per un corpo valido, la risposta è sempre `202` con questo JSON, che conferma la sola accettazione della richiesta e non la consegna di un messaggio:
+
+```json
+{"message":"If the account is eligible, the password reset request has been accepted."}
+```
+
+`POST /api/auth/password-resets` accetta `token` e `newPassword`, stringhe obbligatorie non vuote e non composte soltanto da spazi. Il token deve avere il formato opaco indicato sopra; `newPassword` segue gli stessi vincoli di registrazione: massimo 72 byte UTF-8, spazi conservati e hash BCrypt. Esempio illustrativo:
+
+```json
+{"token":"<segreto di recupero>","newPassword":"<nuova password scelta dall'utente>"}
+```
+
+Entrambe le rotte sono accessibili senza autenticazione, con cookie CSRF e header `X-XSRF-TOKEN`. Il client omette `Authorization`, compreso un eventuale JWT scaduto. Le risposte usano le intestazioni di cache della catena di sicurezza. Gli errori applicativi seguono `application/problem+json`; la risposta di completamento è `204`, senza accesso automatico né modifica dei cookie.
+
+### Transazione e concorrenza
+
+Il servizio usa `@Transactional` e SQL JDBC: PostgreSQL esegue un’unica transazione, senza funzioni o procedure memorizzate. Mantiene la codifica BCrypt nel servizio Java e usa lo stesso ordine dei lock dei flussi esistenti.
+
+1. Individua il proprietario mediante hash del token e blocca la riga `USERS` attiva con `SELECT ... FOR UPDATE`.
+2. Acquisisce il cutoff UTC dopo l’eventuale attesa del lock; consuma il token con un aggiornamento condizionale che richiede proprietario coerente, `used_at IS NULL` e `expires_at > cutoff`. All’uguaglianza il token è scaduto.
+3. Aggiorna l’hash BCrypt della password e mantiene `used_at` sul token consumato.
+4. Elimina gli altri token di recupero non usati dello stesso utente e revoca tutte le sue righe `REFRESH_TOKENS` ancora non revocate. Gli altri utenti non sono coinvolti.
+5. Esegue il commit; un errore precedente annulla consumo, password, cancellazioni e revoche. L’email di notifica futura è soltanto un commento segnaposto e dovrà essere inviata dopo il commit.
+
+Una sola conferma concorrente può riuscire, anche usando link diversi dello stesso account. La conservazione dei token precedenti vale alla **richiesta**, mentre un **reset riuscito** rende inutilizzabili gli altri link. Richiesta di recupero, accesso con password e rinnovo acquisiscono lo stesso lock utente: l’accesso controlla l’hash dopo il lock, evitando emissioni con la vecchia password dopo il reset. I JWT delle sessioni revocate falliscono alla successiva autenticazione perché il controllo Bearer consulta il database. Le richieste già autenticate prima del commit non vengono interrotte retroattivamente.
+
+### Pulizia dei token di recupero
+
+Il job separato `PasswordResetTokenCleanup` elimina i record con `expires_at <= cutoff` oppure `used_at IS NOT NULL`, senza conservazione. Usa un cutoff UTC per esecuzione e, come scelta operativa di questa base, viene eseguito ogni giorno alle 03:00 UTC. La ripetizione è sicura e i token ancora utilizzabili rimangono presenti. La scadenza è verificata durante il reset anche se il job è disabilitato o in ritardo.
+
+| Proprietà | Variabile inoltrata da Compose | Default |
+| --- | --- | --- |
+| `app.security.password-reset-token-cleanup-cron` | `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_CRON` | `0 0 3 * * *` |
+| `app.security.password-reset-token-cleanup-zone` | `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_ZONE` | `UTC` |
+
+Il cron `-` disabilita solo questa pulizia. Valgono gli stessi limiti operativi del job sessioni: backend avviato, nessun recupero immediato delle esecuzioni perse e possibili esecuzioni su più repliche. Non sono necessarie modifiche allo schema v1.1 o migrazioni automatiche; la tabella deve essere già predisposta.
+
+## Controlli esclusi su richiesta esplicita dell’utente
+
+Il **2026-11-12** l’utente ha chiesto esplicitamente di omettere i controlli proposti nell’annotazione alla risposta precedente. Questa base **non implementa limiti di richieste per IP/account, equalizzazione dei tempi delle risposte o protezioni dedicate contro la diffusione dei link di recupero tramite log, analytics e referrer**. Si tratta di esclusioni richieste, non di controlli completati o verificati. Non vengono aggiunti componenti per questi scopi; la regola generale del progetto di non inserire segreti nei log resta applicabile.
+
+Costruzione e validazione dell’URL HTTPS di recupero sono rinviate insieme all’intero invio email in [Invio mail](invio-mail.md), senza attribuire loro un’implementazione corrente. Restano le regole richieste nei punti 1, 2 e 4: risposta generica, token casuali memorizzati come hash, scadenza di 10 minuti, uso singolo, transazione atomica, revoca delle sessioni e nessuna emissione automatica di una nuova sessione. L’attività non implementa il frontend.
+
 ## Verifiche ed evidenze
 
-Il **2026-11-12** sono stati allineati al nuovo prefisso il controller, i matcher di sicurezza, i percorsi dei test e il contratto. Nella revisione documentale dello stesso giorno sono stati confrontati controller, servizio, repository JDBC, catena di sicurezza, scheduler, POM, proprietà e Compose. Le verifiche applicative del 2026-11-11 riportate sotto precedono la modifica del prefisso.
+Per la base del recupero del **2026-11-12**, sulla copia di lavoro di `feature/f01-accesso-utenti`, Java 21.0.11 e Maven Wrapper hanno compilato sorgenti e test con `mvnw.cmd -o -DskipTests test-compile`. Il comando `mvnw.cmd -o "-Dtest=SecurityConfigurationTests,SessionTokenCleanupTests,PasswordResetTokenCleanupTests" test` ha superato **31 test**, senza fallimenti, errori o casi saltati: 25 su catena di sicurezza/contratto HTTP con servizio simulato e 6 sugli scheduler. Questi controlli non attestano le query o la transazione completa.
 
-I report Surefire locali consultati il **2026-11-12** riportano **27 test**, tutti senza errori, fallimenti o casi saltati: 2 in `AppApplicationTests` (profilo e CSRF sui percorsi `/api/auth` nei sorgenti correnti), 21 in `SecurityConfigurationTests` (restrizioni amministrative), 3 in `SessionTokenCleanupTests` (cron, fuso e disabilitazione), 1 in `SessionTokenCleanupDatabaseTests` (cancellazione su tabella temporanea PostgreSQL e ripetibilità). Sono report già presenti in `springboot_app/app/target/surefire-reports/`, consultabili dopo una build locale e non versionati; non sono test rieseguiti in questa revisione e non attestano un commit identificato. [Sorgenti dei test](../../springboot_app/app/src/test/java/webapp).
+Sono aggiunti e compilati test PostgreSQL con schema isolato per durata, richieste ripetute, account non ammessi, validazione, consumo, revoche, rollback, concorrenza e pulizia. **Non sono stati eseguiti**: il server non è stato avviato in sandbox e l’autorizzazione ad avviare un’istanza locale isolata è stata rifiutata. Non è stata eseguita l’intera suite. Sono passati `git diff --check`, `docker compose config --quiet` e il controllo di 182 collegamenti locali e relativi titoli in 11 documenti modificati. La validazione Compose riguarda la configurazione, non l’avvio dei servizi. Invio email, rendering Thymeleaf, frontend e Compose PostgreSQL 18 restano non verificati. I report storici sotto non attestano il nuovo recupero password.
 
-Questa revisione non esegue una nuova build, test JUnit o prove HTTP. Restano da verificare l’intero flusso di autenticazione sui nuovi percorsi contro PostgreSQL 18 tramite Compose, l’integrazione React nel browser e l’esecuzione del job a orario reale. I test dello scheduler e della query di cancellazione non attestano questi scenari.
+### Evidenze storiche precedenti al recupero password
+
+Il **2026-11-12** sono stati allineati al nuovo prefisso il controller, i matcher di sicurezza, i percorsi dei test e il contratto. Nella revisione documentale precedente al recupero sono stati confrontati controller, servizio, repository JDBC, catena di sicurezza, scheduler, POM, proprietà e Compose. Le verifiche applicative del 2026-11-11 riportate sotto precedono la modifica del prefisso.
+
+I report Surefire locali consultati nella revisione precedente del **2026-11-12** riportavano **27 test**, tutti senza errori, fallimenti o casi saltati: 2 in `AppApplicationTests`, 21 in `SecurityConfigurationTests`, 3 in `SessionTokenCleanupTests`, 1 in `SessionTokenCleanupDatabaseTests`. Erano report già presenti in `springboot_app/app/target/surefire-reports/`, non versionati e privi di un commit identificato; le successive esecuzioni possono sostituire i singoli file. Questi numeri descrivono quella consultazione storica, non il risultato corrente dei test del recupero. [Sorgenti dei test](../../springboot_app/app/src/test/java/webapp).
+
+Quella revisione documentale non aveva eseguito una nuova build, test JUnit o prove HTTP. Restano da verificare l’intero flusso di autenticazione sui nuovi percorsi contro PostgreSQL 18 tramite Compose, l’integrazione React nel browser e l’esecuzione dei job a orario reale. I test dello scheduler e della query di cancellazione non attestano questi scenari.
 
 Il **2026-11-11** `mvnw.cmd verify` ha compilato e impacchettato il codice della copia di lavoro del branch `feature/f01-accesso-utenti`, con base `e1b4eeb`, su Windows e Java 21. I due test automatici hanno verificato il profilo protetto e il controllo CSRF sulle operazioni che scrivono il cookie. [Test di sicurezza](../../springboot_app/app/src/test/java/webapp/AppApplicationTests.java).
 
@@ -133,10 +192,12 @@ Nella verifica del perimetro dei ruoli del **2026-11-11**, `mvnw.cmd verify` ha 
 
 ## Da definire
 
-- Recupero della password e matrice dei permessi per le altre funzionalità.
+- Invio delle email di recupero e notifica con template Thymeleaf: [dipendenza rinviata](invio-mail.md). Interfaccia e verifica integrata del recupero restano fuori dall’attività corrente.
+- Matrice dei permessi per le altre funzionalità.
 
 ## Collegamenti
 
 - [Interfaccia di accesso](../FrontEnd/accesso-utenti.md)
+- [Invio mail e template Thymeleaf](invio-mail.md)
 - [Backoffice](gestione-amministrativa.md)
 - [Indice BackEnd](README.md)

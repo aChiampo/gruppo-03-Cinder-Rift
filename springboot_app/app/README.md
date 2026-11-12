@@ -1,6 +1,6 @@
 # Applicazione backend
 
-Ultimo aggiornamento significativo il **2026-11-12** con l’allineamento del prefisso F01 a `/api/auth` e la pulizia programmata delle sessioni, su richiesta e scelte dell’utente. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
+Ultimo aggiornamento significativo il **2026-11-12** con la base del recupero password F01, su richiesta e scelte dell’utente; restano il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React.
 
@@ -26,8 +26,8 @@ Nelle tabelle seguenti, `starter-*` indica `org.springframework.boot:spring-boot
 | `starter-security-oauth2-resource-server` | `compile` | Infrastruttura di sicurezza per la validazione dei bearer token JWT e la protezione delle risorse API. |
 | `org.springdoc:springdoc-openapi-starter-webmvc-ui` | `compile` | Generazione della documentazione OpenAPI e disponibilità di Swagger UI per consultare e richiamare manualmente gli endpoint HTTP. |
 | `starter-validation` | `compile` | Validazione dei campi delle richieste e degli altri dati annotati tramite Bean Validation. |
-| `starter-mail` | `compile` | Supporto all'invio di email, utilizzabile per il recupero della password se viene confermato questo canale. |
-| `starter-thymeleaf` | `compile` | Generazione di HTML tramite template lato server, potenzialmente per le email. Il frontend rimane affidato a React. |
+| `starter-mail` | `compile` | Supporto all'invio di email per il recupero password; implementazione rinviata, con soli commenti segnaposto nel servizio. |
+| `starter-thymeleaf` | `compile` | Rendering dei futuri template email, confermato dall’utente il 2026-11-12; template e integrazione non implementati. Il frontend rimane affidato a React. |
 | `starter-actuator` | `compile` | Endpoint operativi per il controllo dello stato e il monitoraggio dell'applicazione. |
 | `org.springframework.boot:spring-boot-docker-compose` | `runtime` | Integrazione facoltativa per la gestione dei servizi Compose configurati nell'ambiente di sviluppo. |
 | `org.projectlombok:lombok` | `compile` | Riduzione del codice ripetitivo tramite elaborazione delle annotazioni. Dichiarata con `optional=true`, con annotation processor configurato per sorgenti applicativi e test. |
@@ -118,7 +118,32 @@ Non occorrono servizi cron separati, estensioni PostgreSQL o migrazioni. Il back
 
 I test [dello scheduler](src/test/java/webapp/auth/SessionTokenCleanupTests.java) non richiedono PostgreSQL. Il [test di cancellazione](src/test/java/webapp/auth/SessionTokenCleanupDatabaseTests.java) richiede la stessa connessione PostgreSQL dei test applicativi e usa una tabella temporanea locale alla connessione, eliminata al termine, senza modificare le sessioni persistenti. Per eseguire l’intera suite, configurare `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `APP_SECURITY_JWT_SECRET` e `SPRING_DOCKER_COMPOSE_ENABLED=false`, quindi eseguire `mvnw.cmd verify` dalla cartella dell’applicazione.
 
+### Base del recupero password F01
+
+Le due rotte pubbliche di recupero, i payload e il requisito CSRF sono nel [contratto canonico](../../docs/BackEnd/accesso-utenti.md#recupero-password-base-backend). `AuthenticationService` genera token opachi con validità fissa di **10 minuti**, ne persiste soltanto SHA-256 e preserva quelli precedenti alla richiesta di un nuovo token. Il completamento transazionale aggiorna la password BCrypt, consuma il token, elimina gli altri link non usati dello stesso utente e revoca tutte le sue sessioni. Login, richiesta di recupero e rinnovo condividono il lock utente.
+
+Il database v1.1 deve includere `PASSWORD_RESET_TOKENS`. La base non richiede procedure memorizzate o migrazioni automatiche. Il token in chiaro non viene restituito o consegnato: l’invio e il rendering hanno soltanto commenti `TODO` e sono documentati in [Invio mail](../../docs/BackEnd/invio-mail.md). Senza questa integrazione il recupero non è ancora disponibile all’utente finale. Non sono state aggiunte schermate React.
+
+La pulizia separata [PasswordResetTokenCleanup](src/main/java/webapp/auth/PasswordResetTokenCleanup.java) elimina token scaduti o usati senza conservazione, con default giornaliero alle 03:00 UTC:
+
+| Proprietà | Variabile inoltrata da Compose | Default |
+| --- | --- | --- |
+| `app.security.password-reset-token-cleanup-cron` | `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_CRON` | `0 0 3 * * *` |
+| `app.security.password-reset-token-cleanup-zone` | `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_ZONE` | `UTC` |
+
+Il cron `-` disabilita questa pulizia indipendentemente da quella delle sessioni. La validazione del token controlla comunque subito scadenza e uso. I [controlli esclusi su richiesta esplicita dell’utente](../../docs/BackEnd/accesso-utenti.md#controlli-esclusi-su-richiesta-esplicita-dellutente) sono documentati nel contratto.
+
+I [test PostgreSQL del recupero](src/test/java/webapp/auth/PasswordResetDatabaseTests.java) usano uno schema casuale dedicato, che creano ed eliminano senza modificare i dati applicativi. L’utente di prova necessita quindi di `CREATE` sul database, oltre alla connessione. Le prove verificano anche rollback e lock con più connessioni. Il comando completo resta `mvnw.cmd verify` con le variabili di database e sicurezza indicate sopra; disabilitare entrambi gli scheduler durante le prove applicative.
+
+Per le verifiche senza database:
+
+```sh
+mvnw.cmd -o "-Dtest=SecurityConfigurationTests,SessionTokenCleanupTests,PasswordResetTokenCleanupTests" test
+```
+
 ## Verifiche e limiti
+
+Il **2026-11-12**, sulla copia di lavoro di `feature/f01-accesso-utenti`, con Java 21.0.11, sono stati compilati sorgenti e test e sono passati **31 test** senza fallimenti, errori o casi saltati: 25 della catena di sicurezza/contratto HTTP e 6 degli scheduler. Le verifiche HTTP usano il servizio di autenticazione simulato; non provano le query o il reset completo. I nuovi test PostgreSQL sono compilati ma **non eseguiti**: il tentativo in sandbox non ha avviato il server e l’autorizzazione a un’istanza locale isolata è stata rifiutata. Non è stata eseguita l’intera suite né una nuova verifica tramite Compose. Invio email, Thymeleaf e integrazione frontend restano non implementati e non verificati.
 
 La revisione documentale del **2026-11-06** riguarda corrispondenza con il POM, collegamenti relativi e formattazione Markdown. Non attesta risoluzione delle dipendenze Maven, compilazione, avvio, integrazioni o test applicativi.
 
@@ -129,6 +154,7 @@ Il **2026-11-11** Compose ha validato la configurazione e risolto il Dockerfile 
 - [POM dell'applicazione](pom.xml)
 - [Indice della documentazione BackEnd](../../docs/BackEnd/README.md)
 - [Accesso utenti e autenticazione — F01](../../docs/BackEnd/accesso-utenti.md)
+- [Invio mail con template Thymeleaf — dipendenza F01](../../docs/BackEnd/invio-mail.md)
 - [Specifica della base di dati v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md)
 - [Sfide e simulazione — F07](../../docs/BackEnd/sfide-simulazione.md)
 - [README del progetto](../../README.md)

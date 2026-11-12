@@ -4,6 +4,8 @@ Le caselle sono inizialmente aperte: il documento non certifica verifiche esegui
 
 Revisione documentale F01 del **2026-11-12**, su richiesta dell’utente: backend, test e report locali esistono; stato ed evidenze sono nel [contratto di autenticazione](BackEnd/accesso-utenti.md#verifiche-ed-evidenze). Le caselle di consegna restano distinte dai test già presenti: integrazione React e verifica su PostgreSQL 18 tramite Compose non sono completate da questa revisione.
 
+La base backend del recupero password è stata aggiunta nello stesso giorno; compilazione e 31 test senza database sono superati. I nuovi test PostgreSQL del recupero non sono eseguiti, email e interfaccia sono rinviate. Questo aggiornamento non completa alcuna casella di consegna.
+
 ## Identità e perimetro
 
 - [x] Definire nome progetto, numero gruppo, Team Leader, nove membri e account GitHub.

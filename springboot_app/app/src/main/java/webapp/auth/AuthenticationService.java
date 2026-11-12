@@ -33,6 +33,7 @@ class AuthenticationService {
 
     private static final Pattern REFRESH_TOKEN = Pattern.compile("[A-Za-z0-9_-]{43}");
     private static final int BCRYPT_MAX_BYTES = 72;
+    private static final Duration PASSWORD_RESET_LIFETIME = Duration.ofMinutes(10);
 
     private final AccountRepository accounts;
     private final PasswordEncoder passwords;
@@ -87,7 +88,8 @@ class AuthenticationService {
     @Transactional
     public IssuedSession login(String email, String password) {
         validatePasswordLength(password);
-        var account = accounts.findByEmail(canonicalEmail(email));
+        // Verify the current hash after the shared user lock, so reset cannot race session issuance.
+        var account = accounts.lockByEmail(canonicalEmail(email));
         // Run BCrypt for unknown and deleted accounts too, reducing the timing difference from a wrong password.
         String hash = account.map(AccountRepository.Account::passwordHash).orElse(dummyPasswordHash);
         if (!passwords.matches(password, hash) || account.isEmpty()) {
@@ -129,6 +131,49 @@ class AuthenticationService {
         if (isRefreshToken(refreshToken)) {
             accounts.revokeRefreshToken(hashToken(refreshToken), clock.instant());
         }
+    }
+
+    /** Creates a ten-minute recovery token without invalidating previously issued tokens. */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        var account = accounts.lockByEmail(canonicalEmail(email));
+        if (account.isEmpty()) {
+            return;
+        }
+        byte[] tokenBytes = new byte[32];
+        random.nextBytes(tokenBytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+        Instant now = clock.instant();
+        accounts.insertPasswordResetToken(account.orElseThrow().profile().id(), hashToken(token),
+                now, now.plus(PASSWORD_RESET_LIFETIME));
+        // TODO [issue-pending]: after commit, render the recovery email with Thymeleaf and deliver token.
+        // Delivery, reset-link construction and retries are deferred to docs/BackEnd/invio-mail.md.
+    }
+
+    /** Changes the password, consumes recovery links and revokes sessions in one database transaction. */
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        validatePasswordLength(newPassword);
+        if (!isRefreshToken(token)) {
+            throw invalidPasswordReset();
+        }
+        String hash = hashToken(token);
+        UserProfile user = accounts.findPasswordResetTokenOwner(hash).flatMap(accounts::lockActiveProfile)
+                .orElseThrow(AuthenticationService::invalidPasswordReset);
+        // Read the cutoff after acquiring the user lock, including any wait behind another transaction.
+        Instant now = clock.instant();
+        if (!accounts.consumePasswordResetToken(user.id(), hash, now)) {
+            throw invalidPasswordReset();
+        }
+        accounts.updatePassword(user.id(), passwords.encode(newPassword));
+        accounts.deleteOtherPasswordResetTokens(user.id(), hash);
+        accounts.revokeAllRefreshTokens(user.id(), now);
+        // TODO [issue-pending]: after commit, render and send a password-change notification with Thymeleaf.
+        // No session is issued here; the caller can sign in using the regular password-login endpoint.
+    }
+
+    private static ResponseStatusException invalidPasswordReset() {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid password reset token");
     }
 
     private IssuedSession issueSession(UserProfile user, Instant now) {

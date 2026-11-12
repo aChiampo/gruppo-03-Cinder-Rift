@@ -24,6 +24,8 @@ Prima di avviare il backend, configura `APP_SECURITY_JWT_SECRET` nel file locale
 
 La chiave JWT deve essere casuale, codificata in Base64 e rappresentare almeno 32 byte; non esiste una chiave predefinita utilizzabile. Il backend non crea automaticamente lo schema o il ruolo. Le chiamate di autenticazione usano `/api/auth`; per una porta frontend diversa da `8082`, aggiorna anche `APP_SECURITY_ALLOWED_ORIGINS` all’origine esatta del client. Usa lo stesso nome host nei due URL locali. La [pulizia delle sessioni](springboot_app/app/README.md#pulizia-delle-sessioni-f01) è attiva ogni giorno alle 03:00 UTC mentre il backend è avviato.
 
+La base del [recupero password F01](docs/BackEnd/accesso-utenti.md#recupero-password-base-backend) richiede anche la tabella `PASSWORD_RESET_TOKENS` già prevista dalla v1.1. Il suo job separato elimina token scaduti o usati alle 03:00 UTC; `APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_CRON=-` lo disabilita. L’invio email è rinviato e non richiede configurazione SMTP per questa base; il recupero completo non è ancora disponibile all’utente. [Invio mail futuro](docs/BackEnd/invio-mail.md).
+
 Se ti manca una copia del progetto o hai scaricato un file ZIP, apri il terminale nella cartella in cui vuoi salvarlo ed esegui questo comando.
 
 ```text

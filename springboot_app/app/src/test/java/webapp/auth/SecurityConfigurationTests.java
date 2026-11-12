@@ -1,6 +1,7 @@
 package webapp.auth;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,12 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import static org.mockito.Mockito.mock;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringJUnitConfig(SecurityConfigurationTests.SecurityTestConfig.class)
@@ -65,13 +70,56 @@ class SecurityConfigurationTests {
                 .andExpect(status().isUnauthorized());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/auth/password-reset-requests", "/api/auth/password-resets"})
+    void passwordRecoveryRequiresCsrfEvenWithoutLogin(String path) throws Exception {
+        mvc.perform(post(path).contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(path).with(csrf().useInvalidToken()).contentType("application/json").content("{}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(path).with(csrf()).contentType("application/json").content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void anonymousCallerCanRequestAndCompleteRecoveryWithoutReceivingCredentials() throws Exception {
+        mvc.perform(post("/api/auth/password-reset-requests").with(csrf()).contentType("application/json")
+                        .content("{\"email\":\"player@example.invalid\"}"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.message").isString())
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(header().doesNotExist("Set-Cookie"));
+        mvc.perform(post("/api/auth/password-resets").with(csrf()).contentType("application/json")
+                        .content("{\"token\":\"test-token\",\"newPassword\":\"new password\"}"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().doesNotExist("Set-Cookie"));
+    }
+
+    @Test
+    void recoveryRejectsInvalidEmailBlankPasswordsAndUnsupportedContent() throws Exception {
+        mvc.perform(post("/api/auth/password-reset-requests").with(csrf()).contentType("application/json")
+                        .content("{\"email\":\"invalid\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/auth/password-resets").with(csrf()).contentType("application/json")
+                        .content("{\"token\":\"test-token\",\"newPassword\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/auth/password-reset-requests").with(csrf()).contentType("text/plain")
+                        .content("email=player@example.invalid"))
+                .andExpect(status().isUnsupportedMediaType());
+    }
+
     @TestConfiguration(proxyBeanMethods = false)
     @EnableWebMvc
-    @Import(SecurityConfiguration.class)
+    @Import({SecurityConfiguration.class, AuthController.class})
     static class SecurityTestConfig {
         @Bean
         AccountRepository accounts() {
             return mock(AccountRepository.class);
+        }
+
+        @Bean
+        AuthenticationService authentication() {
+            return mock(AuthenticationService.class);
         }
 
         @Bean

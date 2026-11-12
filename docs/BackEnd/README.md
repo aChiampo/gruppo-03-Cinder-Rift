@@ -18,6 +18,7 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 ## Funzionalità
 
 - [F01 — Accesso utenti](accesso-utenti.md)
+- [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
 - [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md)
 - [F04 — Collezione delle carte](collezione-carte.md)
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)

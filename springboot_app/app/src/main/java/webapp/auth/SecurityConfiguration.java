@@ -64,9 +64,8 @@ class SecurityConfiguration {
             // Injects the origin list; the value after ':' is the fallback when the property is absent.
             @Value("${app.security.allowed-origins:http://localhost:8082}") List<String> allowedOrigins) {
         var paths = PathPatternRequestMatcher.withDefaults();
-        // Protect every route that can set or clear a refresh cookie, including sign-in and registration.
-        // OR means a request needs to match only one of the following four alternatives.
-        var cookieWrites = new OrRequestMatcher(
+        // Public browser authentication writes require CSRF, including password recovery.
+        var authenticationWrites = new OrRequestMatcher(
                 // Registration creates an account and sets its first refresh cookie.
                 paths.matcher(HttpMethod.POST, "/api/auth/users"),
                 // Sign-in creates a session and sets a refresh cookie.
@@ -74,13 +73,15 @@ class SecurityConfiguration {
                 // Renewal replaces the existing refresh cookie.
                 paths.matcher(HttpMethod.POST, "/api/auth/session-renewals"),
                 // Sign-out revokes the session and clears its refresh cookie.
-                paths.matcher(HttpMethod.POST, "/api/auth/session-revocations"));
+                paths.matcher(HttpMethod.POST, "/api/auth/session-revocations"),
+                paths.matcher(HttpMethod.POST, "/api/auth/password-reset-requests"),
+                paths.matcher(HttpMethod.POST, "/api/auth/password-resets"));
 
         // The repository saves the expected CSRF token in a cookie and loads it on later requests.
         CookieCsrfTokenRepository csrfTokens = new CookieCsrfTokenRepository();
         // The __Host- prefix requires Secure, Path=/, and no Domain attribute in supporting browsers.
         csrfTokens.setCookieName("__Host-cinder-csrf");
-        // The client sends its CSRF token in this header when calling the four POST routes above.
+        // The client sends its CSRF token in this header on the matched authentication writes.
         csrfTokens.setHeaderName(CSRF_HEADER);
         // '/' covers the host; Secure restricts cookie transmission to secure connections.
         // HttpOnly prevents JavaScript reading the cookie; SameSite=Strict restricts cross-site cookie sending.
@@ -91,8 +92,7 @@ class SecurityConfiguration {
         return http
                 // Applies the browser origin/method/header rules created by the helper at the end of this file.
                 .cors(cors -> cors.configurationSource(corsConfiguration(allowedOrigins)))
-                // Uses the cookie repository and requires CSRF checks only for the four matched POST routes.
-                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens).requireCsrfProtectionMatcher(cookieWrites))
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens).requireCsrfProtectionMatcher(authenticationWrites))
                 // Does not create an HTTP session or use one to retrieve authentication; each request supplies credentials.
                 // The application still stores refresh sessions in the database, which is separate from HttpSession.
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -105,7 +105,7 @@ class SecurityConfiguration {
                         // Allows servlet error dispatches so handling an error does not require a new authentication.
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // These routes require no authenticated user; permitAll does not bypass the CSRF check.
-                        .requestMatchers(cookieWrites).permitAll()
+                        .requestMatchers(authenticationWrites).permitAll()
                         // Allows GET access to CSRF bootstrap, health checks, and the API documentation/UI.
                         .requestMatchers(HttpMethod.GET, "/api/auth/csrf-tokens", "/actuator/health",
                                 // Includes the OpenAPI document and nested Swagger UI assets.
