@@ -1,5 +1,7 @@
 package webapp.auth;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
@@ -67,7 +69,24 @@ class PasswordResetDatabaseTests {
             public java.sql.Connection getConnection() throws java.sql.SQLException {
                 var connection = super.getConnection();
                 connection.setSchema(schema);
-                return connection;
+                return (java.sql.Connection) Proxy.newProxyInstance(
+                        connection.getClass().getClassLoader(),
+                        new Class<?>[] {java.sql.Connection.class},
+                        (proxy, method, args) -> {
+                            if (method.getName().equals("close")) {
+                                try {
+                                    connection.setSchema("public");
+                                } finally {
+                                    connection.close();
+                                }
+                                return null;
+                            }
+                            try {
+                                return method.invoke(connection, args);
+                            } catch (InvocationTargetException exception) {
+                                throw exception.getCause();
+                            }
+                        });
             }
         };
         jdbc = JdbcClient.create(isolated);

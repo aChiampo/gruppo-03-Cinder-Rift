@@ -2,8 +2,25 @@
 
 ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita e base del recupero password.
 Implementazione: backend disponibile nel branch `feature/f01-accesso-utenti`; integrazione FrontEnd da avviare. Responsabile: DA DEFINIRE.
-Ultimo aggiornamento significativo il 2026-11-12 con le migrazioni Flyway F01 per PostgreSQL 18. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
+Ultimo aggiornamento significativo il **2026-11-13**: implementati i profili utente pubblici e la modifica autenticata del proprio profilo, con limiti di validazione allineati al contratto. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-autenticazione-e-autorizzazione).
+
+## Riepilogo API
+
+| Method | Path | Auth required | Purpose | Success Status | Error Statuses |
+| --- | --- | --- | --- | --- | --- |
+| `GET` | `/api/auth/csrf-tokens` | No | Ottiene il token CSRF per le scritture browser F01 | `200` | — |
+| `POST` | `/api/auth/users` | CSRF | Registra un account e apre una sessione | `201` | `400`, `403`, `409`, `415` |
+| `POST` | `/api/auth/sessions` | CSRF | Autentica email e password | `200` | `400`, `401`, `403`, `415` |
+| `POST` | `/api/auth/password-reset-requests` | CSRF | Accetta una richiesta di recupero senza rivelare l’idoneità dell’account | `202` | `400`, `403`, `415` |
+| `POST` | `/api/auth/password-resets` | CSRF | Cambia la password con un token di recupero | `204` | `400`, `403`, `415` |
+| `GET` | `/api/auth/users/me` | Bearer JWT | Restituisce il profilo privato corrente | `200` | `401` |
+| `POST` | `/api/auth/session-renewals` | Cookie refresh + CSRF | Ruota la sessione e restituisce un nuovo access token | `200` | `401`, `403` |
+| `POST` | `/api/auth/session-revocations` | CSRF; cookie refresh facoltativo | Revoca la sessione corrente e scade il cookie refresh | `204` | `403` |
+| `GET` | `/api/users/{userId}` | Bearer JWT | Legge un profilo pubblico attivo | `200` | `400`, `401`, `404` |
+| `PATCH` | `/api/users/me` | Bearer JWT | Aggiorna parzialmente il proprio profilo | `200` | `400`, `401`, `404`, `409` |
+
+`CSRF` indica il cookie `__Host-cinder-csrf` e l’header `X-XSRF-TOKEN`; non indica un JWT. Dettagli, esempi e limiti dei body sono nelle sezioni seguenti.
 
 ## Stack implementato
 
@@ -35,7 +52,174 @@ Tutti gli endpoint F01 del controller usano il prefisso `/api/auth`. La modifica
 | `POST /api/auth/password-reset-requests` | Cookie CSRF e header `X-XSRF-TOKEN`; nessun JWT richiesto | `email` | `202` con `message` generico; nessun token o cookie di rinnovo. Invio email non implementato. |
 | `POST /api/auth/password-resets` | Cookie CSRF e header `X-XSRF-TOKEN`; nessun JWT richiesto | `token`, `newPassword` | `204`, senza credenziali o cookie di rinnovo. |
 
-- `nickname` è una stringa non vuota e non composta soltanto da spazi bianchi (`@NotBlank`). Il server rimuove gli spazi iniziali e finali e confronta il valore conservando maiuscole e minuscole.
+### Guida autenticazione, header e OpenAPI
+
+Il client ottiene il token leggibile da `GET /api/auth/csrf-tokens`: la risposta JSON espone `headerName` e `token`, mentre la risposta imposta il cookie `__Host-cinder-csrf` (HttpOnly, Secure, SameSite Strict). Su tutte le sei scritture `POST /api/auth/*` il browser invia il cookie e il valore JSON in `X-XSRF-TOKEN`: registrazione, accesso, richiesta e conferma recupero password, rinnovo e revoca sessione. Il rinnovo richiede anche `__Host-cinder-refresh`; la revoca lo usa se presente. Queste route non richiedono un bearer JWT.
+
+`GET /api/auth/users/me` e tutte le rotte `/api/users/**` e `/api/decks/**` richiedono invece `Authorization: Bearer <accessToken>` e non richiedono CSRF. Il JWT viene restituito nel body di sessione; il client dovrebbe conservarlo in memoria. Il cookie refresh è HttpOnly e non va letto dal JavaScript.
+
+Con il backend locale avviato sulla porta `8081`, la specifica OpenAPI live è [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs); l’interfaccia è [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html), che reindirizza alla UI Springdoc.
+
+### Contratti dettagliati delle rotte `/api/auth/*`
+
+Le richieste con body usano `Content-Type: application/json`. `@NotBlank` richiede una stringa non vuota e non composta soltanto da spazi; i limiti `@Size` sono in caratteri, mentre il limite password del server è in byte UTF-8. Le risposte `204` non hanno body.
+
+#### `GET /api/auth/csrf-tokens`
+
+Non richiede autenticazione né body. Risponde `200 OK`, imposta `__Host-cinder-csrf` e restituisce:
+
+```json
+{
+  "headerName": "X-XSRF-TOKEN",
+  "token": "<csrf-token>"
+}
+```
+
+#### `POST /api/auth/users`
+
+Richiede CSRF. Body esatto:
+
+```json
+{
+  "nickname": "RiftPlayer",
+  "email": "player@example.invalid",
+  "password": "<password scelta dall'utente>"
+}
+```
+
+`nickname` e `password` sono `@NotBlank`; `email` è `@NotBlank`, `@Email` e lunga al massimo 254 caratteri. Il server rimuove gli spazi esterni da `nickname` e normalizza `email` con `strip().toLowerCase(Locale.ROOT)`. `password` è verificata come non vuota e non composta solo da spazi e non può superare 72 byte UTF-8; gli spazi non vengono rimossi. `201 Created` restituisce una `SessionResponse` e imposta `__Host-cinder-refresh`:
+
+```json
+{
+  "accessToken": "<jwt>",
+  "tokenType": "Bearer",
+  "expiresIn": 900,
+  "user": {
+    "id": 42,
+    "nickname": "RiftPlayer",
+    "email": "player@example.invalid",
+    "role": "USER",
+    "rankingPoints": 1000,
+    "iconUrl": null
+  }
+}
+```
+
+#### `POST /api/auth/sessions`
+
+Richiede CSRF. Body:
+
+```json
+{
+  "email": "player@example.invalid",
+  "password": "<password>"
+}
+```
+
+`email` è `@NotBlank`, `@Email`, massimo 254 caratteri e normalizzata dal server; `password` è `@NotBlank` e limitata a 72 byte UTF-8. `200 OK` restituisce la stessa `SessionResponse` di registrazione e imposta `__Host-cinder-refresh`.
+
+#### `POST /api/auth/password-reset-requests`
+
+Richiede CSRF, non JWT. Body:
+
+```json
+{"email":"player@example.invalid"}
+```
+
+`email` è `@NotBlank`, `@Email`, massimo 254 caratteri e normalizzata dal server. `202 Accepted` restituisce:
+
+```json
+{
+  "message": "If the account is eligible, the password reset request has been accepted."
+}
+```
+
+Il messaggio è uguale per account idonei e non idonei; il token dura 10 minuti, ma invio email e consegna del token non sono implementati.
+
+#### `POST /api/auth/password-resets`
+
+Richiede CSRF, non JWT. Body:
+
+```json
+{
+  "token": "<reset-token>",
+  "newPassword": "<nuova password>"
+}
+```
+
+Entrambi i campi sono `@NotBlank`; `newPassword` non può superare 72 byte UTF-8 e conserva gli spazi. Token mancante, malformato, scaduto, usato o non associato a un account attivo produce `400`. In caso di successo risponde `204 No Content`, senza body o nuova sessione.
+
+#### `GET /api/auth/users/me`
+
+Richiede `Authorization: Bearer <accessToken>`, senza body. `200 OK` restituisce `UserProfile`:
+
+```json
+{
+  "id": 42,
+  "nickname": "RiftPlayer",
+  "email": "player@example.invalid",
+  "role": "USER",
+  "rankingPoints": 1000,
+  "iconUrl": null
+}
+```
+
+`role` è `USER` o `ADMIN`; `iconUrl` può essere `null`. Token assente, non valido, scaduto o revocato produce `401`.
+
+#### `POST /api/auth/session-renewals`
+
+Richiede CSRF e il cookie `__Host-cinder-refresh`; non richiede bearer né body. `200 OK` restituisce la `SessionResponse` illustrata per la registrazione, ruota il cookie refresh e invalida il token precedente. Cookie mancante, malformato, scaduto o revocato produce `401`.
+
+#### `POST /api/auth/session-revocations`
+
+Richiede CSRF; non richiede bearer né body. Il cookie `__Host-cinder-refresh` è facoltativo. Risponde sempre `204 No Content` e imposta il cookie refresh con scadenza immediata; ripetere la richiesta mantiene lo stesso esito.
+
+### Profili utente
+
+Le rotte `/api/users/**` richiedono Bearer JWT e non richiedono CSRF. L’identità del PATCH deriva esclusivamente dal principal autenticato.
+
+#### `GET /api/users/{userId}`
+
+Richiede `Authorization: Bearer <accessToken>`, senza body. `userId` deve essere un intero positivo. `200 OK` restituisce `PublicUserProfile` con i soli campi `id`, `nickname`, `rankingPoints`, `iconUrl` e `registrationDate`; un account inesistente o logicamente cancellato restituisce `404`.
+
+Esempio di profilo pubblico:
+
+```json
+{
+  "id": 42,
+  "nickname": "RiftPlayer",
+  "rankingPoints": 1000,
+  "iconUrl": null,
+  "registrationDate": "2026-11-13T12:00:00Z"
+}
+```
+
+#### `PATCH /api/users/me`
+
+Il body può contenere qualsiasi sottoinsieme dei campi seguenti; la rotta richiede Bearer JWT:
+
+```json
+{
+  "nickname": " NewNickname ",
+  "email": " PLAYER@EXAMPLE.INVALID ",
+  "iconUrl": ""
+}
+```
+
+`nickname` è facoltativo, viene normalizzato con `strip()`, deve risultare non vuoto e ha massimo 50 caratteri dopo la normalizzazione. `email` è facoltativa, viene normalizzata con `strip().toLowerCase(Locale.ROOT)`, deve risultare non vuota e rispettare `@Email` e massimo 254 caratteri. `iconUrl` non ha vincoli Bean Validation; un valore omesso o `null` mantiene quello corrente, mentre `""` lo azzera. Email o nickname già usati restituiscono `409`. L’aggiornamento blocca la riga utente attiva con `SELECT ... FOR UPDATE`. `200 OK` restituisce il `UserProfile` aggiornato:
+
+```json
+{
+  "id": 42,
+  "nickname": "NewNickname",
+  "email": "player@example.invalid",
+  "role": "USER",
+  "rankingPoints": 1000,
+  "iconUrl": null
+}
+```
+
+- `nickname` è una stringa non vuota e non composta soltanto da spazi bianchi, di massimo 50 caratteri (`@Size(max = 50)`). Il server rimuove gli spazi iniziali e finali prima della verifica e confronta il valore conservando maiuscole e minuscole.
 - `email` è una stringa in formato email di massimo 254 caratteri. Dopo la validazione il server rimuove gli spazi esterni e usa la forma minuscola per il salvataggio e la ricerca.
 - `password` è una stringa non vuota e non composta soltanto da spazi bianchi (`@NotBlank`), di massimo 72 byte UTF-8. Il server conserva gli spazi e salva l’hash BCrypt.
 - La risposta di sessione include `accessToken` (stringa JWT), `tokenType` (stringa `Bearer`), `expiresIn` (secondi interi) e `user` (profilo). Il valore segreto di rinnovo viaggia nel cookie `__Host-cinder-refresh`.
@@ -71,11 +255,12 @@ Esempio illustrativo di una risposta di sessione.
 
 | Stato | Condizione |
 | --- | --- |
-| `400` | Campi obbligatori mancanti, formato non valido o limite della password superato. Anche token di recupero malformato, sconosciuto, scaduto, usato o associato a un account non ammesso: `Invalid password reset token`. |
-| `401` | Credenziali errate, cookie di rinnovo mancante o inutilizzabile, oppure JWT mancante o inutilizzabile su una risorsa protetta. L’accesso con password usa lo stesso messaggio per email sconosciuta, account cancellato, ruolo non ammesso e password errata. |
-| `403` | Token CSRF mancante o errato oppure origine CORS non ammessa. |
-| `409` | Email o nickname già in uso. |
-| `415` | Tipo di contenuto non supportato per una richiesta con corpo JSON. |
+| `400` | Validazione JSON, ID non positivo, password oltre 72 byte UTF-8 o token di recupero non utilizzabile. |
+| `401` | Credenziali errate o cookie refresh non utilizzabile; sulle rotte Bearer, token assente o non utilizzabile. Il controller restituisce Problem Details per credenziali/cookie errati; il filtro Bearer risponde con `WWW-Authenticate`. |
+| `403` | Token CSRF mancante/non valido o richiesta browser non ammessa. Il rifiuto avviene nel filtro Security prima del controller e non garantisce un body Problem Details. |
+| `409` | Email o nickname già in uso durante registrazione o PATCH. |
+| `404` | `GET /api/users/{userId}` per un utente inesistente o logicamente cancellato; il PATCH risponde `404` se il principal non ha più un profilo attivo. |
+| `415` | Tipo di contenuto non supportato per una richiesta con body JSON. |
 | `500` | Errore interno di persistenza o configurazione. Una registrazione o un rinnovo falliti prima del commit annullano le proprie scritture. |
 
 Gli errori applicativi di validazione, credenziali e conflitto usano `application/problem+json`. Per i rifiuti della catena di sicurezza, il client usa lo stato HTTP. Le risposte Bearer `401` includono `WWW-Authenticate`.
@@ -89,6 +274,40 @@ Gli errori applicativi di validazione, credenziali e conflitto usano `applicatio
   "instance": "/api/auth/sessions"
 }
 ```
+
+Gli errori MVC usano `application/problem+json` con i campi standard `type`, `title`, `status`, `detail` e `instance`. Esempi per validazione, risorsa mancante e conflitto:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Invalid request content.",
+  "instance": "/api/auth/users"
+}
+```
+
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "User not found",
+  "instance": "/api/users/999"
+}
+```
+
+```json
+{
+  "type": "about:blank",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "Email or nickname is already in use",
+  "instance": "/api/users/me"
+}
+```
+
+`401`/`403` emessi direttamente dai filtri di autenticazione, autorizzazione o CSRF non hanno attualmente un body RFC 7807 garantito; per questi casi il client deve basarsi sullo status (e su `WWW-Authenticate` per Bearer). Non viene definito un esempio ProblemDetail `403` non corrispondente alla risposta effettiva.
 
 ## Ciclo di vita, dati e concorrenza
 
@@ -187,6 +406,8 @@ Il **2026-11-12**, su PostgreSQL 18.1 isolato e Java 21.0.11, sono passati tutti
 Per la base del recupero del **2026-11-12**, sulla copia di lavoro di `feature/f01-accesso-utenti`, Java 21.0.11 e Maven Wrapper hanno compilato sorgenti e test con `mvnw.cmd -o -DskipTests test-compile`. Il comando `mvnw.cmd -o "-Dtest=SecurityConfigurationTests,SessionTokenCleanupTests,PasswordResetTokenCleanupTests" test` ha superato **31 test**, senza fallimenti, errori o casi saltati: 25 su catena di sicurezza/contratto HTTP con servizio simulato e 6 sugli scheduler. Questi controlli non attestano le query o la transazione completa.
 
 Sono aggiunti e compilati test PostgreSQL con schema isolato per durata, richieste ripetute, account non ammessi, validazione, consumo, revoche, rollback, concorrenza e pulizia. **Non sono stati eseguiti**: il server non è stato avviato in sandbox e l’autorizzazione ad avviare un’istanza locale isolata è stata rifiutata. Non è stata eseguita l’intera suite. Sono passati `git diff --check`, `docker compose config --quiet` e il controllo di 182 collegamenti locali e relativi titoli in 11 documenti modificati. La validazione Compose riguarda la configurazione, non l’avvio dei servizi. Invio email, rendering Thymeleaf, frontend e Compose PostgreSQL 18 restano non verificati. I report storici sotto non attestano il nuovo recupero password.
+
+Il **2026-11-13** è stata eseguita dalla cartella `springboot_app/app/` la suite completa con `./mvnw test`, configurando le variabili d'ambiente per il database di test e la chiave JWT non di produzione. Sono passati **70 test su PostgreSQL 18.7**, senza errori, fallimenti o casi saltati. I test F01 includono i profili pubblici, gli aggiornamenti autenticati, la validazione dei limiti del nickname, i conflitti di email/nickname e gli account cancellati. La prova non avvia né verifica Compose o il frontend nel browser.
 
 ### Evidenze storiche precedenti al recupero password
 
