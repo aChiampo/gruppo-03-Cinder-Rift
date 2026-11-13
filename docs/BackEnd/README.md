@@ -17,6 +17,7 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 
 ## Funzionalità
 
+- [Guida API per il Frontend](GUIDA-API-FRONTEND.md) — riferimento operativo condivisibile per autenticazione, profili e mazzi.
 - [F01 — Accesso utenti](accesso-utenti.md)
 - [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
 - [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md)
