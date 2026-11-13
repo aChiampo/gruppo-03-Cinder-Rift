@@ -1,13 +1,384 @@
 # Gestione e validazione dei mazzi
 
 - ID: F05 · Perimetro: confermato; specifica in approfondimento.
-- Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
-- Ultimo aggiornamento significativo: **2026-11-05**, allineamento alla base di dati v1.0 su richiesta dell'utente.
+- Implementazione: persistenza, validazione e API REST backend implementate; frontend non implementato. Responsabile: DA DEFINIRE (Software Developer).
+- Ultimo aggiornamento significativo: **2026-11-13**, esposizione delle rotte HTTP F05 e test MockMvc su PostgreSQL.
 - Branch documentale richiesto: `docs/f05-deck-validation-v2`.
 
 Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
 
-L'integrazione documentale è approvata; la proposta di riferimento è ora la V2.1, mentre regole definitive e bilanciamento restano da confermare. Le decisioni aggiornate dall'utente il 2026-10-29 prevedono una PK autonoma `DECKS_CARDS.id`, una destinazione testuale `ROUND1` … `ROUND5` oppure `EQUIPMENT` e nessuna quantità per riga. Questo modello sostituisce la precedente PK composta e risolve la rappresentazione delle due copie nello stesso round e del gruppo equipaggiamenti. Restano scelti i controlli distinti per operazione e l'atomicità di eventuali aggregati persistiti. Firme, errori e strategie transazionali restano **proposte da concordare**, non API o migrazioni implementate. Verifiche applicative e di bilanciamento: **non eseguite**.
+## Riepilogo API
+
+| Method | Path | Auth required | Purpose | Success Status | Error Statuses |
+| --- | --- | --- | --- | --- | --- |
+| `GET` | `/api/users/me/decks` | Bearer JWT | Elenca i mazzi del chiamante con validazione live | `200` | `401` |
+| `POST` | `/api/users/me/decks` | Bearer JWT | Crea una bozza con eventuali copie iniziali | `201` | `400`, `401`, `404` |
+| `GET` | `/api/decks/{deckId}` | Bearer JWT | Legge un mazzo di proprietà con copie e validazione live | `200` | `400`, `401`, `404` |
+| `PUT` | `/api/decks/{deckId}` | Bearer JWT | Sostituisce copie e stato sfidabile in modo atomico | `200` | `400`, `401`, `404` |
+| `DELETE` | `/api/decks/{deckId}` | Bearer JWT | Elimina un mazzo di proprietà | `204` | `400`, `401`, `404` |
+
+Per distinguere Bearer e CSRF e per consultare OpenAPI, vedere la [guida autenticazione e header F01](accesso-utenti.md#guida-autenticazione-header-e-openapi). Queste rotte non richiedono cookie CSRF o header `X-XSRF-TOKEN`.
+
+L'integrazione documentale è approvata; la proposta di riferimento è ora la V2.1, mentre regole definitive e bilanciamento restano da confermare. Le decisioni aggiornate dall'utente il 2026-10-29 prevedono una PK autonoma `DECKS_CARDS.id`, una destinazione testuale `ROUND1` … `ROUND5` oppure `EQUIPMENT` e nessuna quantità per riga. Questo modello sostituisce la precedente PK composta e risolve la rappresentazione delle due copie nello stesso round e del gruppo equipaggiamenti. Le migrazioni V3/V4 e le API backend implementate sono descritte sotto. I test coprono le rotte e le regole iniziali, ma non costituiscono verifica completa della funzionalità o del bilanciamento.
+
+## Implementazione backend disponibile
+
+Il package `webapp.deck` usa `JdbcClient`, record Java, Jakarta Bean Validation e transazioni Spring. `DeckRepository` esegue CRUD su `decks` e sulle singole righe `decks_cards`; ogni lettura o mutazione di un mazzo è vincolata al proprietario autenticato, con lock della riga utente e poi del mazzo per le operazioni di scrittura. `CardCatalogRepository` carica carte, arti, configurazioni e copie possedute. `DeckService` coordina le operazioni; la cancellazione del mazzo usa la cascata FK prevista da V3. `DeckController` espone le rotte riportate sotto, risolvendo l'identità esclusivamente da `@AuthenticationPrincipal UserProfile`; non è persistito un flag di validità.
+
+`DeckValidator` raccoglie i bean `DeckValidationRule` e restituisce esito, errori, avvisi e riepilogo. Sono implementati controlli strutturali, esistenza di carte e arti attive, compatibilità tipo/destinazione, possesso per variante, conteggio ed energia aggregata per destinazione, nonché la composizione di 30 copie (25 creature, 5 equipaggiamenti e 5 creature per ciascun round). L'incompletezza è un avviso per le bozze e un errore quando si richiede la validità completa; solo un mazzo valido può essere reso `is_challengeable`. Potenza, quote di rarità e limiti di copie della proposta V2.1 non sono implementati.
+
+Il guard condiviso del catalogo previsto dal protocollo transazionale resta **DA DEFINIRE**; il lock utente non sostituisce quel guard né coordina scrittori di catalogo che non lo acquisiscano. Inoltre, la regola implementata confronta la somma di `energy_cost` con `max_energy`, mentre il seed V4 configura i massimi dei round da 1 a 5. Con questi valori, cinque carte con costo positivo in `ROUND1` non possono superare il controllo: la compatibilità dei parametri iniziali con la regola aggregata resta da concordare prima dell'uso di mazzi completi con il catalogo reale.
+
+## API HTTP implementate
+
+Tutte le rotte richiedono un bearer JWT valido e usano l'ID di `UserProfile` come unica identità del proprietario. Il client non invia `ownerId` o `userId`. Le rotte non richiedono CSRF. Ogni oggetto in `entries` rappresenta una singola copia; ripetere una carta crea copie distinte.
+
+I body usano `Content-Type: application/json`. `DeckEntryRequest` ha i campi `cardId` (intero positivo), `cardArtId` (intero positivo) e `destination` (stringa non blank). Non inviare `entryId`: gli ID delle righe salvate sono assegnati dal server. La validità live viene ricalcolata a ogni lettura; non è memorizzata nel database.
+
+#### `GET /api/users/me/decks`
+
+Non ha body. `200 OK` restituisce una lista (vuota se non ci sono mazzi); ciascun elemento usa i campi di `DeckListItemResponse`:
+
+```json
+[
+  {
+    "id": 8,
+    "ownerId": 12,
+    "isChallengeable": false,
+    "cardCount": 1,
+    "validation": {
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        {
+          "code": "CREATURE_COUNT_INCOMPLETE",
+          "scope": "creatures",
+          "message": "Expected 25 creatures but found 1",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": null,
+          "severity": "WARNING"
+        },
+        {
+          "code": "EQUIPMENT_COUNT_INCOMPLETE",
+          "scope": "equipment",
+          "message": "Expected 5 equipment but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "EQUIPMENT",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 1",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND1",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND2",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND3",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND4",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND5",
+          "severity": "WARNING"
+        },
+        {
+          "code": "DECK_COUNT_INCOMPLETE",
+          "scope": "deck",
+          "message": "Expected 30 deck but found 1",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": null,
+          "severity": "WARNING"
+        }
+      ],
+      "summary": {
+        "totalCards": 1,
+        "creatureCount": 1,
+        "equipmentCount": 0,
+        "cardCountByDestination": {"ROUND1": 1},
+        "energyByDestination": {"ROUND1": 1}
+      }
+    }
+  }
+]
+```
+
+#### `POST /api/users/me/decks`
+
+Il body è facoltativo; se presente, `entries` è facoltativo e può essere vuoto o omesso. Ogni elemento deve avere questa struttura:
+
+```json
+{
+  "entries": [
+    {"cardId": 17, "cardArtId": 41, "destination": "ROUND1"}
+  ]
+}
+```
+
+Il server crea sempre una bozza con `isChallengeable: false`. `201 Created` restituisce `DeckDetailsResponse` come mostrato per `GET /api/decks/{deckId}`. Una bozza incompleta è salvabile e riporta le mancanze in `validation.warnings`; errori di regola diversi dalla sola incompletezza impediscono il salvataggio con `400`.
+
+#### `GET /api/decks/{deckId}`
+
+Non ha body; `deckId` deve essere un intero positivo. `200 OK` restituisce `DeckDetailsResponse`:
+
+```json
+{
+  "id": 8,
+  "ownerId": 12,
+  "isChallengeable": false,
+  "entries": [
+    {"entryId": 101, "cardId": 17, "cardArtId": 41, "destination": "ROUND1"}
+  ],
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [
+      {
+        "code": "CREATURE_COUNT_INCOMPLETE",
+        "scope": "creatures",
+        "message": "Expected 25 creatures but found 1",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": null,
+        "severity": "WARNING"
+      },
+      {
+        "code": "EQUIPMENT_COUNT_INCOMPLETE",
+        "scope": "equipment",
+        "message": "Expected 5 equipment but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "EQUIPMENT",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 1",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND1",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND2",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND3",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND4",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND5",
+        "severity": "WARNING"
+      },
+      {
+        "code": "DECK_COUNT_INCOMPLETE",
+        "scope": "deck",
+        "message": "Expected 30 deck but found 1",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": null,
+        "severity": "WARNING"
+      }
+    ],
+    "summary": {
+      "totalCards": 1,
+      "creatureCount": 1,
+      "equipmentCount": 0,
+      "cardCountByDestination": {"ROUND1": 1},
+      "energyByDestination": {"ROUND1": 1}
+    }
+  }
+}
+```
+
+Il mazzo mancante e quello di un altro proprietario restituiscono entrambi `404 Not Found`, senza distinguerli:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Deck not found",
+  "instance": "/api/decks/999"
+}
+```
+
+#### `PUT /api/decks/{deckId}`
+
+Sostituisce atomicamente tutte le copie e il flag sfidabile. `entries` è obbligatorio e non può essere `null`; ogni elemento segue `DeckEntryRequest`. `isChallengeable` è facoltativo: se omesso o `null`, diventa `false`.
+
+```json
+{
+  "entries": [
+    {"cardId": 17, "cardArtId": 41, "destination": "ROUND1"}
+  ],
+  "isChallengeable": false
+}
+```
+
+`200 OK` restituisce `DeckDetailsResponse`. Una bozza può restare incompleta: la sola incompletezza produce warning e non blocca il salvataggio. Se si richiede `"isChallengeable": true`, conteggi, possesso, esistenza/attività di carta e arte, destinazione e limiti configurati devono essere validi; violazioni producono `400` e la sostituzione viene annullata. `isChallengeable` non viene mai attivato su un mazzo invalido.
+
+#### `DELETE /api/decks/{deckId}`
+
+Non ha body; `deckId` deve essere un intero positivo. `204 No Content` elimina il mazzo e le sue copie. Non restituisce body. Un mazzo mancante o di altro proprietario restituisce `404`.
+
+#### Errori
+
+Errori di validazione HTTP del body e ID non positivo restituiscono il Problem Detail standard di Spring. Il fallimento delle regole di validazione mazzo restituisce `application/problem+json` con i campi standard RFC 7807 e le proprietà `errors`, `warnings`, `summary`:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Deck validation failed",
+  "status": 400,
+  "detail": "Deck validation failed",
+  "instance": "/api/decks/8",
+  "errors": [
+    {
+      "code": "CREATURE_COUNT_INCOMPLETE",
+      "scope": "deck",
+      "message": "Expected 25 creatures but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": null,
+      "severity": "ERROR"
+    },
+    {
+      "code": "EQUIPMENT_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 equipment but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "EQUIPMENT",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND1",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND2",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND3",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND4",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND5",
+      "severity": "ERROR"
+    },
+    {
+      "code": "DECK_COUNT_INCOMPLETE",
+      "scope": "deck",
+      "message": "Expected 30 deck but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": null,
+      "severity": "ERROR"
+    }
+  ],
+  "warnings": [],
+  "summary": {
+    "totalCards": 0,
+    "creatureCount": 0,
+    "equipmentCount": 0,
+    "cardCountByDestination": {},
+    "energyByDestination": {}
+  }
+}
+```
+
+I campi `DeckViolation` sono sempre `code`, `scope`, `message`, `cardId`, `cardArtId`, `destination`, `severity`; i valori non applicabili sono `null`. Il contenuto e l'ordine delle violazioni dipendono dal risultato live. Il filtro Bearer risponde `401` con `WWW-Authenticate`; il controller non garantisce un body Problem Detail per i rifiuti del filtro. Il client tratta sia mazzo inesistente sia non appartenente all'utente come `404`, senza possibilità di distinguere i due casi.
+
+Verifica mirata dei test MockMvc F05 del **2026-11-13**: `./mvnw -q -Dtest=DeckControllerDatabaseTests test`, eseguito da `springboot_app/app` con PostgreSQL 18.7; esito superato. I test coprono `200`, `201`, `204`, `400`, `401`, `404`, mancato accesso ai mazzi altrui e rollback della sostituzione non valida. L’ultima esecuzione della suite backend completa da `springboot_app/app`, con `./mvnw test`, ha superato **70 test**, senza errori, fallimenti o casi saltati. La verifica non attesta bilanciamento o correttezza dei parametri di gioco; i 70 test non sono stati rieseguiti durante questo aggiornamento documentale.
 
 ## Obiettivo, perimetro e dipendenze
 
@@ -45,7 +416,7 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 ## Attori, autorizzazioni e precondizioni
 
 - `userId` deriva dall'identità autenticata, non da un campo client arbitrario.
-- Caricamento e modifica verificano `DECKS.id_user == userId`. Identità assente, mazzo inesistente o non autorizzato interrompono il flusso prima di esporre composizione e collezione. Status HTTP e politica di visibilità sono DA DEFINIRE.
+- Caricamento e modifica verificano `DECKS.id_user == userId`. Identità assente richiede autenticazione; mazzo inesistente o non autorizzato restituisce `404 Not Found` prima di esporre composizione e collezione. Gli status implementati sono riepilogati nella sezione [API HTTP](#api-http-implementate).
 - I privilegi di `ADMIN` e `USER` richiedono un’assegnazione esplicita.
 - Regole incomplete o letture fallite producono errori tecnici: nessun salvataggio né esito positivo. Una lettura fallita non equivale a una collezione vuota.
 - Una riga collezione assente vale zero copie solo dopo una lettura riuscita; valori presenti nulli, negativi o non interi indicano dati incoerenti.
@@ -97,7 +468,7 @@ Non sono introdotti stati persistiti di validazione. Una modifica, uno scambio o
 
 ## Contratto logico proposto
 
-Firme di servizio e dati illustrativi, **non endpoint approvati**. Metodi HTTP, percorsi conformi al prefisso `/api`, status, limiti, paginazione e OpenAPI sono DA DEFINIRE prima dell'integrazione.
+Le firme che seguono sono pseudocodice del flusso di dominio, non il contratto HTTP. Le rotte, i payload e gli status effettivamente implementati sono definiti nella sezione [API HTTP implementate](#api-http-implementate); restano DA DEFINIRE le politiche di paginazione e le regole di gioco V2.1 non implementate.
 
 ```typescript
 type DeckDestination = "ROUND1" | "ROUND2" | "ROUND3" | "ROUND4" | "ROUND5" | "EQUIPMENT";
