@@ -44,5 +44,6 @@ Con soglia dieci e rarità minima epica, la decima apertura senza una precedente
 
 - [Terminologia commerciale](../../README.md#terminologia-commerciale)
 - [Offerte pacchetti](../BackEnd/acquisto-pacchetti.md)
+- [Schema dati preliminare](../BackEnd/schema-dati-preliminare.md) — proposta tecnica da coordinare con le decisioni economiche e sulla composizione.
 - [Piano di lancio](comunicazione-lancio.md)
 - [Indice Digital](README.md)

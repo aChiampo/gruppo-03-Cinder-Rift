@@ -1,6 +1,6 @@
 # Negozio delle offerte di pacchetti
 
-ID: F03 · Perimetro: confermato; specifica sintetica.
+ID: F03 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Ultimo aggiornamento significativo: 2026-11-09, per le risorse economiche e per il sistema mercy sulle aperture confermato nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md). Verifiche applicative: non eseguite.
@@ -11,6 +11,7 @@ Ultimo aggiornamento significativo: 2026-11-09, per le risorse economiche e per 
 - Distinguere Scaglie, Nuclei Rift e Rotami secondo la [terminologia economica confermata](../Digital/economia-crediti-pacchetti.md#risorse-economiche), usando i dati autorizzati dal backend senza accorpare le risorse in un unico saldo.
 - Mostrare prezzo, risorsa richiesta e dati del singolo pacchetto usando le informazioni gestite dal backoffice. I tre saldi dell'inventario sono distinti; risorse ammesse nei prezzi e payload definitivi restano da precisare dal contratto backend.
 - Collegare il risultato dell'apertura alla collezione.
+- Il percorso server di acquisto, addebito, apertura e aggiornamento della collezione è descritto nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md#percorso-acquisto-addebito-estrazione-e-collezione).
 
 ## Progresso mercy per pacchetto
 
@@ -23,6 +24,7 @@ Ultimo aggiornamento significativo: 2026-11-09, per le risorse economiche e per 
 
 - Schermate, conferma dell'acquisto, modalità di apertura e stati di errore.
 - Contenuti effettivi dei prodotti; nessun prezzo o nome commerciale è fissato dagli esempi.
+- Stati UI e riallineamento del saldo e della collezione dopo successo, errore o retry, in coerenza con il contratto F03.
 
 ## Collegamenti
 

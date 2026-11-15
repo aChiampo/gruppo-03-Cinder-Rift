@@ -3,8 +3,7 @@
 ID: F03 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: 2026-11-09, per i tre saldi dell'inventario e per il sistema mercy sulle aperture confermato dall'utente. Verifiche applicative: non eseguite.
-Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#inventario-e-pacchetti).
+Ultimo aggiornamento significativo: 2026-11-13. Verifica applicativa: non eseguita.
 
 ## Obiettivo e decisioni note
 
@@ -79,16 +78,90 @@ Consumo del pacchetto, inizializzazione/decremento/reset del progresso e accredi
 
 La chiave del progresso non deduplica richieste ripetute dopo un commit incerto. Chiave di richiesta, conservazione del risultato e recupero devono ancora essere definiti; il client rilegge lo stato invece di ripetere alla cieca. Modifiche di soglia/rarità e riattivazione richiedono una policy di riconciliazione dei progressi esistenti. La garanzia viene risolta nella composizione dell'apertura stessa, senza record di ricompensa differita.
 
+## Percorso acquisto, addebito, estrazione e collezione
+
+Il flusso seguente descrive il comportamento atteso a livello funzionale per F03 e F04. È una proposta da completare con le decisioni aperte riportate sotto: non definisce API, payload o una transazione già implementata.
+
+1. **Scelta dell'offerta.** L'utente consulta un'offerta attiva, composta da uno o più pacchetti e con prezzo in crediti. Prezzo e composizione sono quelli correnti del catalogo gestito dal backoffice, non valori autorevoli inviati dal client.
+2. **Richiesta d'acquisto.** L'utente conferma l'offerta. Il server identifica l'utente autenticato e rilegge prezzo, disponibilità e composizione dell'offerta. Non considera attendibile un saldo o un prezzo calcolato dal client.
+3. **Controllo e addebito.** Il server controlla la disponibilità del saldo e registra l'acquisto al prezzo applicato. L'addebito deve riferirsi all'acquisto e non superare il saldo disponibile; saldo e registrazione devono restare coerenti anche in presenza di richieste concorrenti.
+4. **Creazione dei pacchetti acquistati.** Il server registra i singoli pacchetti compresi nell'offerta acquistata, mantenendo il riferimento all'offerta e al prezzo pagato. L'offerta può contenere più tipi di pacchetto.
+5. **Apertura ed estrazione.** Per ciascun pacchetto aperto, il server applica la composizione e le regole casuali approvate per quel tipo e registra il risultato. Il client non sceglie né modifica le carte estratte. La composizione per rarità è richiesta dalla traccia, ma quantità, distribuzione e regole per duplicati sono ancora da definire.
+6. **Aggiornamento della collezione.** Per ogni carta estratta, il server crea una copia posseduta associata all'utente e alla carta di catalogo. Copie duplicate restano copie distinte; il risultato dell'apertura deve poter essere ricondotto alle copie aggiunte. Scambi successivi possono trasferirne la proprietà secondo F06.
+7. **Risposta e consultazione.** Il client riceve l'esito dell'operazione, il saldo aggiornato e le carte ottenute, oppure recupera l'esito dell'apertura separatamente se questa è differita. La collezione F04 mostra poi le copie risultanti.
+
+### Coerenza e casi di errore da concordare
+
+- **Unità di successo.** È raccomandato che addebito e registrazione dell'acquisto siano atomici. Se l'apertura avviene nella stessa richiesta, anche estrazione registrata e copie aggiunte devono essere coerenti con l'esito; non deve risultare un acquisto addebitato senza una possibilità definita di recuperare o completare l'apertura.
+- **Saldo insufficiente.** La richiesta non deve produrre un addebito né pacchetti o copie. La risposta d'errore e il modo in cui l'interfaccia comunica il saldo residuo sono da definire.
+- **Concorrenza.** Acquisti simultanei non devono spendere due volte la stessa disponibilità. Tecnica di serializzazione/controllo, isolamento e comportamento in caso di conflitto sono da definire dopo la scelta dello stack.
+- **Retry e doppio invio.** Una richiesta ripetuta non dovrebbe generare addebiti o aperture duplicate; identificatore idempotente, durata e risposta da restituire sono da concordare.
+- **Errore durante l'apertura.** Se la generazione o la registrazione del risultato fallisce, l'esito deve restare recuperabile e non creare copie parziali o duplicati. Politica di rollback o ripresa e registrazione della casualità restano da definire.
+- **Saldo mostrato.** Il saldo restituito dal server è quello autorevole dopo l'operazione; i valori locali del client sono solo presentazione e devono riallinearsi alla risposta.
+
+### Scelta ancora aperta: apertura immediata o differita
+
+L'offerta contiene pacchetti; non è ancora deciso se l'acquisto li apra subito o li aggiunga prima a una disponibilità dell'utente per un'apertura successiva. In entrambi i casi il server deve impedire di aprire più volte lo stesso pacchetto. Il contratto dovrà quindi specificare stati e operazioni dell'apertura, nonché se l'acquisto restituisce direttamente le carte o solo i pacchetti ottenuti.
+
+### Esempi di dati illustrativi
+
+Gli identificativi e gli importi sono fittizi. Questi esempi aiutano il confronto con il FrontEnd ma non definiscono DTO, endpoint, prezzo, saldo iniziale o composizione approvati.
+
+Saldo esemplificativo dopo l'acquisto:
+
+```json
+{
+  "userId": "user-demo-01",
+  "balanceCredits": 700
+}
+```
+
+Risultato esemplificativo nel caso, ancora da decidere, in cui l'apertura avvenga contestualmente all'acquisto. I 300 crediti addebitati e le due carte mostrate non rappresentano regole o valori approvati:
+
+```json
+{
+  "purchaseId": "purchase-demo-01",
+  "packId": "pack-demo-01",
+  "creditsDebited": 300,
+  "balanceAfter": 700,
+  "cards": [
+    {
+      "copyId": "copy-demo-01",
+      "cardId": "card-demo-01",
+      "name": "Carta dimostrativa A",
+      "rarity": "Comune"
+    },
+    {
+      "copyId": "copy-demo-02",
+      "cardId": "card-demo-02",
+      "name": "Carta dimostrativa B",
+      "rarity": "Rara"
+    }
+  ]
+}
+```
+
+Se sarà scelta l'apertura differita, il risultato delle carte dovrà essere rappresentato da un esito separato, da definire. Per l'esempio di lettura delle copie possedute, vedere [F04 — Collezione delle carte](collezione-carte.md#esempio-di-carte-possedute).
+
 ## Da definire
 
+<<<<<<< Updated upstream
 - Risorse ammesse nei prezzi, fonte del prezzo e selettore di risorsa delle offerte; corrispondenza delle prenotazioni, configurazione di slot/probabilità, filtri vuoti, assegnazione delle arti e modalità di apertura.
 - API, errori, deduplicazione delle richieste e gestione degli esiti di commit incerti. Non è modellato un registro dei movimenti.
 - Policy iniziale di `mercy_rarity`, ordinamento delle rarità, slot/distribuzione della garanzia, gestione dei progressi dopo modifiche o riattivazione di mercy e deduplicazione delle aperture.
+=======
+- Prezzi, tipi dei pacchetti, disponibilità e composizione per rarità, incluse eventuali carte garantite e gestione dei duplicati.
+- Assegnazione iniziale dei crediti e ulteriori fonti di variazione del saldo, in coordinamento con D03.
+- Apertura immediata o differita; stati del pacchetto, risultato e recupero dopo errori.
+- Confini transazionali, concorrenza, richieste ripetute, idempotenza e politica per errori parziali.
+- Contratto tecnico condiviso: operazioni, input/output, autorizzazioni, errori e criteri di verifica.
+>>>>>>> Stashed changes
 
 ## Collegamenti
 
 - [Interfaccia negozio](../FrontEnd/acquisto-pacchetti.md)
 - [Economia](../Digital/economia-crediti-pacchetti.md)
+- [Schema dati preliminare](schema-dati-preliminare.md)
 - [Backoffice](gestione-amministrativa.md)
 - [Collezione](collezione-carte.md)
 - [Indice BackEnd](README.md)

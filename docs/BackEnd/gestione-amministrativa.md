@@ -24,6 +24,12 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio
 - Cancellare logicamente carte o espansioni richiede il guard esclusivo del catalogo, invalidazione di annunci/trattative e rilascio di tutti gli hold prima della conversione e pulizia di collezione e mazzi. Applicare il [protocollo transazionale comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune); non è un trigger. Tassi, frammenti e recupero per lotti restano da definire.
 - `NOTIFICATIONS` usa FK intere per mittente e destinatario, messaggio obbligatorio e stato `new`, `read` o `archived`. Invii di massa e regali richiedono autorizzazione backend e aggiornamenti economici separati dalla notifica.
 
+## Bozza di classi per il catalogo carte
+
+Per F04 è stata abbozzata una `CardRepository` di lettura e un `CardCatalogService` nella pagina canonica della [collezione](collezione-carte.md#bozza-di-classi-di-servizio-e-repository). Le operazioni di consultazione sono separate dalla gestione amministrativa.
+
+La bozza non introduce ancora un `CardManagementService` di scrittura: ruoli autorizzati, campi modificabili, validazioni e compatibilità delle modifiche con mazzi e partite esistenti sono ancora da definire. Dopo l'accordo su F10, le operazioni amministrative potranno essere aggiunte qui senza sovrapporre le responsabilità della collezione.
+
 ## Riferimenti alla proposta di regolamento
 
 - Il catalogo delle carte dovrà considerare, dopo la conferma delle regole, i concetti descritti nelle sezioni su [energia e punti potenza](../Digital/regolamento-base.md#3-energia-e-punti-potenza), [caratteristiche delle creature](../Digital/regolamento-base.md#5-caratteristiche-delle-creature), [fazioni](../Digital/regolamento-base.md#6-fazioni) ed [equipaggiamenti](../Digital/regolamento-base.md#7-equipaggiamenti).
@@ -38,6 +44,7 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 - Matrice dei permessi e operazioni consentite su cataloghi già utilizzati.
 - Eventuali altre funzioni amministrative.
 - Contratto tecnico del catalogo e validazioni; compatibilità delle modifiche alle carte con mazzi e partite esistenti, in coordinamento con F05 e F07.
+- Operazioni di creazione, aggiornamento, disattivazione o versionamento delle carte e relativa autorizzazione.
 
 ## Collegamenti
 
@@ -45,7 +52,9 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 - [Accesso](accesso-utenti.md)
 - [Offerte di pacchetti](acquisto-pacchetti.md)
 - [Carte e identità](../Digital/lore-identita-carte.md)
-- [Regolamento Versione 2.1](../Digital/regolamento-base.md)
+- [Regolamento Versione 2.0](../Digital/regolamento-base.md)
+- [Bozza di servizi e repository per la collezione](collezione-carte.md#bozza-di-classi-di-servizio-e-repository)
+- [Schema dati preliminare](schema-dati-preliminare.md)
 - [Mazzi](gestione-mazzi.md)
 - [Sfide](sfide-simulazione.md)
 - [Indice BackEnd](README.md)
