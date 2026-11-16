@@ -1,6 +1,6 @@
 # Gioco di carte collezionabili digitale
 
-> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: backend F01 e base del recupero password implementati; invio email, frontend e integrazione di autenticazione da avviare. Aggiornamento F01: **2026-11-12**, su richiesta dell’utente.
+> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: backend F01 e F05 implementati; le API F04 per catalogo e collezione sono state aggiunte, ma i test mirati non sono ancora completati. Invio email e frontend restano da avviare. Aggiornamento F04: **2026-11-15**.
 
 ## Indice generale
 
