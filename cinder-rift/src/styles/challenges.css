@@ -1,0 +1,26 @@
+/* Sfide in attesa */
+.rows { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; align-items: center; gap: 14px; padding: 8px 14px 8px 8px; background: #2b344c; border: 1px solid var(--line-soft); border-radius: 8px; }
+.avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cyan); }
+.avatar.lg { width: 66px; height: 66px; }
+.avatar.red { border-color: #165DD9; }
+.avatar.cyan { border-color: #44C3F4; }
+.row strong { display: block; font-size: 17px; }
+.row small, .decks small { color: var(--muted); font-size: 13px; }
+.empty { padding: 26px 0; text-align: center; color: var(--muted); }
+
+/* Ultima sfida */
+.match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 14px 10px; background: #2b344c; border: 1px solid var(--line-soft); border-radius: 8px; margin-bottom: 12px; }
+.player { display: flex; align-items: center; gap: 10px; }
+.player.right { justify-content: flex-end; text-align: right; }
+.player strong { display: block; font-size: 16px; }
+.win { display: inline-block; margin-top: 4px; padding: 2px 10px; font-size: 12px; font-weight: 700; letter-spacing: .5px; color: #44C3F4; background: #165DD966; border: 1px solid #44C3F4; border-radius: 4px; }
+.score { text-align: center; }
+.score b { display: block; font-size: 18px; }
+.score em { display: block; font-style: normal; font-size: 30px; font-weight: 700; line-height: 1.1; }
+.score small { color: var(--muted); }
+.meta { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.meta > div { display: flex; align-items: center; gap: 8px; padding-left: 10px; border-left: 1px solid var(--line-soft); color: var(--cyan); }
+.meta > div:first-child { border: 0; padding-left: 0; }
+.meta span { color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.2; }
+.meta small { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
