@@ -79,7 +79,7 @@ Se GitHub ti chiede di accedere, usa il tuo account con accesso al progetto. Puo
 1. Apri la cartella principale del progetto, dove trovi i file di avvio.
 2. Su **Windows**, fai doppio clic su [start-windows.bat](start-windows.bat).
 3. Su **macOS**, la prima volta apri **Terminale**. Scrivi `chmod +x ` con uno spazio alla fine, trascina [start-macos.command](start-macos.command) dal Finder nella finestra del Terminale e premi Invio. Poi fai doppio clic sul file nel Finder. Dalle volte successive basta il doppio clic.
-4. Il file scarica gli aggiornamenti del progetto da `dev`, avvia Docker Desktop se serve e prepara l'applicazione. Il primo avvio può richiedere alcuni minuti. Se Docker Desktop chiede di completare la configurazione, finiscila e poi riprova.
+4. Il file scarica gli aggiornamenti del progetto da `dev`. Se Docker Desktop non è installato, scarica l'installer ufficiale e si ferma: installalo e rilancia il file. Se è già installato, lo avvia se necessario. Prima di Compose genera una chiave JWT casuale nel `.env` locale solo se manca e controlla che il file e la variabile siano presenti; non sovrascrive le altre impostazioni già presenti. Dopo che i servizi superano i controlli di salute, apre il frontend nel browser. Il primo avvio può richiedere alcuni minuti. Se Docker Desktop chiede di completare la configurazione, finiscila e poi riprova.
 
 Se compare un errore di aggiornamento, copia il messaggio e mandalo a chi si occupa del progetto.
 
