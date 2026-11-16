@@ -60,7 +60,7 @@ Tutte le dipendenze seguenti utilizzano lo scope Maven `test`.
 | `starter-validation-test` | Test dei comportamenti di validazione. |
 | `starter-websocket-test` | Supporto ai test WebSocket; resta dichiarato anche se lo starter applicativo è commentato. La coerenza di questa scelta va rivalutata quando viene deciso il canale di comunicazione. |
 
-Sono presenti test F01 per profilo protetto e CSRF, restrizioni del namespace amministrativo, scheduler e cancellazione delle sessioni. I report esistenti e i limiti sono descritti nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#verifiche-ed-evidenze). I test delle altre funzionalità restano da implementare; Swagger UI non sostituisce i test automatici.
+Sono presenti test F01 per profilo protetto e CSRF, restrizioni del namespace amministrativo, scheduler e cancellazione delle sessioni. I report esistenti e i limiti sono descritti nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#verifiche-ed-evidenze). F04 include fixture database e test MockMvc per catalogo e collezione, ma la verifica mirata non è completata; le altre funzionalità restano da coprire. Swagger UI non sostituisce i test automatici.
 
 Il motore di gioco deve restare un componente Java isolato e coperto da test JUnit, come richiesto dalla [traccia](../../Laboratorio-Integrato-TRACCIA.md). I suoi test unitari devono verificare le regole senza richiedere Spring o un database. Se organizzato come modulo separato, il motore deve dichiarare autonomamente le proprie dipendenze di test.
 

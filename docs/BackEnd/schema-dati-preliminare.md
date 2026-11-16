@@ -3,12 +3,12 @@
 ID collegati: F01, F03, F04, F05, F06, F07, F08, F10, D01 e D03.  
 Perimetro: proposta trasversale da discutere; non concordata.  
 Implementazione: non iniziata. Stack definitivo e database da confermare.  
-Ultimo aggiornamento significativo: 2026-11-13.  
+Ultimo aggiornamento significativo: 2026-11-15.  
 Verifica: controlli documentali; nessuno schema eseguibile o applicazione disponibile.
 
 ## Scopo e limiti
 
-Questo documento propone un modello logico iniziale per mettere in relazione account, catalogo, copie possedute, crediti, offerte e pacchetti, mazzi, scambi e partite. Non è DDL, non sceglie un database e non sostituisce i contratti canonici delle singole pagine BackEnd: serve da base per il confronto e va aggiornato dopo le decisioni condivise.
+Questo documento propone un modello logico iniziale per mettere in relazione account, catalogo, copie possedute, crediti, offerte e pacchetti, mazzi, scambi e partite. Non è DDL, non sceglie un database e non sostituisce i contratti canonici delle singole pagine BackEnd: serve da base per il confronto e va aggiornato dopo le decisioni condivise. Per F04, il modello `OwnedCopy` riportato qui è superato dallo schema canonico v1.1: `COLLECTIONS` aggrega le quantità per utente, carta e variante grafica; non esiste un `copyId` persistito per ogni copia.
 
 I nomi inglesi delle entità e dei campi sono proposte coerenti con le convenzioni del progetto. Tipi, cardinalità, vincoli e valori enumerati sono concettuali. Le regole di gioco restano nella [proposta di regolamento](../Digital/regolamento-base.md); prezzi, crediti e composizione commerciale restano da definire in [D03](../Digital/economia-crediti-pacchetti.md).
 
@@ -18,7 +18,7 @@ I nomi inglesi delle entità e dei campi sono proposte coerenti con le convenzio
 | --- | --- | --- |
 | Account — F01 | `User`: `id`, `email`, `password_hash`; assegnazioni di ruolo | `email` univoca; memorizzare solo hash della password. I ruoli `ADMIN`, `MANAGER`, `USER` sono confermati, ma cardinalità e permessi non lo sono. |
 | Catalogo — F10/D01 | `Card`: `id`, `name`, `kind`, `rarity`, `faction`, statistiche ed effetto | Creature, equipaggiamenti, rarità e statistiche vanno allineati alla proposta Digital e confermati. Versionamento e modifiche alle carte già usate restano da decidere. |
-| Collezione — F04 | `OwnedCopy`: `id`, `owner_id`, `card_id`, data e provenienza | Una riga rappresenta una copia identificabile, non solo un conteggio aggregato. Consente a mazzi e scambi di riferirsi alla copia precisa; questo criterio è da concordare. |
+| Collezione — F04 | Modello storico `OwnedCopy`: `id`, `owner_id`, `card_id`, data e provenienza | Proposta sostituita dal modello canonico v1.1: conteggi aggregati in `COLLECTIONS` per utente, carta e variante grafica. Mazzi e scambi devono riferirsi ai campi e alle policy definiti nelle rispettive specifiche; non assumere un `copyId` individuale. |
 | Crediti — F03/F06/D03 | `CreditAccount`: utente e saldo; `CreditEntry`: variazione firmata, causale, riferimento e data | Proposta: registro delle variazioni per ricostruire il saldo; se si memorizza anche un saldo corrente, aggiornarlo insieme al registro. Origine dei crediti, precisione, trasferimenti e rettifiche sono da definire. |
 | Offerte e pacchetti — F03/F10 | `Offer`: prezzo in crediti; `OfferPack`: tipo e quantità inclusi; `PackType`; `PackCompositionRule`: rarità e quantità | L'offerta raggruppa pacchetti, mentre la regola di composizione descrive l'estrazione di ciascun pacchetto. Prezzi, tipi, carte garantite, quantità e distribuzione per rarità sono da concordare con Digital. |
 | Acquisto e apertura — F03/F04 | `Purchase`: utente, offerta e prezzo registrato al momento dell'acquisto; `PurchasedPack`; `PackOpening`; carte estratte | Conservare il prezzo applicato e collegare ogni risultato alle copie create. Apertura immediata o differita e modalità di estrazione sono da definire. |
@@ -189,7 +189,7 @@ Per il flusso canonico proposto e i casi di errore, vedere [F03 — Offerte e ac
 
 ## Esempi illustrativi per il FrontEnd
 
-Gli esempi sintetici, con identificativi e valori fittizi, sono mantenuti nelle pagine canoniche per evitare copie divergenti: [saldo e risultato dell'apertura in F03](acquisto-pacchetti.md#esempi-di-dati-illustrativi) e [carte possedute in F04](collezione-carte.md#esempio-di-carte-possedute). Non sono endpoint o DTO approvati, prezzi o composizione dei pacchetti.
+Gli esempi sintetici, con identificativi e valori fittizi, sono mantenuti nelle pagine canoniche per evitare copie divergenti: [saldo e risultato dell'apertura in F03](acquisto-pacchetti.md#esempi-di-dati-illustrativi) e [collezione aggregata in F04](collezione-carte.md#risposta-collezione). Non sono endpoint o DTO approvati, prezzi o composizione dei pacchetti.
 
 ## Confronti e decisioni da acquisire
 
