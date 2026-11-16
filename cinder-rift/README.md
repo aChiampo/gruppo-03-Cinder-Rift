@@ -2,6 +2,26 @@
 
 Pagine: Login → Home · Collezione · Deck (deck builder) · Gioca · Negozio.
 
+Ultimo aggiornamento significativo: **2026-11-16**, configurazione Docker richiesta dall’utente. Il frontend è un prototipo React 18/Vite 5; login e dati dimostrativi non attestano l’integrazione con il backend Spring. Il riferimento canonico per autenticazione, cookie e CSRF è il [contratto F01](../docs/BackEnd/accesso-utenti.md).
+
+## Avvio con Docker Compose
+
+Dalla radice del repository, configura la chiave JWT seguendo la [guida di avvio](../guida-avvio.md), poi esegui:
+
+```text
+docker compose up --build --wait
+```
+
+Apri `http://localhost:8082`. Il servizio `react` compila i sorgenti con Node.js 22 e `npm ci` dal lockfile; Nginx serve il risultato sulla porta interna `8082`, con utente non privilegiato, filesystem in sola lettura e file temporanei in `/tmp`. `dist/`, `node_modules/` e i `.env` locali sono esclusi dal contesto Docker. Il server Vite e il server Node di prova non vengono avviati nell’immagine.
+
+Nel `.env` della **radice del repository**, le variabili `VITE_API_URL` (default `/api`) e `VITE_USE_MOCK` (default `false`) diventano argomenti di build. Nginx inoltra `/api/` a `spring_app:8081` senza rimuovere il prefisso e gestisce il fallback SPA su `index.html`. I nomi dei container non sono indirizzi raggiungibili dal browser. Il controllo di salute usa `/healthz` e verifica solo Nginx.
+
+Il login reale non è ancora compatibile con F01: payload e risposta del login, percorso del profilo, cookie, CSRF e persistenza dei token devono essere allineati al contratto canonico. Per esplorare la grafica imposta `VITE_USE_MOCK=true` nella radice, quindi esegui `docker compose up --build --wait react`. Questo abilita il login simulato esistente senza avviare `mock-api`; non verifica autenticazione o dati server.
+
+Le variabili Vite sono pubbliche e incorporate nel bundle durante il build: non inserirvi segreti. Dopo ogni modifica a `VITE_*` ricostruisci `react`; il riavvio non basta. Il `.env` di questa cartella riguarda soltanto lo sviluppo locale seguente. [Configurazione Compose e porte](../guida-avvio.md#configurazione-dei-servizi-compose).
+
+Verifica del **2026-11-16**: immagine costruita, servizio sano nello stack Compose isolato e risposte HTTP controllate per pagina, asset, fallback SPA e proxy API. Login Spring e interfaccia nel browser non verificati. [Evidenze e limiti](../docs/report/2026-11-16-verifica-docker-compose.md).
+
 ## Avvio
 1. Installa Node.js 18+ (https://nodejs.org)
 2. `npm install`
@@ -13,14 +33,12 @@ Senza backend acceso il login mostra "Server non raggiungibile". Per lavorare su
 `VITE_USE_MOCK=true` in `.env` (login finto, nessuna chiamata di rete).
 
 ## Collegare il backend vero
-1. In `.env` imposta `VITE_API_URL` con l'indirizzo del backend e `VITE_USE_MOCK=false`.
-2. Il backend deve rispettare il contratto qui sotto. Se i percorsi sono diversi, si cambia solo `src/services/endpoints.js`;
-   se i campi dell'utente hanno altri nomi, solo `normalizeUser()` in `src/services/authService.js`.
-3. Se frontend e backend sono su origini diverse, il backend deve abilitare il CORS
-   (header `Content-Type` e `Authorization`) oppure si usa un proxy.
-4. Elimina la cartella `server/` e lo script `mock-api` da `package.json`.
 
-## Contratto API (autenticazione)
+L’integrazione deve adeguare il client al [contratto F01](../docs/BackEnd/accesso-utenti.md), già implementato dal backend Spring. Cambiare solo `VITE_API_URL` o i nomi dei campi non basta: servono l’allineamento dei payload e delle risposte, `/api/auth/user/me`, cookie con credenziali, gestione CSRF e access token in memoria. Queste modifiche applicative non fanno parte della configurazione Docker. Per lo sviluppo su origini diverse configurare anche `APP_SECURITY_ALLOWED_ORIGINS` nel backend. Conservare il mock finché utile alle verifiche isolate del prototipo.
+
+## Contratto del server simulato (autenticazione)
+
+Quanto segue descrive esclusivamente `server/mock-api.js` e il client attuale; non sostituisce il contratto canonico F01 e non richiede modifiche al backend Spring.
 Base: `VITE_API_URL` — il token si invia come `Authorization: Bearer <token>`.
 
 | Metodo | Endpoint        | Body                      | Risposta                                                     |

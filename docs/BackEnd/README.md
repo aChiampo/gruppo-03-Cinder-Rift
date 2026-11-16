@@ -9,6 +9,8 @@ stati, payload, dati, errori, transazioni, concorrenza e verifiche secondo il
 da quelle FrontEnd, collegati allo stesso ID funzionalità e contratto.
 Stato corrente nell'[indice generale](../README.md#stato-delle-funzionalità).
 
+Dal **2026-11-16** il [motore dimostrativo](../../springboot_app/game_engine/README.md#avvio-con-docker-compose) dispone di build Docker e salute Actuator, con H2 in memoria e menu CLI disabilitato nel container. Il servizio non espone ancora API di gioco. [Avvio comune](../../guida-avvio.md) · [Verifica dello stack isolato](../report/2026-11-16-verifica-docker-compose.md).
+
 ## Base di dati v1.1
 
 Ultimo aggiornamento significativo: **2026-11-09**, per l'inventario aggiornato e per il sistema mercy confermato dall'utente. La [specifica autonoma della base di dati v1.1](Database/database-schema-v1.1.md) è la fonte canonica di tabelle, tipi, vincoli e invarianti; [db_schema-v1.1.dbml](Database/db_schema-v1.1.dbml) ne è la rappresentazione completa in DBML. `INVENTORY` distingue Scaglie (`cobalt_shards`), Nuclei Rift (`rift_cores`) e Rotami (`scraps`), tutti interi obbligatori con default `0`. `USER_MERCY` registra il conto alla rovescia per utente e pacchetto con PK composta e FK a utenti, pacchetti e rarità: avanza sulle aperture corrispondenti e si resetta a ogni pesca qualificante, come descritto in [F03](acquisto-pacchetti.md#mercy-sulle-aperture). La risorsa dei campi generici di scambi, prenotazioni e ricompense resta da definire.

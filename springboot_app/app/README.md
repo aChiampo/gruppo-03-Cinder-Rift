@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento significativo il **2026-11-13**, con la rinomina degli endpoint F01 e la cancellazione logica degli account approvate dall’utente. Le migrazioni Flyway F01 e la verifica su PostgreSQL 18.1 risalgono al 2026-11-12. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
-Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend previsto è React; `react_app/` contiene solo `.gitkeep`. Anche il motore di gioco è da implementare.
+Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [prototipo React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Autenticazione frontend e API di gioco restano da integrare. [Avvio e configurazione comune](../../guida-avvio.md).
 
 Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V4. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
 

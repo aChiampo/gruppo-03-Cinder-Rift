@@ -2,7 +2,11 @@
 
 Le pagine distinguono decisioni confermate, proposte e punti aperti. Il regolamento Versione 2.1 resta una proposta per prototipo e bilanciamento; la specifica e il DBML v1.1 rappresentano il modello completo, implementato solo in parte.
 
-Stato verificato il **2026-11-13** sulla copia di lavoro con base `97200d9`: backend F01 (autenticazione e profili) e F05 (mazzi) disponibili, migrazioni Flyway V1–V4 e cancellazione account presenti. React, motore di gioco e invio email sono da implementare. La revisione ha corretto il requisito CSRF con Bearer, il limite nickname in registrazione e i test non allineati.
+Aggiornamento della configurazione del **2026-11-16**, su richiesta dell’utente: Compose usa il prototipo React in `cinder-rift/` e il motore dimostrativo in `springboot_app/game_engine/`, entrambi con Dockerfile e controlli di salute. React richiede ancora l’allineamento al contratto F01; il motore usa H2 in memoria, senza API di gioco né persistenza dei risultati. [Avvio, variabili e limiti](../guida-avvio.md#configurazione-dei-servizi-compose). Le verifiche correnti sono distinte dalle evidenze storiche seguenti.
+
+Verifica del **2026-11-16** sulla copia di lavoro con base `6208de5`: build delle tre immagini superata, quattro servizi sani in uno stack Compose isolato, migrazioni V1–V4 applicate, HTTP e proxy API verificati, **19 test JUnit del motore superati**. Integrazione del login e browser non verificati. [Report con ambiente, isolamento e limiti](report/2026-11-16-verifica-docker-compose.md).
+
+Verifica storica del **2026-11-13** sulla copia di lavoro con base `97200d9`: backend F01 (autenticazione e profili) e F05 (mazzi) disponibili, migrazioni Flyway V1–V4 e cancellazione account presenti. La revisione ha corretto il requisito CSRF con Bearer, il limite nickname in registrazione e i test non allineati. Invio email ancora da implementare.
 
 La suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test su PostgreSQL 18.6** e prodotto il JAR. Configurazione Compose, 16 rotte nei riepiloghi API e collegamenti documentali controllati; avvio dell’applicazione tramite Compose e browser non verificati. [Report datato con ambiente, riferimento, risultati e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze precedenti nelle schede F01/F05 restano storiche.
 
@@ -13,6 +17,8 @@ La suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local"
 - [BackEnd](BackEnd/README.md)
 - [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
 - [Configurazione locale dei servizi Docker Compose](../compose.yaml)
+- [Build e limiti del frontend](../cinder-rift/README.md#avvio-con-docker-compose)
+- [Build e limiti del motore dimostrativo](../springboot_app/game_engine/README.md#avvio-con-docker-compose)
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
 - [Modello di funzionalità](modello-funzionalita.md)
@@ -26,12 +32,12 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 
 | ID  | Oggetto                                                                    | Perimetro                                   | Specifica   | Implementazione | Verifica     | Riferimento principale                               |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------- | ----------- | --------------- | ------------ | ---------------------------------------------------- |
-| F01 | Registrazione, accesso, profilo, rinnovo, uscita, cancellazione account, recupero password e ruoli `ADMIN` e `USER` | Confermato | Contratto backend aggiornato il 2026-11-13 | Backend, pulizie, base recupero, migrazioni Flyway e cancellazione account implementati. Email e FrontEnd da avviare | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Accesso](BackEnd/accesso-utenti.md) |
+| F01 | Registrazione, accesso, profilo, rinnovo, uscita, cancellazione account, recupero password e ruoli `ADMIN` e `USER` | Confermato | Contratto backend aggiornato il 2026-11-13 | Backend, pulizie, base recupero, migrazioni Flyway e cancellazione account implementati. Login React prototipale con contratto mock; integrazione Spring, altre schermate F01 ed email da completare | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Accesso](BackEnd/accesso-utenti.md) |
 | F03 | Offerte di un solo pacchetto; risorsa del prezzo da definire                      | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
-| F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
-| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento; contratto API aggiornato il 2026-11-13 | Persistenza, validazione e API REST backend implementate; frontend non implementato | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Mazzi](BackEnd/gestione-mazzi.md) |
+| F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Interfaccia React con dati dimostrativi; backend e integrazione da implementare | Integrazione non verificata | [Collezione](BackEnd/collezione-carte.md)            |
+| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento; contratto API aggiornato il 2026-11-13 | Persistenza, validazione e API REST backend implementate; deck builder React dimostrativo non integrato | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Mazzi](BackEnd/gestione-mazzi.md) |
 | F06 | Scambi di carte e token, privati/pubblici, consenso e prenotazioni | Confermato; approvato anche dal committente | In approfondimento | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
-| F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Sfide](BackEnd/sfide-simulazione.md)                |
+| F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Motore e campagna dimostrativi con build Docker; API di sfida e integrazione non implementate | Evidenze JUnit e limiti nel [README motore](../springboot_app/game_engine/README.md#avvio-e-verifiche); integrazione non verificata | [Sfide](BackEnd/sfide-simulazione.md)                |
 | F08 | Storico e dettaglio dei turni                                              | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Storico](BackEnd/storico-partite.md)                |
 | F09 | Pagine informative                                                         | DA DEFINIRE; solo segnaposto                | Sintetica   | Non iniziata    | Non eseguita | [Pagine informative](FrontEnd/pagine-informative.md) |
 | F10 | Backoffice carte e prodotti                                                | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Backoffice](BackEnd/gestione-amministrativa.md)     |
@@ -62,7 +68,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 
 | Tema | Traccia | Decisione o chiarimento del gruppo |
 | --- | --- | --- |
-| Database | MySQL | PostgreSQL 18 configurato in Compose; F01 usa lo schema v1.1 via JDBC. Verifica su PostgreSQL 18 tramite Compose ancora da eseguire |
+| Database | MySQL | PostgreSQL 18 configurato in Compose; F01 usa lo schema v1.1 via JDBC. Build, avvio, migrazioni e salute verificati nello stack isolato il 2026-11-16; integrazione funzionale completa da verificare |
 | Scambi | Solo carte | Carte e crediti, privati/pubblici; approvazione del committente confermata dal gruppo |
 | Offerte del negozio | Acquisto di pacchetti | Ogni offerta contiene un solo pacchetto; prezzo e configurazione del pacchetto gestibili dal backoffice |
 | Carte | Creazione con strumenti di intelligenza artificiale | Carte non interamente generate; ripartizione del contributo umano da definire |
@@ -72,7 +78,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 
 Da approfondire successivamente nelle pagine interessate:
 
-- Stack frontend, versioni e strumenti ancora da scegliere; chiarimento della differenza PostgreSQL/MySQL rispetto alla traccia, con backend già configurato nel POM.
+- Allineamento del prototipo React 18/Vite 5 ai contratti canonici e chiarimento della differenza PostgreSQL/MySQL rispetto alla traccia, con backend già configurato nel POM.
 - Permessi di `ADMIN` e `USER` nelle altre funzionalità; invio email e frontend del recupero password F01, con base backend già implementata.
 - Regole di assegnazione delle Scaglie, acquisto dei Nuclei Rift e recupero dei Rotami; risorse ammesse nei prezzi e negli scambi.
 - Offerte di un solo pacchetto: prezzi, limiti, contenuto del pacchetto, apertura e disponibilità.

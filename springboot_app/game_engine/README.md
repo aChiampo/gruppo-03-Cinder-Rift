@@ -4,7 +4,7 @@
 
 > **Stato:** il codice presente è una prima implementazione dimostrativa. Non costituisce l'implementazione completa delle funzionalità F05, F07 o F08, né conferma le regole proposte come definitive.
 
-Ultimo aggiornamento significativo: **2026-11-09**. Fonte: struttura, sorgenti, configurazione, risorse e test del modulo.
+Ultimo aggiornamento significativo: **2026-11-16**, completamento della configurazione Docker richiesto dall’utente. Fonte: struttura, sorgenti, configurazione, risorse e test del modulo.
 
 ## Motore di gioco
 
@@ -47,7 +47,26 @@ Il menu è un flusso CLI dimostrativo, non un matchmaking online né un'interfac
 
 Verifica del **2026-11-09**: `./mvnw test` completato con **19 test, 0 errori e 0 fallimenti**. La verifica usa la configurazione H2; non attesta l'integrazione con PostgreSQL né le funzionalità applicative complete.
 
+Verifica corrente del **2026-11-16**: **19 test superati** nello stage Java del build Docker, immagine costruita e servizio sano su `8083` nello stack Compose isolato, con menu disabilitato e filesystem in sola lettura. [Evidenze e limiti](../../docs/report/2026-11-16-verifica-docker-compose.md). La verifica del 2026-11-09 sopra resta storica.
+
 Il POM dichiara Java 21 e Spring Boot 4.1.2. La configurazione predefinita usa H2; il driver PostgreSQL è incluso come dipendenza runtime.
+
+## Avvio con Docker Compose
+
+Dalla radice del repository:
+
+```text
+docker compose build game-engine
+docker compose up --wait game-engine
+```
+
+Il secondo comando avvia anche backend e PostgreSQL e richiede la [configurazione JWT e Flyway](../../guida-avvio.md). Il contesto è `springboot_app/game_engine/`, mentre il nome del servizio resta `game-engine`.
+
+Il [Dockerfile](Dockerfile) usa Java 21, Maven Wrapper e un’immagine runtime JRE Alpine con `curl`; il processo gira con UID/GID `10001`. Il packaging salta l’esecuzione dei test, da eseguire separatamente con `./mvnw test` o `mvnw.cmd test` su Windows con JDK 21. Il POM genera anche un JAR non eseguibile: Docker seleziona precisamente `game_engine-0.0.1-SNAPSHOT-exec.jar`, con classifier `exec`. Aggiornare il percorso se cambiano artifactId o versione.
+
+L’immagine imposta `SERVER_PORT=8083` e `GAME_ENGINE_CLI_ENABLED=false`, anche per l’avvio diretto senza Compose. Lo starter Actuator fornisce `GET /actuator/health`, usato da Docker e Compose. Con le porte predefinite: `http://localhost:8083/actuator/health`; `ENGINE_PORT` modifica solo la porta host. Compose usa filesystem in sola lettura e `/tmp` scrivibile.
+
+La configurazione resta H2 in memoria, con schema ricreato all’avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. Il servizio non espone ancora API di sfida o campagna; il controllo di salute non attesta integrazione con il backend. Il menu dimostrativo resta disponibile nell’avvio Maven interattivo descritto sopra.
 
 ## Struttura essenziale
 

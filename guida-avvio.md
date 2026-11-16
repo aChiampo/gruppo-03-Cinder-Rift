@@ -1,6 +1,8 @@
 # Avviare Cinder Rift sul proprio computer
 
-Guida aggiornata il **2026-11-13**, nella revisione richiesta dall’utente. La copia corrente contiene il backend F01/F05; React e motore sono segnaposto senza Dockerfile. I launcher e il comando Compose completo descritti sotto richiedono tutti i componenti e non sono ancora utilizzabili per avviare l’intera applicazione. Lo stato del codice è riferito alla copia di lavoro: la revisione non aggiorna i branch locali o remoti.
+Guida aggiornata il **2026-11-16**, su richiesta dell’utente di completare Compose. La copia corrente contiene Dockerfile per backend F01/F05, prototipo React in `cinder-rift/` e motore dimostrativo in `springboot_app/game_engine/`. L’avvio dei container non attesta l’integrazione delle funzionalità: il login React richiede ancora l’allineamento a F01 e il motore non espone API di gioco. Lo stato è riferito alla copia di lavoro; i launcher scaricano `dev`, quindi richiedono che le modifiche siano già integrate e che non vi siano conflitti Git locali.
+
+Build, avvio dei quattro servizi, salute, migrazioni e proxy HTTP sono verificati il **2026-11-16** in uno stack isolato; **19 test del motore superati**. [Report con ambiente e limiti](docs/report/2026-11-16-verifica-docker-compose.md). L’integrazione del login e i launcher non sono verificati.
 
 ## Avviare solo il backend disponibile
 
@@ -12,9 +14,35 @@ docker compose --file compose.yaml up --build --wait spring_app
 
 Compose avvia anche PostgreSQL, dipendenza del backend, senza tentare la build di React e motore. Su un database vuoto Flyway applica V1–V4: autenticazione, catalogo, collezione, mazzi e dati di riferimento. Le migrazioni non inseriscono carte o copie negli inventari e non creano l’intero modello v1.1. Per un database esistente seguire prima la [procedura di adozione](springboot_app/app/README.md#migrazioni-flyway-f01).
 
-Con la porta predefinita consulta [Swagger UI](http://localhost:8081/swagger-ui/index.html) e [salute del backend](http://localhost:8081/actuator/health); se imposti `APPLICATION_PORT`, adatta gli URL. La pagina React su `8082` sarà disponibile dopo l’implementazione del frontend. La configurazione Compose e i test backend sono verificabili separatamente dalla build e dall’avvio dell’immagine applicativa.
+Con la porta predefinita consulta [Swagger UI](http://localhost:8081/swagger-ui/index.html) e [salute del backend](http://localhost:8081/actuator/health); se imposti `APPLICATION_PORT`, adatta gli URL. Questo comando avvia solo backend e database; per React e motore usa il comando completo descritto sotto.
 
 Per eseguire Maven direttamente su Windows serve JDK 21: imposta `JAVA_HOME` alla cartella del JDK, anche se `java` nel `PATH` seleziona una versione precedente. [Comandi e prerequisiti dei test](springboot_app/app/README.md#cancellazione-account-f01).
+
+## Configurazione dei servizi Compose
+
+Il primo build richiede Internet per scaricare immagini, pacchetti npm e dipendenze Maven. Non servono Java o Node.js installati sul computer per usare Compose. Prima dell’avvio configura la chiave JWT come descritto nella sezione sul doppio clic e nel [README backend](springboot_app/app/README.md#configurazione-f01).
+
+Le variabili per Compose si impostano nel `.env` della **radice del repository** o nella shell. Il `.env` dentro `cinder-rift/` riguarda invece lo sviluppo Vite locale ed è escluso dal contesto Docker.
+
+| Variabile | Valore predefinito | Effetto |
+| --- | --- | --- |
+| `APP_SECURITY_JWT_SECRET` | Nessuno utilizzabile | Obbligatoria per avviare il backend; chiave Base64 di almeno 32 byte casuali |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | `cinder_rift`, `postgres`, `postgres` | Database locale; i valori predefiniti non sono credenziali di produzione |
+| `POSTGRES_PORT` | `5432` | Porta locale del database |
+| `APPLICATION_PORT` | `8081` | Porta locale del backend; la porta interna resta `8081` |
+| `REACT_PORT` | `8082` | Porta locale del frontend; la porta interna resta `8082` |
+| `ENGINE_PORT` | `8083` | Porta locale del motore; la porta interna resta `8083` |
+| `VITE_API_URL` | `/api` | Argomento di build pubblico; Nginx inoltra `/api/` a `spring_app:8081` preservando il percorso |
+| `VITE_USE_MOCK` | `false` | Argomento di build pubblico; `true` abilita il login simulato del prototipo |
+| `APP_SECURITY_ALLOWED_ORIGINS` | `http://localhost:8082` | Origini browser autorizzate; aggiornare se cambia origine o porta del client |
+
+I valori `VITE_*` sono incorporati durante il build, come descritto nella [documentazione Vite 5](https://v5.vite.dev/guide/env-and-mode). Dopo averli modificati esegui `docker compose up --build --wait react`; un semplice riavvio non aggiorna il JavaScript. Non inserirvi segreti. Il proxy usa la porta interna del backend, quindi non cambia al variare di `APPLICATION_PORT`.
+
+Il login React usa ancora il contratto del server simulato, diverso da [F01](docs/BackEnd/accesso-utenti.md): percorso del profilo, payload di login/risposta, cookie, CSRF e gestione dei token richiedono allineamento. `VITE_USE_MOCK=true` permette di esplorare la grafica senza verificare il backend; non avvia il server Node `mock-api`. Collezione, mazzi e home usano ancora dati dimostrativi. [Dettagli frontend](cinder-rift/README.md).
+
+Il motore usa H2 in memoria, senza collegarsi al database applicativo; i dati vengono persi al riavvio. Compose disabilita il menu con `GAME_ENGINE_CLI_ENABLED=false`. L’endpoint `/actuator/health` verifica il servizio, ma non rappresenta un’API di simulazione né un collegamento già implementato con `spring_app`. [Dettagli motore](springboot_app/game_engine/README.md#avvio-con-docker-compose).
+
+Le porte sono pubblicate solo su `127.0.0.1`. PostgreSQL conserva i dati nel volume `cinder-rift-postgres-data`; `stop` e `down` lo mantengono. `down --volumes` elimina il database. Backend e motore attendono le dipendenze sane; React attende il backend. I tre servizi applicativi hanno filesystem in sola lettura, `/tmp` scrivibile e controlli di salute.
 
 ## Scaricare e installare Docker Desktop
 
@@ -59,17 +87,18 @@ Se compare un errore di aggiornamento, copia il messaggio e mandalo a chi si occ
 
 Quando leggi **Applicazione pronta**, apri [Cinder Rift su questo computer](http://localhost:8082). Puoi chiudere la finestra del terminale e lasciare aperto Docker Desktop.
 
-L'indirizzo funziona sul computer dove hai avviato l'applicazione. Se compare un errore perché manca `compose.yaml` o un file chiamato `Dockerfile`, chiedi al gruppo se la configurazione di avvio e i componenti dell'applicazione sono già disponibili su `dev`.
+L'indirizzo funziona sul computer dove hai avviato l'applicazione. Se cambi `REACT_PORT`, usa la porta scelta. La salute del frontend è disponibile su `/healthz`; quella del motore su `http://localhost:8083/actuator/health`. Un container sano non garantisce l’integrazione del login o delle partite.
 
 ## Avviare l'applicazione dal terminale
 
 Apri Docker Desktop e attendi che sia pronto. Poi apri il terminale nella cartella principale del progetto. Su Windows puoi aprire la cartella in Esplora file, scrivere `powershell` nella barra degli indirizzi e premere Invio. Su macOS puoi scrivere `cd ` con uno spazio alla fine, trascinare la cartella del progetto nella finestra del Terminale e premere Invio.
 
-Copia un comando alla volta e premi Invio. Se un comando restituisce un errore, fermati e condividi il messaggio con il gruppo.
+Copia un comando alla volta e premi Invio. Aggiorna da `dev` solo con una copia di lavoro senza modifiche da proteggere o conflitti Git. Se stai verificando modifiche locali, salta i due comandi Git. Se un comando restituisce un errore, fermati e condividi il messaggio con il gruppo.
 
 ```text
 git switch dev
 git pull --ff-only origin dev
+docker compose --file compose.yaml config --quiet
 docker compose --file compose.yaml up --build --wait
 ```
 
@@ -78,6 +107,8 @@ Per vedere quali componenti sono in esecuzione, usa:
 ```text
 docker compose --file compose.yaml ps
 ```
+
+Per diagnosticare un servizio non sano, usa `docker compose logs spring_app game-engine react`. Per verificare il motore separatamente, `docker compose build game-engine` compila senza eseguire i test; esegui la suite JUnit con i comandi del [README motore](springboot_app/game_engine/README.md#avvio-e-verifiche).
 
 Quando hai finito, puoi fermare l'applicazione con:
 
