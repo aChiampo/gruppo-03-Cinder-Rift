@@ -99,66 +99,85 @@ export const MOCK_CATALOG = catalog
 export const collectionFor = (userId) => (userId === 2 ? [] : catalog) // utente 2 = collezione vuota
 
 // ---------------------------------------------------------------------------------------------
-// "Backend": filtri, ricerca, ordinamento e paginazione di GET /cards. Valori dei parametri = stringhe
-// (come arrivano in una query string). Vedi docs/API-COLLEZIONE.md.
-export const SORT_KEYS = ['rarita', 'nome', 'energia', 'attacco', 'difesa', 'fazione']
+// "Backend": filtri, ricerca, ordinamento e paginazione compatibili con il contratto F04.
+export const SORT_KEYS = ['name', 'faction', 'rarity', 'energy', 'attack', 'defense', 'power']
 export const MAX_PAGE_SIZE = 100
 
 const RARITY_RANK = { comune: 1, rara: 2, epica: 3, leggendaria: 4 }
 const FACTION_ORDER = ['cyborg', 'radioattivi', 'sapiens', 'cultisti', 'alieni']
 const FACTION_LABEL = { cyborg: 'Cyborg', radioattivi: 'Mostri Radioattivi', sapiens: 'Sapiens', cultisti: 'Cultisti', alieni: 'Alieni' }
+const TYPE_MAP = { all: 'all', CREATURE: 'creature', EQUIPMENT: 'equipment' }
 
 const norm = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 const csv = (v) => (v ? String(v).split(',').map((s) => s.trim()).filter(Boolean) : [])
 const int = (v, fallback) => (v === undefined || v === '' || Number.isNaN(Number(v)) ? fallback : Math.trunc(Number(v)))
+const normalizeValue = (value) => String(value ?? '').trim().toUpperCase()
 
 /** Lancia { status: 400, message } se un parametro non è valido. */
 export function queryCards(all, p = {}) {
-  const sort = p.sort || 'rarita'
+  const sort = (p.sort || 'name').toLowerCase()
   if (!SORT_KEYS.includes(sort)) throw Object.assign(new Error(`Ordinamento non valido: ${sort}`), { status: 400 })
-  const type = p.type || 'all'
-  if (!['all', 'creature', 'equipment'].includes(type)) throw Object.assign(new Error(`Tipo non valido: ${type}`), { status: 400 })
 
-  const pageSize = Math.min(Math.max(int(p.pageSize, 15), 1), MAX_PAGE_SIZE)
-  const wantedPage = Math.max(int(p.page, 1), 1)
-  const factions = csv(p.faction)
-  const rarities = csv(p.rarity)
+  const rawType = normalizeValue(p.type ?? 'all')
+  const type = TYPE_MAP[rawType] ?? 'all'
+  if (!['all', 'creature', 'equipment'].includes(type)) throw Object.assign(new Error(`Tipo non valido: ${rawType}`), { status: 400 })
+
+  const pageSize = Math.min(Math.max(int(p.size ?? p.pageSize, 15), 1), MAX_PAGE_SIZE)
+  const page = Math.max(int(p.page, 0), 0)
+  const factions = csv(p.faction).map((value) => String(value).toLowerCase())
+  const rarities = csv(p.rarity).map((value) => String(value).toLowerCase())
   const [eMin, eMax] = [int(p.energyMin, -Infinity), int(p.energyMax, Infinity)]
   const [aMin, aMax] = [int(p.attackMin, null), int(p.attackMax, null)]
   const [dMin, dMax] = [int(p.defenseMin, null), int(p.defenseMax, null)]
-  const q = norm((p.q ?? '').trim())
+  const q = norm((p.name ?? p.q ?? '').trim())
+  const direction = (p.direction || 'asc').toLowerCase()
 
   const inRange = (v, lo, hi) => (lo == null || v >= lo) && (hi == null || v <= hi)
-  // Con un filtro su attacco/difesa attivo, gli equipaggiamenti (senza statistiche) sono esclusi.
   const stat = (v, lo, hi) => (lo == null && hi == null) || (v != null && inRange(v, lo, hi))
 
   const matches = (c) => {
     if (q && !norm(`${c.name} ${FACTION_LABEL[c.faction] ?? ''} ${c.type === 'equipment' ? 'equipaggiamento' : ''}`).includes(q)) return false
     if (factions.length && !factions.includes(c.faction)) return false
-    if (rarities.length && !rarities.includes(c.rarity)) return false
+    if (rarities.length && !rarities.map((v) => v === 'common' ? 'comune' : v === 'rare' ? 'rara' : v === 'epic' ? 'epica' : v === 'legendary' ? 'leggendaria' : v).includes(c.rarity)) return false
     return inRange(c.energy, eMin, eMax) && stat(c.attack, aMin, aMax) && stat(c.defense, dMin, dMax)
   }
 
-  const order = new Map(all.map((c, i) => [c.id, i])) // ordine di catalogo = spareggio stabile
+  const order = new Map(all.map((c, i) => [c.id, i]))
   const byOrder = (a, b) => order.get(a.id) - order.get(b.id)
-  const desc = (key) => (a, b) => (b[key] ?? -1) - (a[key] ?? -1) || byOrder(a, b) // senza statistica = in fondo
+  const desc = (key) => (a, b) => (b[key] ?? -1) - (a[key] ?? -1) || byOrder(a, b)
   const sorters = {
-    rarita: (a, b) => RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || byOrder(a, b), // dalla più rara
-    nome: (a, b) => a.name.localeCompare(b.name, 'it'),
-    energia: (a, b) => a.energy - b.energy || RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || byOrder(a, b),
-    attacco: desc('attack'),
-    difesa: desc('defense'),
-    fazione: (a, b) => (FACTION_ORDER.indexOf(a.faction) + 1 || 99) - (FACTION_ORDER.indexOf(b.faction) + 1 || 99) || byOrder(a, b),
+    name: (a, b) => a.name.localeCompare(b.name, 'it') || byOrder(a, b),
+    faction: (a, b) => (FACTION_ORDER.indexOf(a.faction) + 1 || 99) - (FACTION_ORDER.indexOf(b.faction) + 1 || 99) || byOrder(a, b),
+    rarity: (a, b) => RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || byOrder(a, b),
+    energy: (a, b) => a.energy - b.energy || RARITY_RANK[b.rarity] - RARITY_RANK[a.rarity] || byOrder(a, b),
+    attack: desc('attack'),
+    defense: desc('defense'),
+    power: desc('power'),
   }
 
-  const base = all.filter(matches) // tutti i filtri tranne il tipo: servono ai contatori delle tab
+  const base = all.filter(matches)
   const counts = {
     all: base.length,
     creature: base.filter((c) => c.type === 'creature').length,
     equipment: base.filter((c) => c.type === 'equipment').length,
   }
-  const sorted = base.filter((c) => type === 'all' || c.type === type).sort(sorters[sort])
-  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize))
-  const page = Math.min(wantedPage, pageCount)
-  return { items: sorted.slice((page - 1) * pageSize, page * pageSize), page, pageSize, total: sorted.length, counts }
+  const filtered = base.filter((c) => type === 'all' || c.type === type)
+  const sorted = [...filtered].sort((a, b) => {
+    const comparison = sorters[sort](a, b)
+    return direction === 'desc' ? comparison * -1 : comparison
+  })
+
+  const totalElements = sorted.length
+  const totalPages = Math.max(1, Math.ceil(totalElements / pageSize))
+  const currentPage = Math.min(page, totalPages - 1)
+  const start = currentPage * pageSize
+
+  return {
+    items: sorted.slice(start, start + pageSize),
+    page: currentPage,
+    size: pageSize,
+    totalElements,
+    totalPages,
+    counts,
+  }
 }

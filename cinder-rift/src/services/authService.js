@@ -1,4 +1,4 @@
-import { apiFetch, ApiError } from './api.js'
+import { apiFetch, ApiError, getCsrfToken } from './api.js'
 import { ENDPOINTS } from './endpoints.js'
 import { user as mockUser } from '../data/user.js'
 
@@ -26,9 +26,9 @@ export function normalizeUser(raw = {}) {
 }
 
 /**
- * POST /api/auth/login   body: { email, password }
+ * POST /api/auth/sessions   body: { email, password }
  *   200 -> { accessToken: string, user: { ... } }
- *   400 -> { message }   campi mancanti
+ *   400 -> { message }
  *   401 -> { message: 'Credenziali non valide' }
  */
 export async function login({ email, password }) {
@@ -40,23 +40,32 @@ export async function login({ email, password }) {
     return { token: 'mock-token', user: { ...mockUser, name: normalizedEmail.split('@')[0], email: normalizedEmail } }
   }
 
-  const data = await apiFetch(ENDPOINTS.auth.login, { method: 'POST', body: { email: normalizedEmail, password } })
+  const csrf = await getCsrfToken().catch(() => null)
+  const data = await apiFetch(ENDPOINTS.auth.login, {
+    method: 'POST',
+    body: { email: normalizedEmail, password },
+    headers: csrf && csrf.headerName ? { [csrf.headerName]: csrf.token } : {},
+  })
   const token = data?.accessToken ?? data?.token
   if (!token) throw new ApiError('Risposta del server non valida.', 502, data)
-  return { token, user: normalizeUser(data.user) }
+  return { token, user: normalizeUser(data.user ?? data) }
 }
 
-/** GET /api/auth/user/me (Bearer) -> { user }. Serve a verificare che la sessione salvata sia ancora valida. */
+/** GET /api/auth/users/me (Bearer) -> { user }. Serve a verificare che la sessione salvata sia ancora valida. */
 export async function getCurrentUser(token) {
   const data = await apiFetch(ENDPOINTS.auth.me, { token })
   return normalizeUser(data?.user ?? data)
 }
 
-/** POST /api/auth/logout (Bearer) -> 204. Best effort: il logout locale avviene comunque. */
+/** POST /api/auth/session-revocations (CSRF + cookie refresh). Best effort: il logout locale avviene comunque. */
 export async function logout(token) {
   if (USE_MOCK || !token) return
   try {
-    await apiFetch(ENDPOINTS.auth.logout, { method: 'POST', token })
+    const csrf = await getCsrfToken().catch(() => null)
+    await apiFetch(ENDPOINTS.auth.logout, {
+      method: 'POST',
+      headers: csrf && csrf.headerName ? { [csrf.headerName]: csrf.token } : {},
+    })
   } catch {
     /* ignorato: la sessione locale viene chiusa in ogni caso */
   }

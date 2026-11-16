@@ -1,5 +1,5 @@
 // Wrapper unico per le chiamate al backend con fetch API.
-const BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api').replace(/\/$/, '')
+const BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8081').replace(/\/$/, '')
 const TIMEOUT_MS = 10000
 
 export class ApiError extends Error {
@@ -14,6 +14,15 @@ export class ApiError extends Error {
 // Chiamato quando il backend risponde 401 a una richiesta autenticata (token scaduto o non valido).
 let onUnauthorized = null
 export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn }
+
+export async function getCsrfToken() {
+  const res = await fetch(`${BASE_URL}/api/auth/csrf-tokens`, { method: 'GET', credentials: 'include' })
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new ApiError(data?.message || `Errore CSRF ${res.status}`, res.status, data)
+  }
+  return data && typeof data === 'object' ? data : { headerName: 'X-XSRF-TOKEN', token: null }
+}
 
 export async function apiFetch(path, { method = 'GET', body, token, headers = {}, signal } = {}) {
   const controller = new AbortController()
