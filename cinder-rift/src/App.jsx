@@ -19,7 +19,7 @@ export default function App() {
     if (!user) setPage("home");
   }, [user]);
 
-  // Ricaricamento della pagina: attende la verifica della sessione col backend (GET /auth/me)
+  // Ricaricamento della pagina: attende la verifica della sessione col backend (GET /api/auth/user/me)
   if (checking)
     return (
       <div className="session-check" role="status">

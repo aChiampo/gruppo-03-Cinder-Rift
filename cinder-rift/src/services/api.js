@@ -25,8 +25,9 @@ export async function apiFetch(path, { method = 'GET', body, token, headers = {}
     res = await fetch(`${BASE_URL}${path}`, {
       method,
       signal: controller.signal,
+      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },

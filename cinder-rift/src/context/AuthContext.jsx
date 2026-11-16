@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
     return () => setUnauthorizedHandler(null)
   }, [clear])
 
-  // Al ricaricamento: il token salvato è ancora valido? (GET /auth/me)
+  // Al ricaricamento: il token salvato è ancora valido? (GET /api/auth/user/me)
   useEffect(() => {
     const stored = readSession()
     if (!stored || USE_MOCK) return

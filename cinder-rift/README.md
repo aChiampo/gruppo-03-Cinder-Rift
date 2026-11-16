@@ -21,21 +21,21 @@ Senza backend acceso il login mostra "Server non raggiungibile". Per lavorare su
 4. Elimina la cartella `server/` e lo script `mock-api` da `package.json`.
 
 ## Contratto API (autenticazione)
-Base: `VITE_API_URL` — il token si invia come `Authorization: Bearer <token>`.
+Base: `VITE_API_URL` — il token si invia come `Authorization: Bearer <token>` e i cookie di sessione/refresh sono inclusi con `credentials: 'include'`.
 
-| Metodo | Endpoint        | Body                      | Risposta                                                     |
-|--------|-----------------|---------------------------|--------------------------------------------------------------|
-| POST   | `/auth/login`   | `{ identifier, password }`| `200 { token, user }` · `400 { message }` · `401 { message }` |
-| GET    | `/auth/me`      | —                         | `200 { user }` · `401`                                       |
-| POST   | `/auth/logout`  | —                         | `204`                                                        |
+| Metodo | Endpoint                      | Body                             | Risposta                                                                 |
+|--------|-------------------------------|----------------------------------|--------------------------------------------------------------------------|
+| POST   | `/api/auth/login`             | `{ email, password }`            | `200 { accessToken, tokenType, expiresIn, user }` · `400 { message }` · `401 { message }` |
+| GET    | `/api/auth/user/me`           | —                                | `200 { id, nickname, email, role, rankingPoints, iconUrl }` · `401`      |
+| POST   | `/api/auth/logout`            | —                                | `204`                                                                    |
 
-`user` = `{ id, name, level, credits, avatar }`. Gli errori devono avere il campo `message` (viene mostrato nel login).
+`user` dal backend usa i campi `{ id, nickname, email, role, rankingPoints, iconUrl }`; il frontend li normalizza in `{ id, name, level, credits, avatar }` per la UI. Gli errori devono avere il campo `message` (viene mostrato nel login).
 
 Comportamento del frontend:
 - Il token è salvato in `sessionStorage` (si perde chiudendo la scheda).
-- Al ricaricamento la sessione viene verificata con `GET /auth/me`: se il token non è valido si torna al login.
+- Al ricaricamento la sessione viene verificata con `GET /api/auth/user/me`: se il token non è valido si torna al login.
 - Qualsiasi richiesta autenticata che riceve `401` riporta al login.
-- Il logout avvisa il backend (`POST /auth/logout`) e chiude comunque la sessione locale.
+- Il logout avvisa il backend (`POST /api/auth/logout`) e chiude comunque la sessione locale.
 - Timeout richieste: 10 secondi.
 
 ## Pagine (id in `App.jsx` e `data/navigation.js`)

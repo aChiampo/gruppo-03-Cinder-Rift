@@ -79,28 +79,46 @@ createServer(async (req, res) => {
   if (req.method === "GET" && pathname === "/api/health")
     return send(res, 200, { status: "ok" });
 
-  // POST /api/auth/login  { identifier, password } -> 200 { token, user } | 400 | 401
+  // POST /api/auth/login  { email, password } -> 200 { accessToken, tokenType, expiresIn, user } | 400 | 401
   if (req.method === "POST" && pathname === "/api/auth/login") {
     const body = await readBody(req);
-    if (!body?.identifier || !body?.password)
+    if (!body?.email || !body?.password)
       return send(res, 400, {
-        message: "Inserisci username/email e password.",
+        message: "Inserisci email e password.",
       });
-    const id = String(body.identifier).trim().toLowerCase();
-    const user = USERS.find((u) => u.username === id || u.email === id);
+    const email = String(body.email).trim().toLowerCase();
+    const user = USERS.find((u) => u.email === email);
     if (!user || user.password !== body.password)
       return send(res, 401, { message: "Credenziali non valide" });
     const token = randomUUID();
     sessions.set(token, user.id);
-    return send(res, 200, { token, user: publicUser(user) });
+    return send(res, 200, {
+      accessToken: token,
+      tokenType: "Bearer",
+      expiresIn: 900,
+      user: {
+        id: user.id,
+        nickname: user.name,
+        email: user.email,
+        role: "USER",
+        rankingPoints: user.credits,
+        iconUrl: user.avatar,
+      },
+    });
   }
 
-  // GET /api/auth/me  (Bearer) -> 200 { user } | 401
-  if (req.method === "GET" && pathname === "/api/auth/me") {
+  // GET /api/auth/user/me  (Bearer) -> 200 { user } | 401
+  if (req.method === "GET" && (pathname === "/api/auth/user/me" || pathname === "/api/auth/me")) {
     const { user } = userFromToken(req);
-    return user
-      ? send(res, 200, { user: publicUser(user) })
-      : send(res, 401, { message: "Sessione non valida" });
+    if (!user) return send(res, 401, { message: "Sessione non valida" });
+    return send(res, 200, {
+      id: user.id,
+      nickname: user.name,
+      email: user.email,
+      role: "USER",
+      rankingPoints: user.credits,
+      iconUrl: user.avatar,
+    });
   }
 
   // POST /api/auth/logout  (Bearer) -> 204
