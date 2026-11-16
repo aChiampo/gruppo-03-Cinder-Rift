@@ -1,0 +1,452 @@
+[
+  {
+    "id": "CUL_R1_1",
+    "name": "Cultisti Invocatore R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "CUL_R1_2",
+    "name": "Cultisti Maestro R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 6
+  },
+  {
+    "id": "CUL_R1_3",
+    "name": "Cultisti Maestro R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 8
+  },
+  {
+    "id": "CUL_R1_4",
+    "name": "Cultisti Maestro R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "CUL_R1_5",
+    "name": "Cultisti Fanatico R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 7
+  },
+  {
+    "id": "CUL_R1_6",
+    "name": "Cultisti Accolito R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 8
+  },
+  {
+    "id": "CUL_R1_7",
+    "name": "Cultisti Fanatico R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 9
+  },
+  {
+    "id": "CUL_R1_8",
+    "name": "Cultisti Ombra R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 3,
+    "initialDef": 7
+  },
+  {
+    "id": "CUL_R1_9",
+    "name": "Cultisti Ombra R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CUL_R1_10",
+    "name": "Cultisti Ombra R1",
+    "faction": "CULTISTI",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 6
+  },
+  {
+    "id": "CUL_R2_1",
+    "name": "Cultisti Accolito R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 9
+  },
+  {
+    "id": "CUL_R2_2",
+    "name": "Cultisti Maestro R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CUL_R2_3",
+    "name": "Cultisti Ombra R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R2_4",
+    "name": "Cultisti Invocatore R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R2_5",
+    "name": "Cultisti Eretico R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R2_6",
+    "name": "Cultisti Maestro R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 11
+  },
+  {
+    "id": "CUL_R2_7",
+    "name": "Cultisti Invocatore R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "CUL_R2_8",
+    "name": "Cultisti Invocatore R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 11
+  },
+  {
+    "id": "CUL_R2_9",
+    "name": "Cultisti Fanatico R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 11
+  },
+  {
+    "id": "CUL_R2_10",
+    "name": "Cultisti Invocatore R2",
+    "faction": "CULTISTI",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CUL_R3_1",
+    "name": "Cultisti Accolito R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 11
+  },
+  {
+    "id": "CUL_R3_2",
+    "name": "Cultisti Fanatico R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R3_3",
+    "name": "Cultisti Ombra R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 12
+  },
+  {
+    "id": "CUL_R3_4",
+    "name": "Cultisti Fanatico R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 5,
+    "initialDef": 12
+  },
+  {
+    "id": "CUL_R3_5",
+    "name": "Cultisti Maestro R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R3_6",
+    "name": "Cultisti Eretico R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 5,
+    "initialDef": 13
+  },
+  {
+    "id": "CUL_R3_7",
+    "name": "Cultisti Maestro R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R3_8",
+    "name": "Cultisti Maestro R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "CUL_R3_9",
+    "name": "Cultisti Eretico R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 5,
+    "initialDef": 12
+  },
+  {
+    "id": "CUL_R3_10",
+    "name": "Cultisti Invocatore R3",
+    "faction": "CULTISTI",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 7,
+    "initialDef": 12
+  },
+  {
+    "id": "CUL_R4_1",
+    "name": "Cultisti Fanatico R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 15
+  },
+  {
+    "id": "CUL_R4_2",
+    "name": "Cultisti Eretico R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 15
+  },
+  {
+    "id": "CUL_R4_3",
+    "name": "Cultisti Eretico R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 13
+  },
+  {
+    "id": "CUL_R4_4",
+    "name": "Cultisti Fanatico R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 14
+  },
+  {
+    "id": "CUL_R4_5",
+    "name": "Cultisti Eretico R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "CUL_R4_6",
+    "name": "Cultisti Accolito R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "CUL_R4_7",
+    "name": "Cultisti Invocatore R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "CUL_R4_8",
+    "name": "Cultisti Eretico R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "CUL_R4_9",
+    "name": "Cultisti Maestro R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 13
+  },
+  {
+    "id": "CUL_R4_10",
+    "name": "Cultisti Invocatore R4",
+    "faction": "CULTISTI",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "CUL_R5_1",
+    "name": "Cultisti Invocatore R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 17
+  },
+  {
+    "id": "CUL_R5_2",
+    "name": "Cultisti Accolito R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 9,
+    "initialDef": 15
+  },
+  {
+    "id": "CUL_R5_3",
+    "name": "Cultisti Accolito R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "CUL_R5_4",
+    "name": "Cultisti Invocatore R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 16
+  },
+  {
+    "id": "CUL_R5_5",
+    "name": "Cultisti Eretico R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "CUL_R5_6",
+    "name": "Cultisti Eretico R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 9,
+    "initialDef": 16
+  },
+  {
+    "id": "CUL_R5_7",
+    "name": "Cultisti Accolito R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "CUL_R5_8",
+    "name": "Cultisti Invocatore R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 9,
+    "initialDef": 17
+  },
+  {
+    "id": "CUL_R5_9",
+    "name": "Cultisti Maestro R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "CUL_R5_10",
+    "name": "Cultisti Maestro R5",
+    "faction": "CULTISTI",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 14
+  }
+]

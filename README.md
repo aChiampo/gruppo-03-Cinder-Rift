@@ -69,7 +69,11 @@ Riferimento: [Lore, identità e carte](docs/Digital/lore-identita-carte.md).
 
 È disponibile la **Versione 2.1 — Proposta per il prototipo e le prove di bilanciamento**. L’integrazione documentale iniziale risale al **2026-10-27**; i riferimenti correnti sono allineati alla Versione 2.1 su richiesta dell’utente del **2026-11-09**. Il regolamento descrive composizione dei mazzi, energia e punti potenza, fazioni, equipaggiamenti, combattimento automatico, round e conclusione della partita.
 
+<<<<<<< HEAD
+L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Il prototipo descritto nel [README del motore e della campagna](springboot_app/game_engine/README.md) non equivale all'implementazione completa delle funzionalità; consultare quel documento per i comandi e le verifiche del modulo.
+=======
 L'integrazione documentale è approvata; l'approvazione definitiva delle regole, il bilanciamento e la conferma della formula del danno restano aperti. Le verifiche del backend F01 non verificano il regolamento o il motore di gioco.
+>>>>>>> origin/dev
 
 Riferimento: [Regolamento e svolgimento del gioco — Versione 2.1](docs/Digital/regolamento-base.md), con [elementi da completare e testare](docs/Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Le modalità aggiuntive non sono confermate.
 
@@ -99,10 +103,16 @@ Riferimento: [Regolamento e svolgimento del gioco — Versione 2.1](docs/Digital
 │   └── .gitkeep
 └── springboot_app/
     ├── app/
+<<<<<<< HEAD
+    └── game_engine/
+=======
     └── game-engine/
+>>>>>>> origin/dev
 ```
 
 I file `.gitkeep` mantengono versionabili le cartelle applicative vuote. I documenti di funzionalità usano nomi italiani e si collegano tra aree; codice, commenti nel codice e risorse tecniche usano l'inglese.
+
+Il modulo `springboot_app/game_engine/` contiene il motore e il package dimostrativo della campagna nella stessa applicazione Spring Boot; non esiste più un modulo `game_campaign` separato. Per dettagli e comandi consultare il [README del motore e della campagna](springboot_app/game_engine/README.md).
 
 Le istruzioni condivise per gli assistenti sono in [AGENTS.md](AGENTS.md);
 [CLAUDE.md](CLAUDE.md) importa lo stesso file. Le regole complete restano nelle
@@ -128,8 +138,12 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
+<<<<<<< HEAD
+Il modulo dimostrativo del motore e della campagna dispone di wrapper Maven, configurazione e test; i comandi e i limiti sono descritti nel [README del modulo](springboot_app/game_engine/README.md). La presenza di questo prototipo non attesta l'implementazione completa delle funzionalità riportate nelle specifiche.
+=======
 La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida di avvio locale](guida-avvio.md) e [Compose](compose.yaml) descrivono avvio e configurazione dei servizi. Prima dell’avvio configurare la chiave JWT e seguire la procedura Flyway per un database nuovo o esistente. [Migrazioni Flyway F01](springboot_app/app/README.md#migrazioni-flyway-f01).
 
 Con il backend avviato sulla porta locale predefinita `8081`, puoi consultare e provare le API in [Swagger UI](http://localhost:8081/swagger-ui/index.html). Se hai impostato `APPLICATION_PORT` in Compose, usa quella porta. [Configurazione del backend](springboot_app/app/README.md#configurazione-f01).
+>>>>>>> origin/dev
 
 Non inserire credenziali reali. Gli esempi di ambiente, i lockfile e i wrapper di build restano versionabili secondo la `.gitignore`.

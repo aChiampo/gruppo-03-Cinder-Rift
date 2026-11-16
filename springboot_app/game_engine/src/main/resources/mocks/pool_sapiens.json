@@ -1,0 +1,452 @@
+[
+  {
+    "id": "SAP_R1_1",
+    "name": "Sapiens Guardia R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 3,
+    "initialDef": 7
+  },
+  {
+    "id": "SAP_R1_2",
+    "name": "Sapiens Soldato R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 6
+  },
+  {
+    "id": "SAP_R1_3",
+    "name": "Sapiens Medico R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 3,
+    "initialDef": 6
+  },
+  {
+    "id": "SAP_R1_4",
+    "name": "Sapiens Soldato R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 7
+  },
+  {
+    "id": "SAP_R1_5",
+    "name": "Sapiens Guardia R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 6
+  },
+  {
+    "id": "SAP_R1_6",
+    "name": "Sapiens Scout R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 6
+  },
+  {
+    "id": "SAP_R1_7",
+    "name": "Sapiens Veterano R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 8
+  },
+  {
+    "id": "SAP_R1_8",
+    "name": "Sapiens Veterano R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 7
+  },
+  {
+    "id": "SAP_R1_9",
+    "name": "Sapiens Medico R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 7
+  },
+  {
+    "id": "SAP_R1_10",
+    "name": "Sapiens Guardia R1",
+    "faction": "SAPIENS",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 9
+  },
+  {
+    "id": "SAP_R2_1",
+    "name": "Sapiens Medico R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "SAP_R2_2",
+    "name": "Sapiens Veterano R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 9
+  },
+  {
+    "id": "SAP_R2_3",
+    "name": "Sapiens Guardia R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "SAP_R2_4",
+    "name": "Sapiens Medico R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 8
+  },
+  {
+    "id": "SAP_R2_5",
+    "name": "Sapiens Cecchino R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "SAP_R2_6",
+    "name": "Sapiens Scout R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 9
+  },
+  {
+    "id": "SAP_R2_7",
+    "name": "Sapiens Scout R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 6,
+    "initialDef": 8
+  },
+  {
+    "id": "SAP_R2_8",
+    "name": "Sapiens Veterano R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 9
+  },
+  {
+    "id": "SAP_R2_9",
+    "name": "Sapiens Cecchino R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "SAP_R2_10",
+    "name": "Sapiens Medico R2",
+    "faction": "SAPIENS",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 10
+  },
+  {
+    "id": "SAP_R3_1",
+    "name": "Sapiens Medico R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 12
+  },
+  {
+    "id": "SAP_R3_2",
+    "name": "Sapiens Cecchino R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "SAP_R3_3",
+    "name": "Sapiens Cecchino R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 7,
+    "initialDef": 12
+  },
+  {
+    "id": "SAP_R3_4",
+    "name": "Sapiens Soldato R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "SAP_R3_5",
+    "name": "Sapiens Cecchino R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 11
+  },
+  {
+    "id": "SAP_R3_6",
+    "name": "Sapiens Guardia R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 12
+  },
+  {
+    "id": "SAP_R3_7",
+    "name": "Sapiens Medico R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 5,
+    "initialDef": 12
+  },
+  {
+    "id": "SAP_R3_8",
+    "name": "Sapiens Scout R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 10
+  },
+  {
+    "id": "SAP_R3_9",
+    "name": "Sapiens Medico R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 12
+  },
+  {
+    "id": "SAP_R3_10",
+    "name": "Sapiens Veterano R3",
+    "faction": "SAPIENS",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "SAP_R4_1",
+    "name": "Sapiens Veterano R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 13
+  },
+  {
+    "id": "SAP_R4_2",
+    "name": "Sapiens Scout R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 15
+  },
+  {
+    "id": "SAP_R4_3",
+    "name": "Sapiens Soldato R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 12
+  },
+  {
+    "id": "SAP_R4_4",
+    "name": "Sapiens Guardia R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "SAP_R4_5",
+    "name": "Sapiens Soldato R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 15
+  },
+  {
+    "id": "SAP_R4_6",
+    "name": "Sapiens Cecchino R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 13
+  },
+  {
+    "id": "SAP_R4_7",
+    "name": "Sapiens Scout R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 13
+  },
+  {
+    "id": "SAP_R4_8",
+    "name": "Sapiens Veterano R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "SAP_R4_9",
+    "name": "Sapiens Cecchino R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "SAP_R4_10",
+    "name": "Sapiens Medico R4",
+    "faction": "SAPIENS",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "SAP_R5_1",
+    "name": "Sapiens Cecchino R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 9,
+    "initialDef": 17
+  },
+  {
+    "id": "SAP_R5_2",
+    "name": "Sapiens Scout R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 9,
+    "initialDef": 16
+  },
+  {
+    "id": "SAP_R5_3",
+    "name": "Sapiens Veterano R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "SAP_R5_4",
+    "name": "Sapiens Guardia R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 16
+  },
+  {
+    "id": "SAP_R5_5",
+    "name": "Sapiens Cecchino R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 9,
+    "initialDef": 15
+  },
+  {
+    "id": "SAP_R5_6",
+    "name": "Sapiens Soldato R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "SAP_R5_7",
+    "name": "Sapiens Veterano R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 16
+  },
+  {
+    "id": "SAP_R5_8",
+    "name": "Sapiens Medico R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "SAP_R5_9",
+    "name": "Sapiens Medico R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 9,
+    "initialDef": 14
+  },
+  {
+    "id": "SAP_R5_10",
+    "name": "Sapiens Scout R5",
+    "faction": "SAPIENS",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 14
+  }
+]
