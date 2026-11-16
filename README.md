@@ -1,6 +1,6 @@
 # Gioco di carte collezionabili digitale
 
-> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato: backend F01 e base del recupero password implementati; invio email, frontend e integrazione di autenticazione da avviare. Aggiornamento F01: **2026-11-12**, su richiesta dell’utente.
+> Nome progetto e numero gruppo: **DA DEFINIRE**. Stato F01 aggiornato il **2026-11-13**, su approvazione dell’utente, con backend, base del recupero password e cancellazione account implementati. Invio email, frontend e integrazione di autenticazione sono da avviare.
 
 ## Indice generale
 
@@ -20,7 +20,7 @@
 
 ## Funzionamento previsto
 
-1. Registrazione e accesso con email e password. Il backend Spring Boot implementa JWT locali, rinnovo tramite cookie e ruoli `ADMIN` e `USER`; gli endpoint usano `/api/auth`. È disponibile anche la base del recupero password; la consegna email e l’interfaccia sono rinviate, quindi il flusso di recupero completo non è disponibile. [Contratto F01](docs/BackEnd/accesso-utenti.md) · [Invio mail futuro con Thymeleaf](docs/BackEnd/invio-mail.md).
+1. Registrazione e accesso con email e password. Il backend Spring Boot implementa JWT locali, rinnovo tramite cookie, ruoli `ADMIN` e `USER` e cancellazione logica degli account con revoca dei token. Gli endpoint usano `/api/auth`. È disponibile anche la base del recupero password, con consegna email e interfaccia rinviate. [Contratto F01](docs/BackEnd/accesso-utenti.md) · [Invio mail futuro con Thymeleaf](docs/BackEnd/invio-mail.md).
 2. Acquisto con crediti di offerte contenenti ciascuna esattamente un pacchetto; prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice.
 3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
 4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata di due giorni dalla creazione dell’annuncio, secondo il [contratto F06](docs/BackEnd/scambi-mercato.md).
@@ -40,7 +40,7 @@ Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti no
 
 ## Tecnologie
 
-Il backend F01 usa Java 21, Spring Boot 4.1.2, Spring MVC, Spring Security e PostgreSQL tramite JDBC; il POM e Compose definiscono rispettivamente dipendenze e PostgreSQL 18. L’autenticazione è gestita nell’applicazione: password BCrypt, access token JWT HS256 e token di rinnovo opachi persistiti come hash. Il frontend previsto è React; versione, strumenti e integrazione client restano da completare. [Stack e configurazione backend](springboot_app/app/README.md).
+I backend F01 e F05 usano Java 21, Spring Boot 4.1.2, Spring MVC, Spring Security e PostgreSQL tramite JDBC; sono implementati autenticazione e profili, CRUD e validazione iniziale dei mazzi. Le migrazioni V1–V4 creano e inizializzano questa base, senza realizzare tutto il modello v1.1. Il POM e Compose definiscono rispettivamente dipendenze e PostgreSQL 18. L’autenticazione è gestita nell’applicazione: password BCrypt, access token JWT HS256 e token di rinnovo opachi persistiti come hash. Il frontend previsto è React; versione, strumenti e integrazione client restano da completare. [Stack e configurazione backend](springboot_app/app/README.md).
 
 La traccia prevede GitHub, GitHub Projects, Swagger, JSDoc per JS/TS e motore Java isolato con test JUnit.
 
@@ -127,6 +127,8 @@ Esempio illustrativo: `feature/fa06-marketplace` e
 e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzionalità.
 
 ## Avvio e verifica
+
+Nella copia corrente sono disponibili backend F01/F05 e database; React e motore sono segnaposto senza Dockerfile. Per avviare i servizi disponibili usare `docker compose up --build --wait spring_app`, con chiave JWT configurata. L’avvio completo e i launcher restano subordinati alla realizzazione di frontend e motore. [Limiti e procedura corrente](guida-avvio.md#avviare-solo-il-backend-disponibile).
 
 La guida del [backend](springboot_app/app/README.md#build-dellimmagine-docker) descrive la build dell'immagine `spring_app`. La [guida di avvio locale](guida-avvio.md) e [Compose](compose.yaml) descrivono avvio e configurazione dei servizi. Prima dell’avvio configurare la chiave JWT e seguire la procedura Flyway per un database nuovo o esistente. [Migrazioni Flyway F01](springboot_app/app/README.md#migrazioni-flyway-f01).
 

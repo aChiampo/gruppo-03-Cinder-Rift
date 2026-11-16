@@ -6,43 +6,45 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List; 
 
-import javax.crypto.SecretKey; // Represents the shared secret used to sign and verify JWTs.
-import javax.crypto.spec.SecretKeySpec; // Associates the decoded key bytes with a cryptographic algorithm.
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.beans.factory.annotation.Value; // Identifies servlet dispatches, including error handling.
-import org.springframework.context.annotation.Bean; // Injects values from application configuration.
-import org.springframework.context.annotation.Configuration; // Registers a method's result as an object managed by Spring.
-import org.springframework.http.HttpHeaders; // Marks a class as a source of Spring bean definitions.
-import org.springframework.http.HttpMethod; // Provides constants for standard HTTP header names.
-import org.springframework.security.authentication.AbstractAuthenticationToken; // Provides HTTP method constants such as GET and POST.
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // Base type for an authentication result.
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // Holds a principal and authorities.
-import org.springframework.security.config.annotation.web.builders.HttpSecurity; // Enables method access annotations.
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;// Builds the HTTP security rules.
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer; // Enables Spring's web security support.
-import org.springframework.security.config.http.SessionCreationPolicy; // Supplies the disable method used below.
-import org.springframework.security.core.authority.SimpleGrantedAuthority; // Controls use of servlet HTTP sessions for security.
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Represents one permission or role as a string.
-import org.springframework.security.crypto.password.PasswordEncoder; // Hashes and verifies passwords using BCrypt.
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator; // Interface used by the authentication service for passwords.
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm; // Combines multiple token validation rules.
-import org.springframework.security.oauth2.jwt.Jwt; // Names shared-secret signature algorithms such as HS256.
-import org.springframework.security.oauth2.jwt.JwtClaimNames; // Represents a decoded JWT and its claims (token data).
-import org.springframework.security.oauth2.jwt.JwtClaimValidator; // Provides standard claim names such as exp (expiration).
-import org.springframework.security.oauth2.jwt.JwtDecoder; // Validates one JWT claim using a predicate.
-import org.springframework.security.oauth2.jwt.JwtEncoder; // Interface for decoding and validating incoming JWTs.
-import org.springframework.security.oauth2.jwt.JwtValidators; // Interface for creating signed outgoing JWTs.
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder; // Creates standard validators, including issuer validation.
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder; // Nimbus-backed implementation of JWT decoding and verification.
-import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException; // Nimbus-backed implementation of JWT signing.
-import org.springframework.security.web.SecurityFilterChain; // Signals unusable bearer credentials.
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository; // Defines the security filters applied to HTTP requests.
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher; // Stores the expected CSRF token in a browser cookie.
-import org.springframework.security.web.util.matcher.OrRequestMatcher; // Matches request paths and methods.
-import org.springframework.web.cors.CorsConfiguration; // Matches when any of its child matchers matches.
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // Describes allowed cross-origin browser requests (CORS).
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.ObjectPostProcessor;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import jakarta.servlet.DispatcherType; // Associates CORS rules with URL patterns.
+import jakarta.servlet.DispatcherType;
 
 /**
  * Applies cookie and CSRF rules to browser sessions and uses bearer JWTs for protected routes.
@@ -67,15 +69,16 @@ class SecurityConfiguration {
         // Public browser authentication writes require CSRF, including password recovery.
         var authenticationWrites = new OrRequestMatcher(
                 // Registration creates an account and sets its first refresh cookie.
-                paths.matcher(HttpMethod.POST, "/api/auth/users"),
+                paths.matcher(HttpMethod.POST, "/api/auth/signin"),
                 // Sign-in creates a session and sets a refresh cookie.
-                paths.matcher(HttpMethod.POST, "/api/auth/sessions"),
+                paths.matcher(HttpMethod.POST, "/api/auth/login"),
                 // Renewal replaces the existing refresh cookie.
                 paths.matcher(HttpMethod.POST, "/api/auth/session-renewals"),
                 // Sign-out revokes the session and clears its refresh cookie.
-                paths.matcher(HttpMethod.POST, "/api/auth/session-revocations"),
+                paths.matcher(HttpMethod.POST, "/api/auth/logout"),
                 paths.matcher(HttpMethod.POST, "/api/auth/password-reset-requests"),
                 paths.matcher(HttpMethod.POST, "/api/auth/password-resets"));
+        var accountDeletions = paths.matcher(HttpMethod.DELETE, "/api/auth/users/{userId}");
 
         // The repository saves the expected CSRF token in a cookie and loads it on later requests.
         CookieCsrfTokenRepository csrfTokens = new CookieCsrfTokenRepository();
@@ -92,7 +95,17 @@ class SecurityConfiguration {
         return http
                 // Applies the browser origin/method/header rules created by the helper at the end of this file.
                 .cors(cors -> cors.configurationSource(corsConfiguration(allowedOrigins)))
-                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens).requireCsrfProtectionMatcher(authenticationWrites))
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens)
+                        .withObjectPostProcessor(new ObjectPostProcessor<CsrfFilter>() {
+                            @Override
+                            public <O extends CsrfFilter> O postProcess(O filter) {
+                                // Resource-server defaults exempt Bearer requests, including cookie-sensitive routes.
+                                // Apply the explicit policy after all configurers have initialized their defaults.
+                                filter.setRequireCsrfProtectionMatcher(
+                                        new OrRequestMatcher(authenticationWrites, accountDeletions));
+                                return filter;
+                            }
+                        }))
                 // Does not create an HTTP session or use one to retrieve authentication; each request supplies credentials.
                 // The application still stores refresh sessions in the database, which is separate from HttpSession.
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -106,6 +119,7 @@ class SecurityConfiguration {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // These routes require no authenticated user; permitAll does not bypass the CSRF check.
                         .requestMatchers(authenticationWrites).permitAll()
+                        .requestMatchers(accountDeletions).hasAnyRole("ADMIN", "USER")
                         // Allows GET access to CSRF bootstrap, health checks, and the API documentation/UI.
                         .requestMatchers(HttpMethod.GET, "/api/auth/csrf-tokens", "/actuator/health",
                                 // Includes the OpenAPI document and nested Swagger UI assets.

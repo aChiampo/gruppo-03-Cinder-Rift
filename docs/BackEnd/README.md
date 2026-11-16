@@ -1,6 +1,6 @@
 # Area BackEnd
 
-Documentazione dei Software Developer: servizi e regole server. Il backend F01 è disponibile in `springboot_app/app/` con Java 21, Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18. Il [contratto F01](accesso-utenti.md) definisce autenticazione, ruoli, cookie, CSRF e pulizia delle sessioni. Le altre funzionalità mantengono lo stato indicato nelle rispettive schede. Allineamento documentale allo stack corrente: **2026-11-12**, su richiesta dell’utente.
+Documentazione dei Software Developer: servizi e regole server. Il backend F01 è disponibile in `springboot_app/app/` con Java 21, Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18. Il [contratto F01](accesso-utenti.md) definisce autenticazione, ruoli, cookie, CSRF e pulizia delle sessioni. Sono implementati anche profili F01 e gestione iniziale dei mazzi F05, con migrazioni V1–V4; il [contratto F05](gestione-mazzi.md) distingue regole attive e proposte V2.1. Le altre funzionalità mantengono lo stato indicato nelle rispettive schede. Allineamento documentale allo stack corrente: **2026-11-13**, nella revisione richiesta dall’utente.
 
 Le pagine BackEnd ospitano i contratti tecnici canonici delle funzionalità
 trasversali, concordati con le altre aree. Approfondire progressivamente permessi,

@@ -9,7 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 /** Adapts F01 sessions to HTTP by sending the access JWT in JSON and the refresh secret in a cookie. */
@@ -60,7 +63,7 @@ class AuthController {
      * @param request registration data from the client
      * @return HTTP 201 with the access credentials, profile, and refresh cookie
      */
-    @PostMapping("/users")
+    @PostMapping("/signin")
     @Operation(summary = "Create a player account and sign in")
     @Parameter(name = SecurityConfiguration.CSRF_HEADER, in = ParameterIn.HEADER, required = true)
     ResponseEntity<SessionResponse> register(@Valid @RequestBody RegistrationRequest request) {
@@ -74,7 +77,7 @@ class AuthController {
      * @param request login credentials from the client
      * @return HTTP 200 with the access credentials, profile, and refresh cookie
      */
-    @PostMapping("/sessions")
+    @PostMapping("/login")
     @Operation(summary = "Sign in with email and password")
     @Parameter(name = SecurityConfiguration.CSRF_HEADER, in = ParameterIn.HEADER, required = true)
     ResponseEntity<SessionResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -108,10 +111,26 @@ class AuthController {
      * @param user the profile resolved from the validated bearer session
      * @return the caller's private profile
      */
-    @GetMapping("/users/me")
+    @GetMapping("/user/me")
     @Operation(summary = "Get the current user's profile", security = @SecurityRequirement(name = "bearerAuth"))
     UserProfile currentUser(@Parameter(hidden = true) @AuthenticationPrincipal UserProfile user) {
         return user;
+    }
+
+    /** Deletes the authorized target and expires the caller's refresh cookie on self-deletion. */
+    @DeleteMapping("/users/{userId}")
+    @Operation(summary = "Delete an account and revoke all of its tokens",
+            description = "USER can delete their own account. ADMIN can delete any account, including other ADMINs.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @Parameter(name = SecurityConfiguration.CSRF_HEADER, in = ParameterIn.HEADER, required = true)
+    ResponseEntity<Void> deleteAccount(@Parameter(hidden = true) @AuthenticationPrincipal UserProfile caller,
+            @PathVariable @Positive int userId) {
+        authentication.deleteAccount(caller, userId);
+        var response = ResponseEntity.noContent();
+        if (caller.id() == userId) {
+            response.header(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO));
+        }
+        return response.build();
     }
 
     /**
@@ -133,7 +152,7 @@ class AuthController {
      * @param refreshToken opaque value of the refresh cookie, or {@code null} when absent
      * @return HTTP 204 with an expiring cookie
      */
-    @PostMapping("/session-revocations")
+    @PostMapping("/logout")
     @Operation(summary = "Revoke the current session and expire its refresh cookie")
     @Parameter(name = SecurityConfiguration.CSRF_HEADER, in = ParameterIn.HEADER, required = true)
     ResponseEntity<Void> revoke(@CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
@@ -153,8 +172,14 @@ class AuthController {
                 .path("/").secure(true).httpOnly(true).sameSite("Strict").maxAge(maxAge).build().toString();
     }
 
-    record RegistrationRequest(@NotBlank String nickname, @NotBlank @Email @Size(max = 254) String email,
+    record RegistrationRequest(@NotBlank @Size(max = 50) String nickname, @NotBlank @Email @Size(max = 254) String email,
             @NotBlank @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String password) {
+        RegistrationRequest {
+            if (nickname != null) {
+                nickname = nickname.strip();
+            }
+        }
+
         @Override
         public String toString() {
             return "RegistrationRequest";

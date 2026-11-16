@@ -1,6 +1,8 @@
 # Lista di verifica della consegna
 
-Le caselle sono inizialmente aperte: il documento non certifica verifiche eseguite. Collegare le evidenze nelle relative issue o pull request.
+Le caselle si completano solo con evidenze pertinenti; il superamento della suite backend non completa la consegna integrata. Collegare le evidenze nelle relative issue o pull request.
+
+Revisione corrente del **2026-11-13**: **118 test** superati su PostgreSQL **18.6**, migrazioni V1–V4 e JAR verificati. [Report con riferimento e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le note del 2026-11-12 sotto sono storiche.
 
 Revisione documentale F01 del **2026-11-12**, su richiesta dell’utente: backend, test e report locali esistono; stato ed evidenze sono nel [contratto di autenticazione](BackEnd/accesso-utenti.md#verifiche-ed-evidenze). Le caselle di consegna restano distinte dai test già presenti: integrazione React e verifica su PostgreSQL 18 tramite Compose non sono completate da questa revisione.
 
@@ -8,8 +10,8 @@ La base backend del recupero password è stata aggiunta nello stesso giorno; com
 
 ## Identità e perimetro
 
-- [x] Definire nome progetto, numero gruppo, Team Leader, nove membri e account GitHub.
-- [x] Confermare stack definitivo e differenza database rispetto alla traccia.
+- [ ] Completare e confermare nome progetto, numero gruppo e account GitHub mancanti; nove membri e Team Leader sono già riportati nel README.
+- [ ] Confermare stack frontend e chiarimento PostgreSQL/MySQL rispetto alla traccia; lo stack backend è già configurato nel POM.
 - [ ] Completare lore, regolamento e valori numerici.
 - [ ] Risolvere F09 e decidere se confermare O01.
 

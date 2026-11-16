@@ -1,6 +1,20 @@
 # Avviare Cinder Rift sul proprio computer
 
-Guida aggiornata il **2026-11-12** per allineare i prerequisiti di autenticazione allo stack corrente, su richiesta dell’utente. L’avvio locale descritto usa la versione di sviluppo (`dev`), quando i relativi componenti sono disponibili su quel branch.
+Guida aggiornata il **2026-11-13**, nella revisione richiesta dall’utente. La copia corrente contiene il backend F01/F05; React e motore sono segnaposto senza Dockerfile. I launcher e il comando Compose completo descritti sotto richiedono tutti i componenti e non sono ancora utilizzabili per avviare l’intera applicazione. Lo stato del codice è riferito alla copia di lavoro: la revisione non aggiorna i branch locali o remoti.
+
+## Avviare solo il backend disponibile
+
+Apri Docker Desktop e configura `APP_SECURITY_JWT_SECRET` come descritto sotto. Dalla radice della copia corrente esegui:
+
+```text
+docker compose --file compose.yaml up --build --wait spring_app
+```
+
+Compose avvia anche PostgreSQL, dipendenza del backend, senza tentare la build di React e motore. Su un database vuoto Flyway applica V1–V4: autenticazione, catalogo, collezione, mazzi e dati di riferimento. Le migrazioni non inseriscono carte o copie negli inventari e non creano l’intero modello v1.1. Per un database esistente seguire prima la [procedura di adozione](springboot_app/app/README.md#migrazioni-flyway-f01).
+
+Con la porta predefinita consulta [Swagger UI](http://localhost:8081/swagger-ui/index.html) e [salute del backend](http://localhost:8081/actuator/health); se imposti `APPLICATION_PORT`, adatta gli URL. La pagina React su `8082` sarà disponibile dopo l’implementazione del frontend. La configurazione Compose e i test backend sono verificabili separatamente dalla build e dall’avvio dell’immagine applicativa.
+
+Per eseguire Maven direttamente su Windows serve JDK 21: imposta `JAVA_HOME` alla cartella del JDK, anche se `java` nel `PATH` seleziona una versione precedente. [Comandi e prerequisiti dei test](springboot_app/app/README.md#cancellazione-account-f01).
 
 ## Scaricare e installare Docker Desktop
 
@@ -20,7 +34,7 @@ Guida aggiornata il **2026-11-12** per allineare i prerequisiti di autenticazion
 
 Ti servono una connessione a Internet, Git installato e l'accesso al progetto su GitHub. [Download di Git](https://git-scm.com/install/)
 
-Prima di avviare il backend, configura `APP_SECURITY_JWT_SECRET` nel file locale `.env` della cartella del repository o nell’ambiente da cui lanci Compose. Su un database nuovo Flyway crea le tabelle F01 e inserisce i ruoli all’avvio. Se il database contiene già lo schema F01, completa la procedura di adozione prima di avviare il backend. [Migrazioni Flyway F01](springboot_app/app/README.md#migrazioni-flyway-f01).
+Prima di avviare il backend, configura `APP_SECURITY_JWT_SECRET` nel file locale `.env` della cartella del repository o nell’ambiente da cui lanci Compose. Su un database nuovo Flyway applica V1–V4 all’avvio. Se il database contiene già lo schema F01 o tabelle F05, completa la procedura di adozione e riconciliazione prima di avviare il backend. [Migrazioni Flyway](springboot_app/app/README.md#migrazioni-flyway-f01).
 
 La chiave JWT deve essere casuale, codificata in Base64 e rappresentare almeno 32 byte; non esiste una chiave predefinita utilizzabile. Le chiamate di autenticazione usano `/api/auth`; per una porta frontend diversa da `8082`, aggiorna anche `APP_SECURITY_ALLOWED_ORIGINS` all’origine esatta del client. Usa lo stesso nome host nei due URL locali. La [pulizia delle sessioni](springboot_app/app/README.md#pulizia-delle-sessioni-f01) è attiva ogni giorno alle 03:00 UTC mentre il backend è avviato.
 

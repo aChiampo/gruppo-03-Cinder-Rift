@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-/** Owns the transaction boundaries for account creation and browser session issuance and rotation. */
+/** Owns account creation and deletion, password recovery, and browser session transactions. */
 @Service
 class AuthenticationService {
     static final String ISSUER = "cinder-rift";
@@ -131,6 +131,39 @@ class AuthenticationService {
         if (isRefreshToken(refreshToken)) {
             accounts.revokeRefreshToken(hashToken(refreshToken), clock.instant());
         }
+    }
+
+    /**
+     * Soft-deletes an account and invalidates its sessions and recovery links atomically.
+     * USER may delete themselves; ADMIN may delete any account, including another ADMIN.
+     *
+     * @param caller the authenticated principal, rechecked under the database locks
+     * @param userId the target account ID
+     */
+    @Transactional
+    public void deleteAccount(UserProfile caller, int userId) {
+        if (userId <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User ID must be positive");
+        }
+        // Reject another user's target before looking it up, then recheck the current role under lock.
+        if (!"ADMIN".equals(caller.role()) && caller.id() != userId) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deletion is not permitted");
+        }
+        var locked = accounts.lockAccountsForDeletion(caller.id(), userId);
+        var currentCaller = locked.stream().filter(account -> account.id() == caller.id())
+                .filter(account -> !account.deleted())
+                .filter(account -> "ADMIN".equals(account.role()) || "USER".equals(account.role()))
+                .findFirst().orElseThrow(() -> unauthorized("The account is no longer active"));
+        if (!"ADMIN".equals(currentCaller.role()) && caller.id() != userId) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deletion is not permitted");
+        }
+        if (locked.stream().noneMatch(account -> account.id() == userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
+        }
+        Instant now = clock.instant();
+        accounts.revokeAllRefreshTokens(userId, now);
+        accounts.deletePasswordResetTokens(userId);
+        accounts.markDeleted(userId);
     }
 
     /** Creates a ten-minute recovery token without invalidating previously issued tokens. */

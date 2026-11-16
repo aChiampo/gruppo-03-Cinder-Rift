@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -52,6 +53,35 @@ class AccountRepository {
                 .param("userId", userId)
                 .query((row, rowNumber) -> mapProfile(row))
                 .optional();
+    }
+
+    /** Locks caller and target in a stable order, including accounts already soft-deleted. */
+    List<AccountState> lockAccountsForDeletion(int callerId, int targetId) {
+        return jdbc.sql("""
+                SELECT u.id, r.code AS role, u.is_deleted
+                FROM users u JOIN roles r ON r.id = u.id_role
+                WHERE u.id IN (:callerId, :targetId)
+                ORDER BY u.id FOR UPDATE OF u
+                """)
+                .param("callerId", callerId).param("targetId", targetId)
+                .query((row, rowNumber) -> new AccountState(
+                        row.getInt("id"), row.getString("role"), row.getBoolean("is_deleted")))
+                .list();
+    }
+
+    /** Preserves the account and its foreign-key references while disabling authentication. */
+    void markDeleted(int userId) {
+        int updated = jdbc.sql("UPDATE users SET is_deleted = true WHERE id = :userId")
+                .param("userId", userId).update();
+        if (updated != 1) {
+            throw new IllegalStateException("The locked account is missing");
+        }
+    }
+
+    /** Removes every recovery secret for an account being deleted. */
+    void deletePasswordResetTokens(int userId) {
+        jdbc.sql("DELETE FROM password_reset_tokens WHERE id_user = :userId")
+                .param("userId", userId).update();
     }
 
     /**
@@ -262,4 +292,6 @@ class AccountRepository {
             return "Account[id=" + profile.id() + "]";
         }
     }
+
+    record AccountState(int id, String role, boolean deleted) {}
 }
