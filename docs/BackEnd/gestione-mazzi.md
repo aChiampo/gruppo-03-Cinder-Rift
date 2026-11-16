@@ -1,33 +1,404 @@
 # Gestione e validazione dei mazzi
 
 - ID: F05 · Perimetro: confermato; specifica in approfondimento.
-- Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
-- Ultimo aggiornamento significativo: **2026-11-05**, allineamento alla base di dati v1.0 su richiesta dell'utente.
+- Implementazione: persistenza, validazione e API REST backend implementate; frontend non implementato. Responsabile: DA DEFINIRE (Software Developer).
+- Ultimo aggiornamento significativo: **2026-11-13**, esposizione delle rotte HTTP F05 e test MockMvc su PostgreSQL.
 - Branch documentale richiesto: `docs/f05-deck-validation-v2`.
 
-Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.0](Database/database-schema-v1.0.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
+Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
 
-L'integrazione documentale è approvata; la proposta di riferimento è ora la V2.1, mentre regole definitive e bilanciamento restano da confermare. Le decisioni aggiornate dall'utente il 2026-10-29 prevedono una PK autonoma `DECKS_CARDS.id`, una destinazione testuale `ROUND1` … `ROUND5` oppure `EQUIPMENT` e nessuna quantità per riga. Questo modello sostituisce la precedente PK composta e risolve la rappresentazione delle due copie nello stesso round e del gruppo equipaggiamenti. Restano scelti i controlli distinti per operazione e l'atomicità di eventuali aggregati persistiti. Firme, errori e strategie transazionali restano **proposte da concordare**, non API o migrazioni implementate. Verifiche applicative e di bilanciamento: **non eseguite**.
+## Riepilogo API
+
+| Method | Path | Auth required | Purpose | Success Status | Error Statuses |
+| --- | --- | --- | --- | --- | --- |
+| `GET` | `/api/users/me/decks` | Bearer JWT | Elenca i mazzi del chiamante con validazione live | `200` | `401` |
+| `POST` | `/api/users/me/decks` | Bearer JWT | Crea una bozza con eventuali copie iniziali | `201` | `400`, `401`, `404` |
+| `GET` | `/api/decks/{deckId}` | Bearer JWT | Legge un mazzo di proprietà con copie e validazione live | `200` | `400`, `401`, `404` |
+| `PUT` | `/api/decks/{deckId}` | Bearer JWT | Sostituisce copie e stato sfidabile in modo atomico | `200` | `400`, `401`, `404` |
+| `DELETE` | `/api/decks/{deckId}` | Bearer JWT | Elimina un mazzo di proprietà | `204` | `400`, `401`, `404` |
+
+Per distinguere Bearer e CSRF e per consultare OpenAPI, vedere la [guida autenticazione e header F01](accesso-utenti.md#guida-autenticazione-header-e-openapi). Queste rotte non richiedono cookie CSRF o header `X-XSRF-TOKEN`.
+
+L'integrazione documentale è approvata; la proposta di riferimento è ora la V2.1, mentre regole definitive e bilanciamento restano da confermare. Le decisioni aggiornate dall'utente il 2026-10-29 prevedono una PK autonoma `DECKS_CARDS.id`, una destinazione testuale `ROUND1` … `ROUND5` oppure `EQUIPMENT` e nessuna quantità per riga. Questo modello sostituisce la precedente PK composta e risolve la rappresentazione delle due copie nello stesso round e del gruppo equipaggiamenti. Le migrazioni V3/V4 e le API backend implementate sono descritte sotto. I test coprono le rotte e le regole iniziali, ma non costituiscono verifica completa della funzionalità o del bilanciamento.
+
+## Implementazione backend disponibile
+
+Il package `webapp.deck` usa `JdbcClient`, record Java, Jakarta Bean Validation e transazioni Spring. `DeckRepository` esegue CRUD su `decks` e sulle singole righe `decks_cards`; ogni lettura o mutazione di un mazzo è vincolata al proprietario autenticato, con lock della riga utente e poi del mazzo per le operazioni di scrittura. `CardCatalogRepository` carica carte, arti, configurazioni e copie possedute. `DeckService` coordina le operazioni; la cancellazione del mazzo usa la cascata FK prevista da V3. `DeckController` espone le rotte riportate sotto, risolvendo l'identità esclusivamente da `@AuthenticationPrincipal UserProfile`; non è persistito un flag di validità.
+
+`DeckValidator` raccoglie i bean `DeckValidationRule` e restituisce esito, errori, avvisi e riepilogo. Sono implementati controlli strutturali, esistenza di carte e arti attive, compatibilità tipo/destinazione, possesso per variante, conteggio ed energia aggregata per destinazione, nonché la composizione di 30 copie (25 creature, 5 equipaggiamenti e 5 creature per ciascun round). L'incompletezza è un avviso per le bozze e un errore quando si richiede la validità completa; solo un mazzo valido può essere reso `is_challengeable`. Potenza, quote di rarità e limiti di copie della proposta V2.1 non sono implementati.
+
+Il guard condiviso del catalogo previsto dal protocollo transazionale resta **DA DEFINIRE**; il lock utente non sostituisce quel guard né coordina scrittori di catalogo che non lo acquisiscano. Inoltre, la regola implementata confronta la somma di `energy_cost` con `max_energy`, mentre il seed V4 configura i massimi dei round da 1 a 5. Con questi valori, cinque carte con costo positivo in `ROUND1` non possono superare il controllo: la compatibilità dei parametri iniziali con la regola aggregata resta da concordare prima dell'uso di mazzi completi con il catalogo reale.
+
+## API HTTP implementate
+
+Tutte le rotte richiedono un bearer JWT valido e usano l'ID di `UserProfile` come unica identità del proprietario. Il client non invia `ownerId` o `userId`. Le rotte non richiedono CSRF. Ogni oggetto in `entries` rappresenta una singola copia; ripetere una carta crea copie distinte.
+
+I body usano `Content-Type: application/json`. `DeckEntryRequest` ha i campi `cardId` (intero positivo), `cardArtId` (intero positivo) e `destination` (stringa non blank). Non inviare `entryId`: gli ID delle righe salvate sono assegnati dal server. La validità live viene ricalcolata a ogni lettura; non è memorizzata nel database.
+
+#### `GET /api/users/me/decks`
+
+Non ha body. `200 OK` restituisce una lista (vuota se non ci sono mazzi); ciascun elemento usa i campi di `DeckListItemResponse`:
+
+```json
+[
+  {
+    "id": 8,
+    "ownerId": 12,
+    "isChallengeable": false,
+    "cardCount": 1,
+    "validation": {
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        {
+          "code": "CREATURE_COUNT_INCOMPLETE",
+          "scope": "creatures",
+          "message": "Expected 25 creatures but found 1",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": null,
+          "severity": "WARNING"
+        },
+        {
+          "code": "EQUIPMENT_COUNT_INCOMPLETE",
+          "scope": "equipment",
+          "message": "Expected 5 equipment but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "EQUIPMENT",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 1",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND1",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND2",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND3",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND4",
+          "severity": "WARNING"
+        },
+        {
+          "code": "CARD_COUNT_INCOMPLETE",
+          "scope": "round",
+          "message": "Expected 5 round but found 0",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": "ROUND5",
+          "severity": "WARNING"
+        },
+        {
+          "code": "DECK_COUNT_INCOMPLETE",
+          "scope": "deck",
+          "message": "Expected 30 deck but found 1",
+          "cardId": null,
+          "cardArtId": null,
+          "destination": null,
+          "severity": "WARNING"
+        }
+      ],
+      "summary": {
+        "totalCards": 1,
+        "creatureCount": 1,
+        "equipmentCount": 0,
+        "cardCountByDestination": {"ROUND1": 1},
+        "energyByDestination": {"ROUND1": 1}
+      }
+    }
+  }
+]
+```
+
+#### `POST /api/users/me/decks`
+
+Il body è facoltativo; se presente, `entries` è facoltativo e può essere vuoto o omesso. Ogni elemento deve avere questa struttura:
+
+```json
+{
+  "entries": [
+    {"cardId": 17, "cardArtId": 41, "destination": "ROUND1"}
+  ]
+}
+```
+
+Il server crea sempre una bozza con `isChallengeable: false`. `201 Created` restituisce `DeckDetailsResponse` come mostrato per `GET /api/decks/{deckId}`. Una bozza incompleta è salvabile e riporta le mancanze in `validation.warnings`; errori di regola diversi dalla sola incompletezza impediscono il salvataggio con `400`.
+
+#### `GET /api/decks/{deckId}`
+
+Non ha body; `deckId` deve essere un intero positivo. `200 OK` restituisce `DeckDetailsResponse`:
+
+```json
+{
+  "id": 8,
+  "ownerId": 12,
+  "isChallengeable": false,
+  "entries": [
+    {"entryId": 101, "cardId": 17, "cardArtId": 41, "destination": "ROUND1"}
+  ],
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [
+      {
+        "code": "CREATURE_COUNT_INCOMPLETE",
+        "scope": "creatures",
+        "message": "Expected 25 creatures but found 1",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": null,
+        "severity": "WARNING"
+      },
+      {
+        "code": "EQUIPMENT_COUNT_INCOMPLETE",
+        "scope": "equipment",
+        "message": "Expected 5 equipment but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "EQUIPMENT",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 1",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND1",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND2",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND3",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND4",
+        "severity": "WARNING"
+      },
+      {
+        "code": "CARD_COUNT_INCOMPLETE",
+        "scope": "round",
+        "message": "Expected 5 round but found 0",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": "ROUND5",
+        "severity": "WARNING"
+      },
+      {
+        "code": "DECK_COUNT_INCOMPLETE",
+        "scope": "deck",
+        "message": "Expected 30 deck but found 1",
+        "cardId": null,
+        "cardArtId": null,
+        "destination": null,
+        "severity": "WARNING"
+      }
+    ],
+    "summary": {
+      "totalCards": 1,
+      "creatureCount": 1,
+      "equipmentCount": 0,
+      "cardCountByDestination": {"ROUND1": 1},
+      "energyByDestination": {"ROUND1": 1}
+    }
+  }
+}
+```
+
+Il mazzo mancante e quello di un altro proprietario restituiscono entrambi `404 Not Found`, senza distinguerli:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Deck not found",
+  "instance": "/api/decks/999"
+}
+```
+
+#### `PUT /api/decks/{deckId}`
+
+Sostituisce atomicamente tutte le copie e il flag sfidabile. `entries` è obbligatorio e non può essere `null`; ogni elemento segue `DeckEntryRequest`. `isChallengeable` è facoltativo: se omesso o `null`, diventa `false`.
+
+```json
+{
+  "entries": [
+    {"cardId": 17, "cardArtId": 41, "destination": "ROUND1"}
+  ],
+  "isChallengeable": false
+}
+```
+
+`200 OK` restituisce `DeckDetailsResponse`. Una bozza può restare incompleta: la sola incompletezza produce warning e non blocca il salvataggio. Se si richiede `"isChallengeable": true`, conteggi, possesso, esistenza/attività di carta e arte, destinazione e limiti configurati devono essere validi; violazioni producono `400` e la sostituzione viene annullata. `isChallengeable` non viene mai attivato su un mazzo invalido.
+
+#### `DELETE /api/decks/{deckId}`
+
+Non ha body; `deckId` deve essere un intero positivo. `204 No Content` elimina il mazzo e le sue copie. Non restituisce body. Un mazzo mancante o di altro proprietario restituisce `404`.
+
+#### Errori
+
+Errori di validazione HTTP del body e ID non positivo restituiscono il Problem Detail standard di Spring. Il fallimento delle regole di validazione mazzo restituisce `application/problem+json` con i campi standard RFC 7807 e le proprietà `errors`, `warnings`, `summary`:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Deck validation failed",
+  "status": 400,
+  "detail": "Deck validation failed",
+  "instance": "/api/decks/8",
+  "errors": [
+    {
+      "code": "CREATURE_COUNT_INCOMPLETE",
+      "scope": "deck",
+      "message": "Expected 25 creatures but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": null,
+      "severity": "ERROR"
+    },
+    {
+      "code": "EQUIPMENT_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 equipment but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "EQUIPMENT",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND1",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND2",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND3",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND4",
+      "severity": "ERROR"
+    },
+    {
+      "code": "CARD_COUNT_INCOMPLETE",
+      "scope": "round",
+      "message": "Expected 5 round but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": "ROUND5",
+      "severity": "ERROR"
+    },
+    {
+      "code": "DECK_COUNT_INCOMPLETE",
+      "scope": "deck",
+      "message": "Expected 30 deck but found 0",
+      "cardId": null,
+      "cardArtId": null,
+      "destination": null,
+      "severity": "ERROR"
+    }
+  ],
+  "warnings": [],
+  "summary": {
+    "totalCards": 0,
+    "creatureCount": 0,
+    "equipmentCount": 0,
+    "cardCountByDestination": {},
+    "energyByDestination": {}
+  }
+}
+```
+
+I campi `DeckViolation` sono sempre `code`, `scope`, `message`, `cardId`, `cardArtId`, `destination`, `severity`; i valori non applicabili sono `null`. Il contenuto e l'ordine delle violazioni dipendono dal risultato live. Il filtro Bearer risponde `401` con `WWW-Authenticate`; il controller non garantisce un body Problem Detail per i rifiuti del filtro. Il client tratta sia mazzo inesistente sia non appartenente all'utente come `404`, senza possibilità di distinguere i due casi.
+
+Verifica mirata dei test MockMvc F05 del **2026-11-13**: `./mvnw -q -Dtest=DeckControllerDatabaseTests test`, eseguito da `springboot_app/app` con PostgreSQL 18.7; esito superato. I test coprono `200`, `201`, `204`, `400`, `401`, `404`, mancato accesso ai mazzi altrui e rollback della sostituzione non valida. L’ultima esecuzione della suite backend completa da `springboot_app/app`, con `./mvnw test`, ha superato **70 test**, senza errori, fallimenti o casi saltati. La verifica non attesta bilanciamento o correttezza dei parametri di gioco; i 70 test non sono stati rieseguiti durante questo aggiornamento documentale.
 
 ## Obiettivo, perimetro e dipendenze
 
 Adattare il flusso «aggiunta → raccolta regole e dati → validazione → salvataggio oppure errori» alla V2.1, mantenendo `submitDeck(userId, deckId)` come verifica completa prima dell'utilizzo. Ogni utente può comporre e salvare più mazzi; salvare una bozza incompleta non significa renderla utilizzabile.
 
-Questa pagina approfondisce il riferimento tecnico canonico F05 già esistente. Il precedente aggiornamento del 2026-11-02 resta la fonte delle proposte V2.1. La versione corrente recepisce invece la base di dati v1.0: destinazioni e limiti dei round sono persistiti in `ROUND_CONFIGURATIONS`, mentre le altre regole proposte devono ancora essere concordate. Restano lo pseudocodice descrittivo con l'eccezione preesistente dei commenti in italiano e l'assenza di revisioni/versioni di mazzi e catalogo. Il protocollo di accesso è comune fra servizi. Non sono eseguite migrazioni o prove applicative; regole di gioco e API ancora proposte restano riconoscibili come tali.
+Questa pagina approfondisce il riferimento tecnico canonico F05 già esistente. Il precedente aggiornamento del 2026-11-02 resta la fonte delle proposte V2.1. La versione corrente recepisce invece la base di dati v1.1: destinazioni e limiti dei round sono persistiti in `ROUND_CONFIGURATIONS`, mentre le altre regole proposte devono ancora essere concordate. Restano lo pseudocodice descrittivo con l'eccezione preesistente dei commenti in italiano e l'assenza di revisioni/versioni di mazzi e catalogo. Il protocollo di accesso è comune fra servizi. Non sono eseguite migrazioni o prove applicative; regole di gioco e API ancora proposte restano riconoscibili come tali.
 
 Dipendenze: F01 per l'identità, F04 per il possesso, F06 per gli scambi, F07 per validazione e snapshot prima della partita, F10 per catalogo e regole. Mescolamento, effetti e simulazione spettano a F07. Gli equipaggiamenti formano un gruppo separato: F05 non li assegna a round specifici.
 
 
 ## Requisiti di validazione derivati dalla V2.1
 
-La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di regole indipendente. I numeri proposti non sono seed o parametri già inseriti nella v1.0. Per persistenza, arti e limiti configurabili prevale la specifica della base di dati; il raccordo delle restanti regole di gioco richiede conferma. I valori restano governati dalle [sezioni 2–4 del regolamento](../Digital/regolamento-base.md#2-struttura-del-mazzo). Ogni occorrenza logica vale una copia; i totali si calcolano contando le occorrenze, non gli ID carta distinti. Ogni riga persistita rappresenta una copia, senza campo quantità, e ha un ID autonomo anche quando carta e destinazione coincidono con un'altra riga.
+La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di regole indipendente. I numeri proposti non sono seed o parametri già inseriti nella v1.1. Per persistenza, arti e limiti configurabili prevale la specifica della base di dati; il raccordo delle restanti regole di gioco richiede conferma. I valori restano governati dalle [sezioni 2–4 del regolamento](../Digital/regolamento-base.md#2-struttura-del-mazzo). Ogni occorrenza logica vale una copia; i totali si calcolano contando le occorrenze, non gli ID carta distinti. Ogni riga persistita rappresenta una copia, senza campo quantità, e ha un ID autonomo anche quando carta e destinazione coincidono con un'altra riga.
 
 | Ambito | Controllo |
 | --- | --- |
 | Mazzo | Esattamente 30 carte: 25 creature e 5 equipaggiamenti |
 | Creature | Cinque gruppi assegnati ai round 1–5, esattamente 5 carte per gruppo |
 | Equipaggiamenti | Un gruppo separato di 5 carte differenti, senza assegnazione al round |
-| Energia persistente v1.0 | Somma di `CARDS.energy_cost` per destinazione ≤ `ROUND_CONFIGURATIONS.max_energy`; valori iniziali DA DEFINIRE |
+| Energia persistente v1.1 | Somma di `CARDS.energy_cost` per destinazione ≤ `ROUND_CONFIGURATIONS.max_energy`; valori iniziali DA DEFINIRE |
 | Potenza | Totale ≤ 75; creature ≤ 65; equipaggiamenti ≤ 10; ogni gruppo creature ≤ 14 |
 | Rarità creature, intero mazzo | Comuni ≥ 13; rare ≤ 8; epiche ≤ 3; leggendarie ≤ 1 |
 | Copie creature | ≤ 2 per stessa carta nell'insieme dei cinque gruppi, anche divise fra round |
@@ -38,21 +409,21 @@ La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di r
 
 Nella V2.1 non si applica il precedente limite di un'epica o leggendaria per gruppo creature: più copie epiche e/o leggendarie possono condividere un round se rispettano tutti gli altri vincoli. Restano i massimi di rarità per categoria riportati nelle tabelle della sezione 4 del regolamento: creature epiche ≤ 3 e leggendarie ≤ 1; equipaggiamenti epici ≤ 1 e nessun leggendario nel primo set.
 
-I budget sono massimi indipendenti, non obiettivi esatti: risparmi in una categoria non aumentano il limite dell'altra. La v1.0 richiede il controllo della somma dei costi energetici per destinazione, distinto dalla potenza. L'accesso individuale proposto dalla V2.1 è una regola aggiuntiva da riconciliare, non sostituisce `max_energy`. La potenza è il costo fisso della carta, da caricare dal catalogo, non da dedurre dalla sola rarità. Le fasce V2.1 per carta sono: comune 1–2, rara 2–3, epica 3–4, leggendaria 5; valgono anche per gli equipaggiamenti ammessi.
+I budget sono massimi indipendenti, non obiettivi esatti: risparmi in una categoria non aumentano il limite dell'altra. La v1.1 richiede il controllo della somma dei costi energetici per destinazione, distinto dalla potenza. L'accesso individuale proposto dalla V2.1 è una regola aggiuntiva da riconciliare, non sostituisce `max_energy`. La potenza è il costo fisso della carta, da caricare dal catalogo, non da dedurre dalla sola rarità. Le fasce V2.1 per carta sono: comune 1–2, rara 2–3, epica 3–4, leggendaria 5; valgono anche per gli equipaggiamenti ammessi.
 
-Soglie e accesso delle creature meno costose ai round successivi restano proposti, come indicato nella [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Non introdurre limiti statistici o quote di fazione non definiti. Il controllo aggregato dell'energia è invece richiesto dalla v1.0; i numeri proposti non sono default di `ROUND_CONFIGURATIONS`. La restrizione sugli equipaggiamenti leggendari riguarda il primo set: la gestione di eventuali set successivi è **DA DEFINIRE**.
+Soglie e accesso delle creature meno costose ai round successivi restano proposti, come indicato nella [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Non introdurre limiti statistici o quote di fazione non definiti. Il controllo aggregato dell'energia è invece richiesto dalla v1.1; i numeri proposti non sono default di `ROUND_CONFIGURATIONS`. La restrizione sugli equipaggiamenti leggendari riguarda il primo set: la gestione di eventuali set successivi è **DA DEFINIRE**.
 
 ## Attori, autorizzazioni e precondizioni
 
 - `userId` deriva dall'identità autenticata, non da un campo client arbitrario.
-- Caricamento e modifica verificano `DECKS.id_user == userId`. Identità assente, mazzo inesistente o non autorizzato interrompono il flusso prima di esporre composizione e collezione. Status HTTP e politica di visibilità sono DA DEFINIRE.
-- Nessuna gerarchia o privilegio implicito fra `ADMIN`, `MANAGER` e `USER`.
+- Caricamento e modifica verificano `DECKS.id_user == userId`. Identità assente richiede autenticazione; mazzo inesistente o non autorizzato restituisce `404 Not Found` prima di esporre composizione e collezione. Gli status implementati sono riepilogati nella sezione [API HTTP](#api-http-implementate).
+- I privilegi di `ADMIN` e `USER` richiedono un’assegnazione esplicita.
 - Regole incomplete o letture fallite producono errori tecnici: nessun salvataggio né esito positivo. Una lettura fallita non equivale a una collezione vuota.
 - Una riga collezione assente vale zero copie solo dopo una lettura riuscita; valori presenti nulli, negativi o non interi indicano dati incoerenti.
 
-## Dati e vincoli della base di dati v1.0
+## Dati e vincoli della base di dati v1.1
 
-| Concetto | Base di dati v1.0 | Regola |
+| Concetto | Base di dati v1.1 | Regola |
 | --- | --- | --- |
 | Identificativi | PK autonome e `CARDS_ARTS.id_art`: `int` auto-incrementali | Le FK ereditano gli interi; il client non genera la PK |
 | Mazzo/proprietario | `DECKS.id`, `id_user` obbligatorio | Autorizzazione a ogni operazione |
@@ -65,7 +436,7 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 | Scambiabilità | `tradable_replica` meno hold non scaduti | Non coincide con la disponibilità per giocare |
 | Destinazioni e limiti | `ROUND_CONFIGURATIONS.round_name`, `round_number`, `max_energy`, `max_cards` | FK dalla destinazione; parametri positivi; aggregati verificati dal backend |
 | Parole chiave | `CARDS_KEYWORDS.id_card` PK e `keyword_list` JSONB | Al massimo una lista per carta; ID interi annidati senza FK |
-| Altre regole di gioco | Non sono colonne della v1.0 | Proposte V2.1 da concordare; nessun seed o valore implicito |
+| Altre regole di gioco | Non sono colonne della v1.1 | Proposte V2.1 da concordare; nessun seed o valore implicito |
 | Validazione precedente | Nessuno stato persistito di validazione | Nessuna revisione di mazzo/catalogo; rivalidare i dati correnti |
 
 
@@ -77,7 +448,7 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 
 La [sezione 4](../Digital/regolamento-base.md#4-budget-e-vincoli-di-composizione) ammette due copie della stessa creatura anche nello stesso mazzetto: il nuovo modello le rappresenta mediante due righe con ID distinti e la stessa destinazione. Il valore `EQUIPMENT` rappresenta esplicitamente il gruppo separato. I due precedenti problemi strutturali sono quindi risolti; le altre regole V2.1 richiedono comunque il validatore e non sono garantite dalla sola PK.
 
-Il DBML dichiara già le FK per proprietario, composizione, carte e collezione. Le quantità della collezione sono obbligatorie: `owned_replica > 0` e `0 <= tradable_replica <= owned_replica`; quando il possesso scende a zero la riga va eliminata. `DECKS.id_user`, carta, arte e destinazione sono obbligatori. Diversi metadati di `CARDS` restano nullable e devono essere verificati prima dell'uso. Un `CHECK` di riga non copre i limiti aggregati. La specifica e il DBML v1.0 sono allineati; non è stata creata o eseguita una migrazione database.
+Il DBML dichiara già le FK per proprietario, composizione, carte e collezione. Le quantità della collezione sono obbligatorie: `owned_replica > 0` e `0 <= tradable_replica <= owned_replica`; quando il possesso scende a zero la riga va eliminata. `DECKS.id_user`, carta, arte e destinazione sono obbligatori. Diversi metadati di `CARDS` restano nullable e devono essere verificati prima dell'uso. Un `CHECK` di riga non copre i limiti aggregati. La specifica e il DBML v1.1 sono allineati; non è stata creata o eseguita una migrazione database.
 
 ## Controlli per operazione e utilizzo
 
@@ -97,7 +468,7 @@ Non sono introdotti stati persistiti di validazione. Una modifica, uno scambio o
 
 ## Contratto logico proposto
 
-Firme di servizio e dati illustrativi, **non endpoint approvati**. Metodi HTTP, percorsi conformi al prefisso `/api`, status, limiti, paginazione e OpenAPI sono DA DEFINIRE prima dell'integrazione.
+Le firme che seguono sono pseudocodice del flusso di dominio, non il contratto HTTP. Le rotte, i payload e gli status effettivamente implementati sono definiti nella sezione [API HTTP implementate](#api-http-implementate); restano DA DEFINIRE le politiche di paginazione e le regole di gioco V2.1 non implementate.
 
 ```typescript
 type DeckDestination = "ROUND1" | "ROUND2" | "ROUND3" | "ROUND4" | "ROUND5" | "EQUIPMENT";
@@ -131,7 +502,7 @@ validateDeckChange(proposedDeck, context): ValidationResult;
 validateDeck(deck, context): ValidationResult;
 ```
 
-Gli ID sono interi positivi nel dominio `int` della v1.0; i campi numerici del contratto proposto devono rispettarlo. Ogni elemento di `entries` rappresenta una copia, senza proprietà `quantity`; `entryId` corrisponde alla PK `DECKS_CARDS.id` delle occorrenze salvate. L'aggiunta richiede carta, arte e destinazione e non permette al client di scegliere la PK. `destination` è obbligatoria e usa gli stessi valori testuali del DBML. Due elementi con stessi `cardId`, `cardArtId` e `destination` sono due copie distinte: non vengono deduplicati e, se altrimenti conformi, possono essere salvati con ID diversi. Ripetere lo stesso `entryId` in una composizione è invece un errore strutturale, perché identificherebbe due volte la stessa riga. I limiti di copie si contano per carta logica; il possesso si conta per coppia carta/arte in tutto il mazzo.
+Gli ID sono interi positivi nel dominio `int` della v1.1; i campi numerici del contratto proposto devono rispettarlo. Ogni elemento di `entries` rappresenta una copia, senza proprietà `quantity`; `entryId` corrisponde alla PK `DECKS_CARDS.id` delle occorrenze salvate. L'aggiunta richiede carta, arte e destinazione e non permette al client di scegliere la PK. `destination` è obbligatoria e usa gli stessi valori testuali del DBML. Due elementi con stessi `cardId`, `cardArtId` e `destination` sono due copie distinte: non vengono deduplicati e, se altrimenti conformi, possono essere salvati con ID diversi. Ripetere lo stesso `entryId` in una composizione è invece un errore strutturale, perché identificherebbe due volte la stessa riga. I limiti di copie si contano per carta logica; il possesso si conta per coppia carta/arte in tutto il mazzo.
 
 `summary` contiene almeno totale carte/potenza, conteggi e potenza per categoria, rarità per categoria, conteggio/potenza e somma energetica per destinazione e occorrenze per coppia carta/arte. Non richiede un contatore epiche + leggendarie per round, poiché nella V2.1 non esiste più quel vincolo. Serializzazione definitiva DA DEFINIRE. Il risultato non contiene token di revisione/versione e non autorizza utilizzi futuri.
 
@@ -150,7 +521,7 @@ Esempio: aggiungere una creatura comune posseduta da 1 punto, energia 1, con des
 | `RULESET_UNAVAILABLE`, `VALIDATION_UNAVAILABLE` | Errori tecnici di configurazione/lettura, distinti dalle violazioni del mazzo |
 | `CONCURRENT_MODIFICATION` | Conflitto di accesso concorrente o timeout dei lock, nessun salvataggio parziale |
 
-Gli errori riportano scope, riferimenti e valori pertinenti; il client localizza le descrizioni senza sostituire i codici. Formato degli errori tecnici e di autenticazione DA DEFINIRE con F01, senza simulare una validazione riuscita.
+Gli errori riportano scope, riferimenti e valori pertinenti; il client localizza le descrizioni senza sostituire i codici. Per autenticazione Bearer, risposte `401` e relativi header fare riferimento al [contratto F01](accesso-utenti.md#contratto-tecnico-condiviso), già disponibile. Il formato degli errori tecnici e di dominio specifici di F05 resta DA DEFINIRE, senza simulare una validazione riuscita. Riferimento F01 allineato il **2026-11-12**, su richiesta dell’utente.
 
 ## Flusso in pseudocodice
 
@@ -311,10 +682,10 @@ Il flusso F07 è un'integrazione **proposta**, non un contratto già approvato. 
 1. Acquisire il guard condiviso sul catalogo e leggere configurazioni dei round e regole correnti dopo i lock, mantenendole immutabili per l'operazione; chi modifica carte o metadati prende lo stesso guard in esclusiva. La primitiva del guard è DA DEFINIRE e deve coordinare tutti i processi applicativi.
 2. Guard stabile per utente, ad esempio la riga `USERS`, per serializzare variazioni della collezione e controlli. Protegge anche righe `COLLECTIONS` assenti, che il lock delle sole righe esistenti non coprirebbe.
 3. Ordine unico: guard catalogo → utenti per ID numerico crescente → mazzi per ID crescente → annunci e trattative, se coinvolti, per ID crescente → dettagli in ordine deterministico. Ogni flusso prende i guard necessari prima di modificare le risorse protette.
-4. Leggere valori correnti **dopo** l'acquisizione dei guard e mantenerli fino a commit/rollback, con isolamento `READ COMMITTED` come nel protocollo v1.0. La primitiva comune del guard catalogo resta DA DEFINIRE; non riutilizzare una snapshot DB anteriore all'attesa dei lock.
+4. Leggere valori correnti **dopo** l'acquisizione dei guard e mantenerli fino a commit/rollback, con isolamento `READ COMMITTED` come nel protocollo v1.1. La primitiva comune del guard catalogo resta DA DEFINIRE; non riutilizzare una snapshot DB anteriore all'attesa dei lock.
 5. Conflitto/timeout: rollback e retry limitato soltanto se sicuro; non ripetere alla cieca un'aggiunta dopo un esito di commit sconosciuto.
 
-Il lock del mazzo evita aggiornamenti persi; quello della collezione coordina possesso e scambi; quello del catalogo evita variazioni dei metadati a metà verifica. Il protocollo usa lock e letture correnti, senza tracciamento di revisioni/versioni. Il DBML non implementa il protocollo: il solo lock del mazzo non è sufficiente e tutti i flussi interessati devono rispettare gli stessi guard. Le letture rispettano il [protocollo transazionale comune v1.0](Database/database-schema-v1.0.md#protocollo-transazionale-comune); la distribuzione delle sole regole aggiuntive non modellate resta DA DEFINIRE.
+Il lock del mazzo evita aggiornamenti persi; quello della collezione coordina possesso e scambi; quello del catalogo evita variazioni dei metadati a metà verifica. Il protocollo usa lock e letture correnti, senza tracciamento di revisioni/versioni. Il DBML non implementa il protocollo: il solo lock del mazzo non è sufficiente e tutti i flussi interessati devono rispettare gli stessi guard. Le letture rispettano il [protocollo transazionale comune v1.1](Database/database-schema-v1.1.md#protocollo-transazionale-comune); la distribuzione delle sole regole aggiuntive non modellate resta DA DEFINIRE.
 
 ### Effetti degli scambi
 
@@ -322,7 +693,7 @@ I lock DB brevi sono distinti dalle prenotazioni persistenti. La proposta base u
 
 Proposta minima: uno scambio può lasciare il mazzo non idoneo; le righe restano, con rivalidazione al controllo/uso successivo. Un controllo pre-scambio può informare sui mazzi interessati, ma non sostituisce la verifica atomica al trasferimento e non introduce automaticamente un veto. Rifiuto dello scambio o prenotazione delle copie dei mazzi sono alternative **DA DEFINIRE con F06**.
 
-La v1.0 modella `TRADE_TOKEN_RESERVATIONS` e `TRADE_CARD_RESERVATIONS`, collegati alle trattative e alla versione accettata. Occorre decidere se le copie prenotate restano utilizzabili per giocare: soltanto allora si può definire `availableForPlay`. Non inferirla dal solo `tradable_replica` o dal possesso. Prenotare non cambia possesso o composizione del mazzo.
+La v1.1 modella `TRADE_TOKEN_RESERVATIONS` e `TRADE_CARD_RESERVATIONS`, collegati alle trattative e alla versione accettata. Occorre decidere se le copie prenotate restano utilizzabili per giocare: soltanto allora si può definire `availableForPlay`. Non inferirla dal solo `tradable_replica` o dal possesso. Prenotare non cambia possesso o composizione del mazzo.
 
 Per la validazione sul possesso, uno scambio committato prima dello snapshot F07 modifica il possesso da verificare e può impedirne l'avvio. Se lo snapshot committa prima, la partita usa la composizione fissata; lo scambio successivo incide sugli utilizzi futuri. Questo comportamento e l'eventuale lock delle carte per tutta la partita richiedono accordo F06/F07.
 

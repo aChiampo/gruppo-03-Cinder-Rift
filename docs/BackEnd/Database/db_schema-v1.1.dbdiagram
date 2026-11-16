@@ -1,0 +1,941 @@
+{
+  "version": "3.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "relationshipMode": "All",
+    "tablePositions": [
+      {
+        "name": "ROLES",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 250
+      },
+      {
+        "name": "PASSWORD_RESET_TOKENS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 12
+      },
+      {
+        "name": "REFRESH_TOKENS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 282
+      },
+      {
+        "name": "USERS",
+        "schemaName": "public",
+        "x": 916.947265625,
+        "y": 53
+      },
+      {
+        "name": "DECKS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 553
+      },
+      {
+        "name": "DECKS_CARDS",
+        "schemaName": "public",
+        "x": 2334.40234375,
+        "y": 53
+      },
+      {
+        "name": "ROUND_CONFIGURATIONS",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 12
+      },
+      {
+        "name": "CARDS",
+        "schemaName": "public",
+        "x": 916.947265625,
+        "y": 658
+      },
+      {
+        "name": "FACTIONS",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 392
+      },
+      {
+        "name": "RARITIES",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 630
+      },
+      {
+        "name": "EXPANSIONS",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 868
+      },
+      {
+        "name": "CARD_TYPES",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 1170
+      },
+      {
+        "name": "KEYWORDS",
+        "schemaName": "public",
+        "x": 12,
+        "y": 12
+      },
+      {
+        "name": "CARDS_KEYWORDS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 2089
+      },
+      {
+        "name": "NOTIFICATIONS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 727
+      },
+      {
+        "name": "COLLECTIONS",
+        "schemaName": "public",
+        "x": 2334.40234375,
+        "y": 323
+      },
+      {
+        "name": "INVENTORY",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 1018
+      },
+      {
+        "name": "PACKS",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 1376
+      },
+      {
+        "name": "USER_MERCY",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 1883
+      },
+      {
+        "name": "INVENTORY_PACKS",
+        "schemaName": "public",
+        "x": 2334.40234375,
+        "y": 593
+      },
+      {
+        "name": "BATTLE_HISTORY",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 1278
+      },
+      {
+        "name": "DAILY_QUESTS",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 1774
+      },
+      {
+        "name": "WEEKLY_QUESTS",
+        "schemaName": "public",
+        "x": 320.87939453125,
+        "y": 2012
+      },
+      {
+        "name": "DAILY_REWARDS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 3092
+      },
+      {
+        "name": "WEEKLY_REWARDS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 3362
+      },
+      {
+        "name": "FACTION_ADVANTAGES",
+        "schemaName": "public",
+        "x": 916.947265625,
+        "y": 483
+      },
+      {
+        "name": "FRIENDSHIPS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 1613
+      },
+      {
+        "name": "ORIGINAL_ANNOUNCES",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 2232
+      },
+      {
+        "name": "CURRENT_NEGOTIATIONS",
+        "schemaName": "public",
+        "x": 2334.40234375,
+        "y": 767
+      },
+      {
+        "name": "TRADES_COMPLETED",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 2662
+      },
+      {
+        "name": "CARDS_ARTS",
+        "schemaName": "public",
+        "x": 1593.37548828125,
+        "y": 3664
+      },
+      {
+        "name": "TRADE_TOKEN_RESERVATIONS",
+        "schemaName": "public",
+        "x": 2894.7373046875,
+        "y": 12
+      },
+      {
+        "name": "TRADE_CARD_RESERVATIONS",
+        "schemaName": "public",
+        "x": 2894.7373046875,
+        "y": 282
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": [
+      {
+        "firstFieldNames": [
+          "id_role"
+        ],
+        "firstTableName": "USERS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "ROLES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "DECKS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_faction"
+        ],
+        "firstTableName": "CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "FACTIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_rarity"
+        ],
+        "firstTableName": "CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "RARITIES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_type"
+        ],
+        "firstTableName": "CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CARD_TYPES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_expansion"
+        ],
+        "firstTableName": "CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "EXPANSIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card"
+        ],
+        "firstTableName": "CARDS_KEYWORDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CARDS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_deck"
+        ],
+        "firstTableName": "DECKS_CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "DECKS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card"
+        ],
+        "firstTableName": "DECKS_CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CARDS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card",
+          "id_card_art"
+        ],
+        "firstTableName": "DECKS_CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id_card",
+          "id_art"
+        ],
+        "secondTableName": "CARDS_ARTS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "destination"
+        ],
+        "firstTableName": "DECKS_CARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "round_name"
+        ],
+        "secondTableName": "ROUND_CONFIGURATIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "COLLECTIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card"
+        ],
+        "firstTableName": "COLLECTIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CARDS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "user_a_id"
+        ],
+        "firstTableName": "FRIENDSHIPS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "user_b_id"
+        ],
+        "firstTableName": "FRIENDSHIPS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "requested_by"
+        ],
+        "firstTableName": "FRIENDSHIPS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "PASSWORD_RESET_TOKENS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "REFRESH_TOKENS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "INVENTORY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_inventory"
+        ],
+        "firstTableName": "INVENTORY_PACKS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "INVENTORY",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_pack"
+        ],
+        "firstTableName": "INVENTORY_PACKS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "PACKS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "USER_MERCY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_pack"
+        ],
+        "firstTableName": "USER_MERCY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "PACKS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "mercy_rarity"
+        ],
+        "firstTableName": "USER_MERCY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "RARITIES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "publisher_id"
+        ],
+        "firstTableName": "ORIGINAL_ANNOUNCES",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "announce_id"
+        ],
+        "firstTableName": "CURRENT_NEGOTIATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "ORIGINAL_ANNOUNCES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "publisher_id"
+        ],
+        "firstTableName": "CURRENT_NEGOTIATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "responder_id"
+        ],
+        "firstTableName": "CURRENT_NEGOTIATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "publisher_id"
+        ],
+        "firstTableName": "TRADES_COMPLETED",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "responder_id"
+        ],
+        "firstTableName": "TRADES_COMPLETED",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "player1_id"
+        ],
+        "firstTableName": "BATTLE_HISTORY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "player2_id"
+        ],
+        "firstTableName": "BATTLE_HISTORY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "winner_id"
+        ],
+        "firstTableName": "BATTLE_HISTORY",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_advantaged_faction"
+        ],
+        "firstTableName": "FACTION_ADVANTAGES",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "FACTIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_disadvantaged_faction"
+        ],
+        "firstTableName": "FACTION_ADVANTAGES",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "FACTIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_receiver"
+        ],
+        "firstTableName": "NOTIFICATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_sender"
+        ],
+        "firstTableName": "NOTIFICATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "DAILY_REWARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_quest"
+        ],
+        "firstTableName": "DAILY_REWARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "DAILY_QUESTS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "WEEKLY_REWARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_quest"
+        ],
+        "firstTableName": "WEEKLY_REWARDS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "WEEKLY_QUESTS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card"
+        ],
+        "firstTableName": "CARDS_ARTS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CARDS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card",
+          "id_card_art"
+        ],
+        "firstTableName": "COLLECTIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id_card",
+          "id_art"
+        ],
+        "secondTableName": "CARDS_ARTS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "negotiation_id"
+        ],
+        "firstTableName": "TRADE_TOKEN_RESERVATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CURRENT_NEGOTIATIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "TRADE_TOKEN_RESERVATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id_user"
+        ],
+        "secondTableName": "INVENTORY",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "negotiation_id"
+        ],
+        "firstTableName": "TRADE_CARD_RESERVATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "CURRENT_NEGOTIATIONS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_user"
+        ],
+        "firstTableName": "TRADE_CARD_RESERVATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "USERS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_card",
+          "id_card_art"
+        ],
+        "firstTableName": "TRADE_CARD_RESERVATIONS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id_card",
+          "id_art"
+        ],
+        "secondTableName": "CARDS_ARTS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      }
+    ]
+  },
+  "views": {}
+}

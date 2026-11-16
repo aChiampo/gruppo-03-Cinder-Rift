@@ -1,14 +1,28 @@
 # Indice della documentazione
 
-Le pagine documentano decisioni confermate, proposte e punti aperti, senza fissare dettagli ancora mancanti. Il modello definisce l'approfondimento progressivo da applicare quando le informazioni saranno disponibili; le pagine esistenti non vengono espanse in anticipo. Il regolamento Versione 2.0 è disponibile come proposta per il prototipo e le prove di bilanciamento. Tutte le applicazioni e funzionalità software sono **non implementate**.
+Le pagine documentano decisioni confermate, proposte e punti aperti. Il modello definisce l'approfondimento progressivo delle specifiche. Il regolamento Versione 2.1 è disponibile come proposta per il prototipo e le prove di bilanciamento. La tabella delle funzionalità riporta lo stato corrente, compreso il backend F01 implementato il **2026-11-11**.
 
-Ultimo aggiornamento significativo dell'indice: **2026-11-05**, per la base di dati **v1.0** e l'allineamento di tutte le funzionalità BackEnd su richiesta dell'utente. La [specifica autonoma v1.0](BackEnd/Database/database-schema-v1.0.md) è la fonte canonica di dati e invarianti; la rappresentazione completa è [db_schema-v1.0.dbml](BackEnd/Database/db_schema-v1.0.dbml). Gli ID generati sono interi auto-incrementali; gli annunci pubblici non prenotano alla pubblicazione e le modifiche delle trattative rilasciano tutti gli hold. Resta la decisione del **2026-11-04** su un solo pacchetto per offerta. L'integrazione documentale della proposta di regolamento resta datata **2026-10-27**. FrontEnd e Digital non sono modificati da questo allineamento. Implementazione non iniziata e verifiche applicative non eseguite: l'aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
+Aggiornamento F01 del **2026-11-13**: implementati `GET /api/users/{userId}` per il profilo pubblico e `PATCH /api/users/me` per la modifica autenticata, con nickname limitato a 50 caratteri. La suite backend completa ha superato **70 test** su PostgreSQL 18.7; dettagli e limiti nella [scheda di accesso](BackEnd/accesso-utenti.md#verifiche-ed-evidenze).
+
+Aggiornamento F05 del **2026-11-13**: implementate persistenza JDBC, validatore modulare e API REST per i mazzi; i test MockMvc coprono autenticazione, proprietà e status previsti. L’ultima esecuzione completa documentata ha superato **70 test** su PostgreSQL 18.7. Frontend e regole avanzate V2.1 restano da implementare.
+
+Aggiornamento documentale API F01/F05 del **2026-11-13**: le schede BackEnd ora riportano tabelle riepilogative, payload allineati ai record Java, status HTTP, errori e guida agli header; F05 rimanda alla guida Bearer/CSRF canonica F01. L’ultima esecuzione completa documentata ha superato **70 test** su PostgreSQL 18.7; questa revisione è documentale e non costituisce una nuova esecuzione dei test.
+
+Aggiornamento F01 dell’indice del **2026-11-12**, su richiesta e scelte dell’utente: contratto e backend allineati al prefisso `/api/auth`; pulizia Spring delle sessioni scadute o revocate ogni giorno alle 03:00 UTC, senza conservazione. Le evidenze e i limiti di verifica sono nella scheda F01.
+
+Aggiornamento successivo dello stesso giorno, su richiesta dell’utente: implementata la base del recupero password F01, con token di 10 minuti e transazione atomica; nuove richieste preservano i link precedenti. Invio email rinviato, con [template Thymeleaf previsti](BackEnd/invio-mail.md), e frontend escluso. Sorgenti e test compilati; passati 31 test senza database. I test PostgreSQL del recupero sono compilati ma non eseguiti; l’avvio dell’istanza di prova non è stato autorizzato. PostgreSQL 18 tramite Compose e l’integrazione React restano da verificare. Evidenze, controlli esclusi su richiesta e limiti sono nel [contratto F01](BackEnd/accesso-utenti.md).
+
+Aggiornamento storico dell?indice del **2026-11-09**, per il significato di Scaglie, Nuclei Rift e Rotami riportato nel [glossario economico](Digital/economia-crediti-pacchetti.md#risorse-economiche) e per il [sistema mercy sulle aperture](BackEnd/acquisto-pacchetti.md#mercy-sulle-aperture) confermato dall'utente. Il DBML e i diagrammi di inventario distinguono `cobalt_shards`, `rift_cores` e `scraps`, tutti `int` obbligatori con default `0`. `USER_MERCY` usa PK `(id_user, id_pack)`, FK a utenti/pacchetti/rarità e un contatore inizializzato dalla soglia del pacchetto, con garanzia allo zero e reset su ogni pesca qualificante. La risorsa dei campi monetari generici di offerte, prenotazioni e premi resta da definire. Lo stesso aggiornamento, su richiesta dell’utente, rimuove i campi anagrafici dal modello utente, conferma la durata di due giorni degli annunci di scambio pubblici e privati e allinea i riferimenti correnti al regolamento Versione 2.1. La versione corrente della specifica e del DBML è **v1.1**, con file e riferimenti rinominati su richiesta dell’utente del **2026-11-09**. Quell?aggiornamento documentale non ha eseguito migrazioni o verifiche applicative.
+
+Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'allineamento di tutte le funzionalità BackEnd su richiesta dell'utente. La [specifica autonoma v1.1](BackEnd/Database/database-schema-v1.1.md) è la fonte canonica di dati e invarianti; la rappresentazione completa è [db_schema-v1.1.dbml](BackEnd/Database/db_schema-v1.1.dbml). Gli ID generati sono interi auto-incrementali; gli annunci pubblici non prenotano alla pubblicazione e le modifiche delle trattative rilasciano tutti gli hold. Resta la decisione del **2026-11-04** su un solo pacchetto per offerta. L'integrazione documentale della proposta di regolamento resta datata **2026-10-27**. FrontEnd e Digital non sono modificati da questo allineamento. In quella revisione l?implementazione non era iniziata e non erano state eseguite verifiche applicative: l?aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
 
 ## Aree e strumenti comuni
 
 - [Digital](Digital/README.md)
 - [FrontEnd](FrontEnd/README.md)
 - [BackEnd](BackEnd/README.md)
+- [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
+- [Configurazione locale dei servizi Docker Compose](../compose.yaml)
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
 - [Modello di funzionalità](modello-funzionalita.md)
@@ -20,10 +34,10 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 
 | ID  | Oggetto                                                                    | Perimetro                                   | Specifica   | Implementazione | Verifica     | Riferimento principale                               |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------- | ----------- | --------------- | ------------ | ---------------------------------------------------- |
-| F01 | Email/password, JWT, ruoli ADMIN/MANAGER/USER                              | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Accesso](BackEnd/accesso-utenti.md)                 |
-| F03 | Offerte di un solo pacchetto acquistabili con crediti                      | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
+| F01 | Registrazione, accesso, profilo, rinnovo, uscita, recupero password e ruoli `ADMIN` e `USER` | Confermato | Contratto backend aggiornato il 2026-11-13 | Backend, API profilo utente, pulizie, base recupero e migrazioni Flyway implementati. Email e FrontEnd da avviare | 70 test superati su PostgreSQL 18.7; avvio via Compose e browser da verificare | [Accesso](BackEnd/accesso-utenti.md) |
+| F03 | Offerte di un solo pacchetto; risorsa del prezzo da definire                      | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
 | F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
-| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Mazzi](BackEnd/gestione-mazzi.md)                   |
+| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento; contratto API aggiornato il 2026-11-13 | Persistenza, validazione e API REST backend implementate; frontend non implementato | 70 test superati nella suite backend completa su PostgreSQL 18.7; limiti F05 nella scheda | [Mazzi](BackEnd/gestione-mazzi.md) |
 | F06 | Scambi di carte e token, privati/pubblici, consenso e prenotazioni | Confermato; approvato anche dal committente | In approfondimento | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
 | F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Sfide](BackEnd/sfide-simulazione.md)                |
 | F08 | Storico e dettaglio dei turni                                              | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Storico](BackEnd/storico-partite.md)                |
@@ -40,7 +54,7 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 
 Per Digital, implementazione indica la realizzazione dei materiali e verifica indica la validazione pertinente, non necessariamente test software. Per tutte le aree la specifica può essere sintetica, in approfondimento, concordata o da aggiornare; l'implementazione non iniziata, in corso, parziale o integrata. L'esito di verifica richiede data, ambito, riferimento ed evidenze, compresi limiti o controlli non eseguiti.
 
-Il [regolamento Versione 2.0](Digital/regolamento-base.md) è la proposta condivisa per F05 e F07, con conseguenze per F08, D01 e F10. L'integrazione del testo è approvata, mentre regole definitive e bilanciamento restano da confermare. Le specifiche interessate sono in approfondimento; API, dati, permessi e altri contratti tecnici mancanti restano DA DEFINIRE nelle pagine BackEnd. I riferimenti FrontEnd descrivono le implicazioni per il client senza introdurre contratti concorrenti. F09 resta un segnaposto e O01 non è confermato.
+Il [regolamento Versione 2.1](Digital/regolamento-base.md) è la proposta condivisa per F05 e F07, con conseguenze per F08, D01 e F10. L'integrazione del testo è approvata, mentre regole definitive e bilanciamento restano da confermare. Le specifiche interessate sono in approfondimento; API, dati, permessi e altri contratti tecnici mancanti restano DA DEFINIRE nelle pagine BackEnd. I riferimenti FrontEnd descrivono le implicazioni per il client senza introdurre contratti concorrenti. F09 resta un segnaposto e O01 non è confermato.
 
 Aggiornare questa tabella nella PR che cambia lo stato; i dettagli della singola porzione restano nelle pagine di area. I metadati temporali si aggiungono alle pagine esistenti al prossimo aggiornamento significativo, senza attribuire date retroattive. Quando serve una verifica storica dettagliata, collegare un report in `docs/report/AAAA-MM-GG-descrizione.md`, creato solo dopo l'attività reale. Il report registra il passato; questo indice mantiene lo stato corrente.
 
@@ -56,7 +70,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 
 | Tema | Traccia | Decisione o chiarimento del gruppo |
 | --- | --- | --- |
-| Database | MySQL | PostgreSQL inizialmente indicato; stack definitivo atteso e differenza da verificare |
+| Database | MySQL | PostgreSQL 18 configurato in Compose; F01 usa lo schema v1.1 via JDBC. Verifica su PostgreSQL 18 tramite Compose ancora da eseguire |
 | Scambi | Solo carte | Carte e crediti, privati/pubblici; approvazione del committente confermata dal gruppo |
 | Offerte del negozio | Acquisto di pacchetti | Ogni offerta contiene un solo pacchetto; prezzo e configurazione del pacchetto gestibili dal backoffice |
 | Carte | Creazione con strumenti di intelligenza artificiale | Carte non interamente generate; ripartizione del contributo umano da definire |
@@ -67,11 +81,11 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 Da approfondire successivamente nelle pagine interessate:
 
 - Stack definitivo, versioni, strumenti e differenza PostgreSQL/MySQL.
-- Permessi dei tre ruoli e dettagli del ciclo di vita JWT.
-- Modalità di assegnazione dei crediti in fase 1.
+- Permessi di `ADMIN` e `USER` nelle altre funzionalità; invio email e frontend del recupero password F01, con base backend già implementata.
+- Regole di assegnazione delle Scaglie, acquisto dei Nuclei Rift e recupero dei Rotami; risorse ammesse nei prezzi e negli scambi.
 - Offerte di un solo pacchetto: prezzi, limiti, contenuto del pacchetto, apertura e disponibilità.
 - Scambi: API, integrazione delle prenotazioni con gli altri servizi, giocabilità delle copie prenotate e operatività della pulizia; durata, consenso, modifica e annullamento sono descritti nel [contratto F06](BackEnd/scambi-mercato.md).
-- Regolamento: approvazione definitiva della Versione 2.0; soglie di energia, statistiche e punti potenza delle carte, effetti e ordine di risoluzione degli equipaggiamenti, bilanciamento di budget/rarità/copie/bonus, conferma della formula del danno con gli insegnanti e possibilità di cure o prevenzione dei danni. Riferimenti: [formula proposta](Digital/regolamento-base.md#11-danni-ai-giocatori) ed [elementi da completare e testare](Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
+- Regolamento: approvazione definitiva della Versione 2.1; soglie di energia, statistiche e punti potenza delle carte, effetti e ordine di risoluzione degli equipaggiamenti, bilanciamento di budget/rarità/copie/bonus, conferma della formula del danno con gli insegnanti e possibilità di cure o prevenzione dei danni. Riferimenti: [formula proposta](Digital/regolamento-base.md#11-danni-ai-giocatori) ed [elementi da completare e testare](Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
 - Effetti degli scambi sui mazzi e uso delle carte in più mazzi.
 - Numero di approvazioni, revisori, strategia di merge e protezioni remote.
 - Nomi del progetto e del gruppo, membri e Team Leader.

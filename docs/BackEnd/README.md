@@ -1,6 +1,6 @@
 # Area BackEnd
 
-Documentazione sintetica dei Software Developer: servizi e regole server. Il codice sarà in `springboot_app/`; lo stack definitivo è ancora atteso.
+Documentazione dei Software Developer: servizi e regole server. Il backend F01 è disponibile in `springboot_app/app/` con Java 21, Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18. Il [contratto F01](accesso-utenti.md) definisce autenticazione, ruoli, cookie, CSRF e pulizia delle sessioni. Le altre funzionalità mantengono lo stato indicato nelle rispettive schede. Allineamento documentale allo stack corrente: **2026-11-12**, su richiesta dell’utente.
 
 Le pagine BackEnd ospitano i contratti tecnici canonici delle funzionalità
 trasversali, concordati con le altre aree. Approfondire progressivamente permessi,
@@ -9,15 +9,16 @@ stati, payload, dati, errori, transazioni, concorrenza e verifiche secondo il
 da quelle FrontEnd, collegati allo stesso ID funzionalità e contratto.
 Stato corrente nell'[indice generale](../README.md#stato-delle-funzionalità).
 
-## Base di dati v1.0
+## Base di dati v1.1
 
-Ultimo aggiornamento significativo: **2026-11-05**. La [specifica autonoma della base di dati v1.0](Database/database-schema-v1.0.md) è la fonte canonica di tabelle, tipi, vincoli e invarianti; [db_schema-v1.0.dbml](Database/db_schema-v1.0.dbml) ne è la rappresentazione completa in DBML. Tutte le pagine di funzionalità BackEnd sono allineate a questa versione.
+Ultimo aggiornamento significativo: **2026-11-09**, per l'inventario aggiornato e per il sistema mercy confermato dall'utente. La [specifica autonoma della base di dati v1.1](Database/database-schema-v1.1.md) è la fonte canonica di tabelle, tipi, vincoli e invarianti; [db_schema-v1.1.dbml](Database/db_schema-v1.1.dbml) ne è la rappresentazione completa in DBML. `INVENTORY` distingue Scaglie (`cobalt_shards`), Nuclei Rift (`rift_cores`) e Rotami (`scraps`), tutti interi obbligatori con default `0`. `USER_MERCY` registra il conto alla rovescia per utente e pacchetto con PK composta e FK a utenti, pacchetti e rarità: avanza sulle aperture corrispondenti e si resetta a ogni pesca qualificante, come descritto in [F03](acquisto-pacchetti.md#mercy-sulle-aperture). La risorsa dei campi generici di scambi, prenotazioni e ricompense resta da definire.
 
 Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano gli interi. Carte e arti sono distinte anche nei mazzi, le prenotazioni appartengono alle trattative e ai consensi correnti, le missioni usano flag di riscossione booleani. Le regole/API ancora proposte restano da concordare. Nessuna migrazione, implementazione o verifica applicativa è attestata da questo allineamento.
 
 ## Funzionalità
 
 - [F01 — Accesso utenti](accesso-utenti.md)
+- [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
 - [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md)
 - [F04 — Collezione delle carte](collezione-carte.md)
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)

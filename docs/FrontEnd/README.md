@@ -1,6 +1,6 @@
 # Area FrontEnd
 
-Documentazione sintetica dei Web Developer: interfacce e flussi del portale. Il codice sarà in `react_app/`; lo stack definitivo è ancora atteso.
+Documentazione dei Web Developer: interfacce e flussi del portale. Il frontend React è previsto in `react_app/`; implementazione e integrazione F01 sono ancora da avviare. Il backend di autenticazione è già disponibile: il client segue il [contratto F01](../BackEnd/accesso-utenti.md) per JWT in memoria, cookie, CSRF e percorsi `/api/auth`. Allineamento documentale: **2026-11-12**, su richiesta dell’utente; versioni e strumenti frontend restano da completare.
 
 Quando saranno disponibili le decisioni, approfondire flussi e stati UI, errori,
 accessibilità e verifiche secondo il [modello](../modello-funzionalita.md).
@@ -10,7 +10,7 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 
 ## Funzionalità
 
-- [F01 — Registrazione e accesso](accesso-utenti.md)
+- [F01 — Registrazione, accesso e recupero password](accesso-utenti.md) — interfaccia da avviare; invio email rinviato.
 - [F03 — Negozio delle offerte di pacchetti](acquisto-pacchetti.md)
 - [F04 — Consultazione della collezione](collezione-carte.md)
 - [F05 — Composizione dei mazzi](gestione-mazzi.md)

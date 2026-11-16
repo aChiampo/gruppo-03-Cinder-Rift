@@ -1,7 +1,7 @@
-// Schema v1.0; complete DBML representation of database-schema-v1.0.md.
-Project cinder_rift_v1_0 {
+// Schema v1.1; complete DBML representation of database-schema-v1.1.md.
+Project cinder_rift_v1_1 {
   database_type: 'PostgreSQL'
-  Note: 'Schema v1.0; PostgreSQL 18; auto-incrementing integer entity and artwork IDs; integer foreign keys and inherited association keys; timestamptz with UTC connections and serialization. Persistent trade reservations are distinct from short transaction locks. Backend validations enforce quantities, participants, offer versions and resource availability.'
+  Note: 'Schema v1.1; PostgreSQL 18; auto-incrementing integer entity and artwork IDs; integer foreign keys and inherited association keys; timestamptz with UTC connections and serialization. Persistent trade reservations are distinct from short transaction locks. Backend validations enforce quantities, participants, offer versions and resource availability.'
 }
 
 Table ROLES {
@@ -29,8 +29,6 @@ Table REFRESH_TOKENS {
 
 Table USERS {
   id int [pk, not null, increment]
-  first_name varchar
-  surname varchar
   nickname varchar [not null, unique]
   hash_password varchar [not null]
   email varchar [not null, unique]
@@ -182,9 +180,11 @@ Table COLLECTIONS {
 Table INVENTORY {
   id int [pk, not null, increment]
   id_user int [not null, unique]
-  token_balance bigint [not null, default: 0]
+  cobalt_shards int [not null, default: 0]
+  rift_cores int [not null, default: 0]
+  scraps int [not null, default: 0]
 
-  Note: 'Tokens and credits are one currency. Spendable tokens equal token_balance minus the sum of unexpired token holds. No cached reserved balance or movement registry is modeled. All spenders follow the common resource locking protocol documented in database-schema-v1.0.md.'
+  Note: 'cobalt_shards stores Scaglie earned in the game world; rift_cores stores purchasable premium Nuclei Rift; scraps stores Rotami recoverable from duplicates. These are distinct required integer balances with default zero. Non-negative balances and integer bounds are validated by the backend. Legacy token offer, reservation and reward fields do not identify which resource they represent; that mapping is DA DEFINIRE. No cached reserved balance or movement registry is modeled. All resource writers follow the common locking protocol documented in database-schema-v1.1.md.'
 }
 
 Table PACKS {
@@ -196,9 +196,31 @@ Table PACKS {
   allowed_types jsonb [not null]
   allowed_expansions jsonb [not null]
   allowed_rarities jsonb [not null]
+  mercy_threshold int [note: 'NULL disables mercy for this pack. A positive value is the initial countdown copied by the backend into USER_MERCY.mercy_counter; it is not a SQL default on the user row.']
   slot_pulls jsonb [not null]
 
+  checks {
+    `mercy_threshold IS NULL OR mercy_threshold > 0` [name: 'packs_mercy_threshold_check']
+  }
+
   Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. Source: user decision on 2026-11-04. price storage and the offer-to-pack mapping are DA DEFINIRE. Filters use FACTIONS.code, CARD_TYPES.code, EXPANSIONS.code and RARITIES.code. Slot probabilities may include common, rare, epic and legendary outcomes. JSON contracts are DA DEFINIRE.'
+}
+
+Table USER_MERCY {
+  id_user int [not null]
+  id_pack int [not null]
+  mercy_counter int [not null, note: 'No SQL default. On the first opening of the corresponding enabled pack, the backend initializes this countdown from PACKS.mercy_threshold, then decrements it for that opening. Zero forces a card of mercy_rarity or higher. Any qualifying pull, including the forced one, resets the counter to the pack threshold. Pack consumption, progress and granted cards are committed atomically; failure leaves all unchanged.']
+  mercy_rarity int [not null, note: 'Required minimum rarity, referencing RARITIES.id. The backend uses an explicit rarity ranking, never the numeric ID, to determine qualifying outcomes. Rarity initialization comes from an approved pack policy.']
+
+  indexes {
+    (id_user, id_pack) [pk]
+  }
+
+  checks {
+    `mercy_counter >= 0` [name: 'user_mercy_counter_check']
+  }
+
+  Note: 'One progress row per user and pack. The two primary-key columns are inherited foreign keys, not generated IDs. Progress is independent of INVENTORY_PACKS and survives consumption of the last owned pack. Counter initialization and the cross-table bound mercy_counter <= PACKS.mercy_threshold are backend responsibilities, not enforced by a default or this row CHECK. Only successful openings of the corresponding pack advance mercy. NULL mercy_threshold disables mercy and no progress is initialized or advanced while disabled. A zero counter is resolved by a guaranteed qualifying pull in the opening transaction and resets only with successful delivery. Full rules are defined in database-schema-v1.1.md.'
 }
 
 Table INVENTORY_PACKS {
@@ -344,7 +366,7 @@ Table ORIGINAL_ANNOUNCES {
     `status IN ('PUBLISHED', 'PENDING', 'EXPIRED', 'COMPLETED', 'CANCELLED')` [name: 'original_announces_status_check']
   }
 
-  Note: 'Public publication creates no hold. Expiry is fixed at two days. Starting on the original offer reserves publisher resources before p_acceptance becomes true; direct acceptance can reserve both parties and complete atomically. A first counteroffer composes start and modification: final version 2, both acceptances false and no holds. Private requests are restricted to accepted friends and create the negotiation and publisher holds atomically. The complete protocol is defined in database-schema-v1.0.md.'
+  Note: 'Public publication creates no hold. Expiry is fixed at two days. Starting on the original offer reserves publisher resources before p_acceptance becomes true; direct acceptance can reserve both parties and complete atomically. A first counteroffer composes start and modification: final version 2, both acceptances false and no holds. Private requests are restricted to accepted friends and create the negotiation and publisher holds atomically. The complete protocol is defined in database-schema-v1.1.md.'
 }
 
 Table CURRENT_NEGOTIATIONS {
@@ -452,6 +474,9 @@ Ref refresh_tokens_id_user_fk: REFRESH_TOKENS.id_user > USERS.id
 Ref inventory_id_user_fk: INVENTORY.id_user > USERS.id
 Ref inventory_packs_id_inventory_fk: INVENTORY_PACKS.id_inventory > INVENTORY.id
 Ref inventory_packs_id_pack_fk: INVENTORY_PACKS.id_pack > PACKS.id
+Ref user_mercy_id_user_fk: USER_MERCY.id_user > USERS.id
+Ref user_mercy_id_pack_fk: USER_MERCY.id_pack > PACKS.id
+Ref user_mercy_rarity_fk: USER_MERCY.mercy_rarity > RARITIES.id
 Ref original_announces_publisher_id_fk: ORIGINAL_ANNOUNCES.publisher_id > USERS.id
 Ref current_negotiations_announce_id_fk: CURRENT_NEGOTIATIONS.announce_id > ORIGINAL_ANNOUNCES.id
 Ref current_negotiations_publisher_id_fk: CURRENT_NEGOTIATIONS.publisher_id > USERS.id
