@@ -1,0 +1,62 @@
+[
+  {
+    "id": "EQ_1",
+    "name": "Spada Laser",
+    "atkBonus": 2,
+    "defBonus": 0
+  },
+  {
+    "id": "EQ_2",
+    "name": "Scudo Iniezione",
+    "atkBonus": 0,
+    "defBonus": 3
+  },
+  {
+    "id": "EQ_3",
+    "name": "Potenziatore ACI",
+    "atkBonus": 1,
+    "defBonus": 1
+  },
+  {
+    "id": "EQ_4",
+    "name": "Armatura Nanotech",
+    "atkBonus": 0,
+    "defBonus": 4
+  },
+  {
+    "id": "EQ_5",
+    "name": "Cannone Plasma",
+    "atkBonus": 3,
+    "defBonus": 0
+  },
+  {
+    "id": "EQ_6",
+    "name": "Artigli Bio",
+    "atkBonus": 3,
+    "defBonus": 0
+  },
+  {
+    "id": "EQ_7",
+    "name": "Scudo Energetico",
+    "atkBonus": 0,
+    "defBonus": 3
+  },
+  {
+    "id": "EQ_8",
+    "name": "Iniettore Radiazioni",
+    "atkBonus": 2,
+    "defBonus": 1
+  },
+  {
+    "id": "EQ_9",
+    "name": "Piastra Titanio",
+    "atkBonus": 0,
+    "defBonus": 4
+  },
+  {
+    "id": "EQ_10",
+    "name": "Siero Mutante",
+    "atkBonus": 1,
+    "defBonus": 2
+  }
+]
