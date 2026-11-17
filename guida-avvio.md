@@ -4,19 +4,6 @@ Guida aggiornata il **2026-11-16**, su richiesta dell’utente di completare Com
 
 Build, avvio dei quattro servizi, salute, migrazioni e proxy HTTP sono verificati il **2026-11-16** in uno stack isolato; **19 test del motore superati**. [Report con ambiente e limiti](docs/report/2026-11-16-verifica-docker-compose.md). L’integrazione del login e i launcher non sono verificati.
 
-## Avviare solo il backend disponibile
-
-Apri Docker Desktop e configura `APP_SECURITY_JWT_SECRET` come descritto sotto. Dalla radice della copia corrente esegui:
-
-```text
-docker compose --file compose.yaml up --build --wait spring_app
-```
-
-Compose avvia anche PostgreSQL, dipendenza del backend, senza tentare la build di React e motore. Su un database vuoto Flyway applica V1–V4: autenticazione, catalogo, collezione, mazzi e dati di riferimento. Le migrazioni non inseriscono carte o copie negli inventari e non creano l’intero modello v1.1. Per un database esistente seguire prima la [procedura di adozione](springboot_app/app/README.md#migrazioni-flyway-f01).
-
-Con la porta predefinita consulta [Swagger UI](http://localhost:8081/swagger-ui/index.html) e [salute del backend](http://localhost:8081/actuator/health); se imposti `APPLICATION_PORT`, adatta gli URL. Questo comando avvia solo backend e database; per React e motore usa il comando completo descritto sotto.
-
-Per eseguire Maven direttamente su Windows serve JDK 21: imposta `JAVA_HOME` alla cartella del JDK, anche se `java` nel `PATH` seleziona una versione precedente. [Comandi e prerequisiti dei test](springboot_app/app/README.md#cancellazione-account-f01).
 
 ## Configurazione dei servizi Compose
 

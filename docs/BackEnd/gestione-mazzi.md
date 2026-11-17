@@ -7,6 +7,8 @@
 
 Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
 
+Aggiornamento dati iniziali del **2026-11-16**, su richiesta dell’utente: V5 importa 30 carte CR01 e un’arte `default` per carta; V6 assegna una copia per carta all’utente dimostrativo. Il CSV conserva i valori originali: i limiti dei round V4 e le regole di validazione non vengono modificati. Le nuove colonne del catalogo sono persistite ma non aggiunte ai payload F05. [Mapping, assunzioni e procedura](../../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05).
+
 ## Riepilogo API
 
 | Method | Path | Auth required | Purpose | Success Status | Error Statuses |

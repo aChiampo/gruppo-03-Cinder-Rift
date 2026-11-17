@@ -26,6 +26,8 @@ La suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local"
 
 ## Stato delle funzionalità
 
+Aggiornamento dati F01/F05 del **2026-11-16**, su richiesta dell’utente: migrazioni V5/V6 per il set CR01 (30 carte e arti) e l’utente dimostrativo completo di inventario e collezione. [Dettagli e test delle migrazioni](../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05). Verifica della copia di lavoro: **241 test backend superati** e JAR prodotto su PostgreSQL 18.6 isolato, inclusi 123 casi delle nuove migrazioni. L’integrazione React e le API di collezione restano da completare.
+
 Aggiornamento F01 del **2026-11-13**, su approvazione dell’utente, con la rinomina degli endpoint e la cancellazione account sotto `/api/auth`. Il [contratto canonico](BackEnd/accesso-utenti.md#cancellazione-account) descrive la cancellazione propria per `USER` e di qualsiasi account per `ADMIN`, inclusi altri amministratori, con revoca delle sessioni e rimozione dei token di recupero.
 
 Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e le altre aree; per una funzionalità trasversale lo stato implementativo complessivo resta parziale finché le porzioni previste non sono integrate. Non dedurre l'implementazione dal solo perimetro confermato.
