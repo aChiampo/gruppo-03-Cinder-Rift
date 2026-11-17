@@ -33,27 +33,29 @@ Senza backend acceso il login mostra "Server non raggiungibile". Per lavorare su
 `VITE_USE_MOCK=true` in `.env` (login finto, nessuna chiamata di rete).
 
 ## Collegare il backend vero
+1. In `.env` imposta `VITE_API_URL` con l'indirizzo del backend e `VITE_USE_MOCK=false`.
+2. Il backend deve rispettare il contratto qui sotto. Se i percorsi sono diversi, si cambia solo `src/services/endpoints.js`;
+   se i campi dell'utente hanno altri nomi, solo `normalizeUser()` in `src/services/authService.js`.
+3. Se frontend e backend sono su origini diverse, il backend deve abilitare il CORS
+   (header `Content-Type` e `Authorization`) oppure si usa un proxy.
+4. Elimina la cartella `server/` e lo script `mock-api` da `package.json`.
 
-L’integrazione deve adeguare il client al [contratto F01](../docs/BackEnd/accesso-utenti.md), già implementato dal backend Spring. Cambiare solo `VITE_API_URL` o i nomi dei campi non basta: servono l’allineamento dei payload e delle risposte, `/api/auth/user/me`, cookie con credenziali, gestione CSRF e access token in memoria. Queste modifiche applicative non fanno parte della configurazione Docker. Per lo sviluppo su origini diverse configurare anche `APP_SECURITY_ALLOWED_ORIGINS` nel backend. Conservare il mock finché utile alle verifiche isolate del prototipo.
+## Contratto API (autenticazione)
+Base: `VITE_API_URL` — il token si invia come `Authorization: Bearer <token>` e i cookie di sessione/refresh sono inclusi con `credentials: 'include'`.
 
-## Contratto del server simulato (autenticazione)
+| Metodo | Endpoint                      | Body                             | Risposta                                                                 |
+|--------|-------------------------------|----------------------------------|--------------------------------------------------------------------------|
+| POST   | `/api/auth/login`             | `{ email, password }`            | `200 { accessToken, tokenType, expiresIn, user }` · `400 { message }` · `401 { message }` |
+| GET    | `/api/auth/user/me`           | —                                | `200 { id, nickname, email, role, rankingPoints, iconUrl }` · `401`      |
+| POST   | `/api/auth/logout`            | —                                | `204`                                                                    |
 
-Quanto segue descrive esclusivamente `server/mock-api.js` e il client attuale; non sostituisce il contratto canonico F01 e non richiede modifiche al backend Spring.
-Base: `VITE_API_URL` — il token si invia come `Authorization: Bearer <token>`.
-
-| Metodo | Endpoint        | Body                      | Risposta                                                     |
-|--------|-----------------|---------------------------|--------------------------------------------------------------|
-| POST   | `/auth/login`   | `{ identifier, password }`| `200 { token, user }` · `400 { message }` · `401 { message }` |
-| GET    | `/auth/me`      | —                         | `200 { user }` · `401`                                       |
-| POST   | `/auth/logout`  | —                         | `204`                                                        |
-
-`user` = `{ id, name, level, credits, avatar }`. Gli errori devono avere il campo `message` (viene mostrato nel login).
+`user` dal backend usa i campi `{ id, nickname, email, role, rankingPoints, iconUrl }`; il frontend li normalizza in `{ id, name, level, credits, avatar }` per la UI. Gli errori devono avere il campo `message` (viene mostrato nel login).
 
 Comportamento del frontend:
 - Il token è salvato in `sessionStorage` (si perde chiudendo la scheda).
-- Al ricaricamento la sessione viene verificata con `GET /auth/me`: se il token non è valido si torna al login.
+- Al ricaricamento la sessione viene verificata con `GET /api/auth/user/me`: se il token non è valido si torna al login.
 - Qualsiasi richiesta autenticata che riceve `401` riporta al login.
-- Il logout avvisa il backend (`POST /auth/logout`) e chiude comunque la sessione locale.
+- Il logout avvisa il backend (`POST /api/auth/logout`) e chiude comunque la sessione locale.
 - Timeout richieste: 10 secondi.
 
 ## Pagine (id in `App.jsx` e `data/navigation.js`)

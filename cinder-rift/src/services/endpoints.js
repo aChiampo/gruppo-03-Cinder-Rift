@@ -2,13 +2,13 @@
 // Quando il backend sarà pronto, se i percorsi sono diversi si cambia solo questo file.
 export const ENDPOINTS = {
   auth: {
-    login: "/auth/login", // POST  { identifier, password } -> { token, user }
-    me: "/auth/me", // GET   (Bearer token)           -> { user }
-    logout: "/auth/logout", // POST  (Bearer token)           -> 204
+    login: "/api/auth/login", // POST  { email, password } -> { accessToken, tokenType, expiresIn, user }
+    me: "/api/auth/user/me", // GET   (Bearer token) -> { id, nickname, email, role, rankingPoints, iconUrl }
+    logout: "/api/auth/logout", // POST  (Bearer token) -> 204
   },
   cards: {
     // GET (Bearer token) ?type&faction&rarity&energyMin&energyMax&attackMin&attackMax&defenseMin&defenseMax&q&sort&page&pageSize
     //   -> { items, page, pageSize, total, counts }   (solo le carte possedute dall'utente: docs/API-COLLEZIONE.md)
-    collection: "/cards",
+    collection: "/api/cards",
   },
 };

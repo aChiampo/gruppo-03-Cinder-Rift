@@ -4,7 +4,7 @@ import { User, Lock, Eye, EyeOff, LogIn, ChevronRight, UserRound } from 'lucide-
 
 export default function LoginScreen({ onRegister }) {
   const { login } = useAuth()
-  const [identifier, setIdentifier] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState('')
@@ -12,16 +12,20 @@ export default function LoginScreen({ onRegister }) {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!identifier.trim() || !password) {
-      setError('Inserisci username/email e password.')
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail || !password) {
+      setError('Inserisci email e password.')
       return
     }
+
     setError('')
     setLoading(true)
     try {
-      await login({ identifier: identifier.trim(), password }) // poi App mostra la Home
+      await login({ email: trimmedEmail, password }) // poi App mostra la Home
     } catch (err) {
       setError(err.message || 'Accesso non riuscito. Riprova.')
+    } finally {
       setLoading(false)
     }
   }
@@ -44,12 +48,12 @@ export default function LoginScreen({ onRegister }) {
             <label className="field">
               <User size={22} fill="currentColor" />
               <input
-                type="text"
-                placeholder="Username o Email"
-                autoComplete="username"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                aria-label="Username o Email"
+                type="email"
+                placeholder="Email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-label="Email"
               />
             </label>
 
