@@ -7,6 +7,15 @@ export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 const DEFAULT_AVATAR = '/img/avatar-cyborg.jpg'
 
+/** Fetches the readable CSRF token while apiFetch includes the matching cookie. */
+async function getCsrfHeaders() {
+  const csrf = await apiFetch(ENDPOINTS.auth.csrfTokens)
+  if (!csrf?.headerName || !csrf?.token) {
+    throw new ApiError('Risposta del server non valida.', 502, csrf)
+  }
+  return { [csrf.headerName]: csrf.token }
+}
+
 /** Unico punto in cui i campi del backend diventano i campi usati dall'interfaccia. */
 export function normalizeUser(raw = {}) {
   const safeRaw = raw ?? {}
@@ -27,6 +36,7 @@ export function normalizeUser(raw = {}) {
 
 /**
  * POST /api/auth/login   body: { email, password }
+ * Requires the CSRF cookie and the header returned by GET /api/auth/csrf-tokens.
  *   200 -> { accessToken: string, user: { ... } }
  *   400 -> { message }   campi mancanti
  *   401 -> { message: 'Credenziali non valide' }
@@ -40,7 +50,12 @@ export async function login({ email, password }) {
     return { token: 'mock-token', user: { ...mockUser, name: normalizedEmail.split('@')[0], email: normalizedEmail } }
   }
 
-  const data = await apiFetch(ENDPOINTS.auth.login, { method: 'POST', body: { email: normalizedEmail, password } })
+  const headers = await getCsrfHeaders()
+  const data = await apiFetch(ENDPOINTS.auth.login, {
+    method: 'POST',
+    body: { email: normalizedEmail, password },
+    headers,
+  })
   const token = data?.accessToken ?? data?.token
   if (!token) throw new ApiError('Risposta del server non valida.', 502, data)
   return { token, user: normalizeUser(data.user) }
@@ -52,12 +67,13 @@ export async function getCurrentUser(token) {
   return normalizeUser(data?.user ?? data)
 }
 
-/** POST /api/auth/logout (Bearer) -> 204. Best effort: il logout locale avviene comunque. */
-export async function logout(token) {
-  if (USE_MOCK || !token) return
+/** POST /api/auth/logout with CSRF and cookies -> 204. Server logout is best effort. */
+export async function logout() {
+  if (USE_MOCK) return
   try {
-    await apiFetch(ENDPOINTS.auth.logout, { method: 'POST', token })
+    const headers = await getCsrfHeaders()
+    await apiFetch(ENDPOINTS.auth.logout, { method: 'POST', headers })
   } catch {
-    /* ignorato: la sessione locale viene chiusa in ogni caso */
+    /* The caller clears the local session even if the request fails. */
   }
 }
