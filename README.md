@@ -133,7 +133,9 @@ e al medesimo contratto. Gli ID attività non sostituiscono l'ID della funzional
 
 ## Avvio e verifica
 
-Configura la chiave JWT e segui la procedura Flyway per un database nuovo o esistente, poi esegui dalla radice:
+Per il primo utilizzo esegui [set-up-windows.bat](set-up-windows.bat) o [set-up-macos.command](set-up-macos.command): preparano Git e Docker Desktop e clonano `dev` sul Desktop. Dopo aver completato le eventuali installazioni e rilanciato il set-up, usa [start-up-windows.bat](start-up-windows.bat) o [start-up-macos.command](start-up-macos.command) dalla cartella clonata: aggiornano il progetto, preparano `.env` e la chiave JWT e ricostruiscono i container. [Procedura completa e destinazioni](guida-avvio.md#preparare-il-computer-e-scaricare-il-progetto). Modifica documentale del **2026-11-17**, su richiesta dell’utente di separare preparazione e avvio.
+
+Per l’avvio manuale, configura la chiave JWT e segui la procedura Flyway per un database nuovo o esistente, poi esegui dalla radice:
 
 ```text
 docker compose --file compose.yaml up --build --wait

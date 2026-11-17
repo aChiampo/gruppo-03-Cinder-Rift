@@ -4,6 +4,8 @@ Le pagine distinguono decisioni confermate, proposte e punti aperti. Il regolame
 
 Aggiornamento della configurazione del **2026-11-16**, su richiesta dell’utente: Compose usa il prototipo React in `cinder-rift/` e il motore dimostrativo in `springboot_app/game_engine/`, entrambi con Dockerfile e controlli di salute. React richiede ancora l’allineamento al contratto F01; il motore usa H2 in memoria, senza API di gioco né persistenza dei risultati. [Avvio, variabili e limiti](../guida-avvio.md#configurazione-dei-servizi-compose). Le verifiche correnti sono distinte dalle evidenze storiche seguenti.
 
+Dal **2026-11-17**, su richiesta dell’utente, la preparazione iniziale usa gli script `set-up` per Windows/macOS e clona sul Desktop; gli script `start-up` aggiornano `dev`, preparano `.env` e la chiave JWT e ricostruiscono Compose. [Guida aggiornata](../guida-avvio.md#preparare-il-computer-e-scaricare-il-progetto). Le verifiche storiche dello stack non attestano i nuovi flussi di installazione su sistemi nativi puliti.
+
 Verifica del **2026-11-16** sulla copia di lavoro con base `6208de5`: build delle tre immagini superata, quattro servizi sani in uno stack Compose isolato, migrazioni V1–V4 applicate, HTTP e proxy API verificati, **19 test JUnit del motore superati**. Integrazione del login e browser non verificati. [Report con ambiente, isolamento e limiti](report/2026-11-16-verifica-docker-compose.md).
 
 Verifica storica del **2026-11-13** sulla copia di lavoro con base `97200d9`: backend F01 (autenticazione e profili) e F05 (mazzi) disponibili, migrazioni Flyway V1–V4 e cancellazione account presenti. La revisione ha corretto il requisito CSRF con Bearer, il limite nickname in registrazione e i test non allineati. Invio email ancora da implementare.
