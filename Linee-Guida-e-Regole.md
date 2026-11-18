@@ -65,9 +65,9 @@ Esempio Java:
 ```java
 /**
  * Validates a deck against the selected rule set.
-//  *
+ *
  * @param deck the deck to validate
-//  * @return the validation result and any rule violations
+ * @return the validation result and any rule violations
  */
 ValidationResult validate(Deck deck);
 ```
@@ -105,14 +105,14 @@ Sono convenzioni di naming, non contratti o schemi già implementati. Vedere la 
 
 ### Convenzioni per gli endpoint
 
-Ultimo aggiornamento significativo della sezione: **2026-10-28**. Fonte: selezione delle regole e conferma del prefisso `/api` da parte dell'utente nella conversazione del 2026-10-28.
+Ultimo aggiornamento significativo della sezione il **2026-11-13**, su richiesta dell’utente di rinominare quattro endpoint F01. Le regole generali e il prefisso `/api` derivano dalla conferma dell’utente del 2026-10-28.
 
 - **Nomi delle risorse:** usare sostantivi inglesi al plurale, in minuscolo; per nomi composti usare kebab-case, ad esempio `/api/cards`, `/api/decks`, `/api/trade-offers`.
 - **Operazioni:** esprimere l'operazione tramite il metodo HTTP, senza verbi nel percorso. Usare ad esempio `GET /api/decks` e `POST /api/decks`, evitando percorsi come `/api/getDecks`, `/api/createDeck` o `/api/packs/{packId}/open`.
 - **Identificativi:** collocare l'identificativo dopo la risorsa e usare segnaposto descrittivi in camelCase, ad esempio `/api/decks/{deckId}`.
 - **Parametri di query:** usare nomi in camelCase per filtri, ordinamento e paginazione, ad esempio `/api/cards?faction=fire&pageSize=20`. Definire i parametri supportati nel contratto della funzionalità.
 - **Prefisso comune:** tutti gli endpoint API usano il prefisso `/api`. La politica di versionamento resta **DA DEFINIRE**.
-- **Raggruppamento F01:** dal **2026-11-12**, su richiesta dell’utente, gli endpoint di autenticazione usano `/api/auth` come prefisso comune del controller, mantenendo i nomi di risorsa e i metodi del [contratto F01](docs/BackEnd/accesso-utenti.md#contratto-tecnico-condiviso).
+- **Raggruppamento F01:** dal **2026-11-12**, su richiesta dell’utente, gli endpoint di autenticazione usano `/api/auth` come prefisso comune del controller. Dal **2026-11-13**, su ulteriore richiesta dell’utente, registrazione, accesso, profilo e uscita usano rispettivamente `/signin`, `/login`, `/user/me` e `/logout` sotto tale prefisso, come eccezioni alle convenzioni generali di naming. Metodi e percorsi sono definiti nel [contratto F01](docs/BackEnd/accesso-utenti.md#contratto-tecnico-condiviso).
 
 Gli esempi illustrano le convenzioni di naming: non definiscono endpoint implementati, operazioni disponibili o valori di dominio approvati. I contratti effettivi restano nelle pagine BackEnd pertinenti, secondo le regole del [contratto condiviso tra aree](#contratto-condiviso-tra-aree).
 

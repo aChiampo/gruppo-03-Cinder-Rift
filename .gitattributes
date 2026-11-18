@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Double-click launchers must keep their platform's line endings on checkout.
+*.bat text eol=crlf
+*.command text eol=lf

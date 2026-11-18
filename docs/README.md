@@ -1,20 +1,16 @@
 # Indice della documentazione
 
-Le pagine documentano decisioni confermate, proposte e punti aperti. Il modello definisce l'approfondimento progressivo delle specifiche. Il regolamento Versione 2.1 è disponibile come proposta per il prototipo e le prove di bilanciamento. La tabella delle funzionalità riporta lo stato corrente, compreso il backend F01 implementato il **2026-11-11**.
+Le pagine distinguono decisioni confermate, proposte e punti aperti. Il regolamento Versione 2.1 resta una proposta per prototipo e bilanciamento; la specifica e il DBML v1.1 rappresentano il modello completo, implementato solo in parte.
 
-Aggiornamento F01 del **2026-11-13**: implementati `GET /api/users/{userId}` per il profilo pubblico e `PATCH /api/users/me` per la modifica autenticata, con nickname limitato a 50 caratteri. La suite backend completa ha superato **70 test** su PostgreSQL 18.7; dettagli e limiti nella [scheda di accesso](BackEnd/accesso-utenti.md#verifiche-ed-evidenze).
+Aggiornamento della configurazione del **2026-11-16**, su richiesta dell’utente: Compose usa il prototipo React in `cinder-rift/` e il motore dimostrativo in `springboot_app/game_engine/`, entrambi con Dockerfile e controlli di salute. React richiede ancora l’allineamento al contratto F01; il motore usa H2 in memoria, senza API di gioco né persistenza dei risultati. [Avvio, variabili e limiti](../guida-avvio.md#configurazione-dei-servizi-compose). Le verifiche correnti sono distinte dalle evidenze storiche seguenti.
 
-Aggiornamento F05 del **2026-11-13**: implementate persistenza JDBC, validatore modulare e API REST per i mazzi; i test MockMvc coprono autenticazione, proprietà e status previsti. L’ultima esecuzione completa documentata ha superato **70 test** su PostgreSQL 18.7. Frontend e regole avanzate V2.1 restano da implementare.
+Dal **2026-11-17**, su richiesta dell’utente, la preparazione iniziale usa gli script `set-up` per Windows/macOS e clona sul Desktop; gli script `start-up` aggiornano `dev`, preparano `.env` e la chiave JWT e ricostruiscono Compose. [Guida aggiornata](../guida-avvio.md#preparare-il-computer-e-scaricare-il-progetto). Le verifiche storiche dello stack non attestano i nuovi flussi di installazione su sistemi nativi puliti.
 
-Aggiornamento documentale API F01/F05 del **2026-11-13**: le schede BackEnd ora riportano tabelle riepilogative, payload allineati ai record Java, status HTTP, errori e guida agli header; F05 rimanda alla guida Bearer/CSRF canonica F01. L’ultima esecuzione completa documentata ha superato **70 test** su PostgreSQL 18.7; questa revisione è documentale e non costituisce una nuova esecuzione dei test.
+Verifica del **2026-11-16** sulla copia di lavoro con base `6208de5`: build delle tre immagini superata, quattro servizi sani in uno stack Compose isolato, migrazioni V1–V4 applicate, HTTP e proxy API verificati, **19 test JUnit del motore superati**. Integrazione del login e browser non verificati. [Report con ambiente, isolamento e limiti](report/2026-11-16-verifica-docker-compose.md).
 
-Aggiornamento F01 dell’indice del **2026-11-12**, su richiesta e scelte dell’utente: contratto e backend allineati al prefisso `/api/auth`; pulizia Spring delle sessioni scadute o revocate ogni giorno alle 03:00 UTC, senza conservazione. Le evidenze e i limiti di verifica sono nella scheda F01.
+Verifica storica del **2026-11-13** sulla copia di lavoro con base `97200d9`: backend F01 (autenticazione e profili) e F05 (mazzi) disponibili, migrazioni Flyway V1–V4 e cancellazione account presenti. La revisione ha corretto il requisito CSRF con Bearer, il limite nickname in registrazione e i test non allineati. Invio email ancora da implementare.
 
-Aggiornamento successivo dello stesso giorno, su richiesta dell’utente: implementata la base del recupero password F01, con token di 10 minuti e transazione atomica; nuove richieste preservano i link precedenti. Invio email rinviato, con [template Thymeleaf previsti](BackEnd/invio-mail.md), e frontend escluso. Sorgenti e test compilati; passati 31 test senza database. I test PostgreSQL del recupero sono compilati ma non eseguiti; l’avvio dell’istanza di prova non è stato autorizzato. PostgreSQL 18 tramite Compose e l’integrazione React restano da verificare. Evidenze, controlli esclusi su richiesta e limiti sono nel [contratto F01](BackEnd/accesso-utenti.md).
-
-Aggiornamento storico dell?indice del **2026-11-09**, per il significato di Scaglie, Nuclei Rift e Rotami riportato nel [glossario economico](Digital/economia-crediti-pacchetti.md#risorse-economiche) e per il [sistema mercy sulle aperture](BackEnd/acquisto-pacchetti.md#mercy-sulle-aperture) confermato dall'utente. Il DBML e i diagrammi di inventario distinguono `cobalt_shards`, `rift_cores` e `scraps`, tutti `int` obbligatori con default `0`. `USER_MERCY` usa PK `(id_user, id_pack)`, FK a utenti/pacchetti/rarità e un contatore inizializzato dalla soglia del pacchetto, con garanzia allo zero e reset su ogni pesca qualificante. La risorsa dei campi monetari generici di offerte, prenotazioni e premi resta da definire. Lo stesso aggiornamento, su richiesta dell’utente, rimuove i campi anagrafici dal modello utente, conferma la durata di due giorni degli annunci di scambio pubblici e privati e allinea i riferimenti correnti al regolamento Versione 2.1. La versione corrente della specifica e del DBML è **v1.1**, con file e riferimenti rinominati su richiesta dell’utente del **2026-11-09**. Quell?aggiornamento documentale non ha eseguito migrazioni o verifiche applicative.
-
-Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'allineamento di tutte le funzionalità BackEnd su richiesta dell'utente. La [specifica autonoma v1.1](BackEnd/Database/database-schema-v1.1.md) è la fonte canonica di dati e invarianti; la rappresentazione completa è [db_schema-v1.1.dbml](BackEnd/Database/db_schema-v1.1.dbml). Gli ID generati sono interi auto-incrementali; gli annunci pubblici non prenotano alla pubblicazione e le modifiche delle trattative rilasciano tutti gli hold. Resta la decisione del **2026-11-04** su un solo pacchetto per offerta. L'integrazione documentale della proposta di regolamento resta datata **2026-10-27**. FrontEnd e Digital non sono modificati da questo allineamento. In quella revisione l?implementazione non era iniziata e non erano state eseguite verifiche applicative: l?aggiornamento non costituisce una prova del software o una validazione del bilanciamento.
+La suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test su PostgreSQL 18.6** e prodotto il JAR. Configurazione Compose, 16 rotte nei riepiloghi API e collegamenti documentali controllati; avvio dell’applicazione tramite Compose e browser non verificati. [Report datato con ambiente, riferimento, risultati e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze precedenti nelle schede F01/F05 restano storiche.
 
 ## Aree e strumenti comuni
 
@@ -24,6 +20,8 @@ Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'al
 - [Guida API per il Frontend](BackEnd/GUIDA-API-FRONTEND.md)
 - [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
 - [Configurazione locale dei servizi Docker Compose](../compose.yaml)
+- [Build e limiti del frontend](../cinder-rift/README.md#avvio-con-docker-compose)
+- [Build e limiti del motore dimostrativo](../springboot_app/game_engine/README.md#avvio-con-docker-compose)
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
 - [Modello di funzionalità](modello-funzionalita.md)
@@ -31,16 +29,20 @@ Allineamento documentale del **2026-11-05**, per la base di dati **v1.0** e l'al
 
 ## Stato delle funzionalità
 
+Aggiornamento dati F01/F05 del **2026-11-16**, su richiesta dell’utente: migrazioni V5/V6 per il set CR01 (30 carte e arti) e l’utente dimostrativo completo di inventario e collezione. [Dettagli e test delle migrazioni](../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05). Verifica della copia di lavoro: **241 test backend superati** e JAR prodotto su PostgreSQL 18.6 isolato, inclusi 123 casi delle nuove migrazioni. L’integrazione React e le API di collezione restano da completare.
+
+Aggiornamento F01 del **2026-11-13**, su approvazione dell’utente, con la rinomina degli endpoint e la cancellazione account sotto `/api/auth`. Il [contratto canonico](BackEnd/accesso-utenti.md#cancellazione-account) descrive la cancellazione propria per `USER` e di qualsiasi account per `ADMIN`, inclusi altri amministratori, con revoca delle sessioni e rimozione dei token di recupero.
+
 Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e le altre aree; per una funzionalità trasversale lo stato implementativo complessivo resta parziale finché le porzioni previste non sono integrate. Non dedurre l'implementazione dal solo perimetro confermato.
 
 | ID  | Oggetto                                                                    | Perimetro                                   | Specifica   | Implementazione | Verifica     | Riferimento principale                               |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------- | ----------- | --------------- | ------------ | ---------------------------------------------------- |
-| F01 | Registrazione, accesso, profilo, rinnovo, uscita, recupero password e ruoli `ADMIN` e `USER` | Confermato | Contratto backend aggiornato il 2026-11-13 | Backend, API profilo utente, pulizie, base recupero e migrazioni Flyway implementati. Email e FrontEnd da avviare | 70 test superati su PostgreSQL 18.7; avvio via Compose e browser da verificare | [Accesso](BackEnd/accesso-utenti.md) |
+| F01 | Registrazione, accesso, profilo, rinnovo, uscita, cancellazione account, recupero password e ruoli `ADMIN` e `USER` | Confermato | Contratto backend aggiornato il 2026-11-13 | Backend, pulizie, base recupero, migrazioni Flyway e cancellazione account implementati. Login React prototipale con contratto mock; integrazione Spring, altre schermate F01 ed email da completare | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Accesso](BackEnd/accesso-utenti.md) |
 | F03 | Offerte di un solo pacchetto; risorsa del prezzo da definire                      | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
-| F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Collezione](BackEnd/collezione-carte.md)            |
-| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento; contratto API aggiornato il 2026-11-13 | Persistenza, validazione e API REST backend implementate; frontend non implementato | 70 test superati nella suite backend completa su PostgreSQL 18.7; limiti F05 nella scheda | [Mazzi](BackEnd/gestione-mazzi.md) |
+| F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Interfaccia React con dati dimostrativi; backend e integrazione da implementare | Integrazione non verificata | [Collezione](BackEnd/collezione-carte.md)            |
+| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento; contratto API aggiornato il 2026-11-13 | Persistenza, validazione e API REST backend implementate; deck builder React dimostrativo non integrato | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Mazzi](BackEnd/gestione-mazzi.md) |
 | F06 | Scambi di carte e token, privati/pubblici, consenso e prenotazioni | Confermato; approvato anche dal committente | In approfondimento | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
-| F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Sfide](BackEnd/sfide-simulazione.md)                |
+| F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Motore e campagna dimostrativi con build Docker; API di sfida e integrazione non implementate | Evidenze JUnit e limiti nel [README motore](../springboot_app/game_engine/README.md#avvio-e-verifiche); integrazione non verificata | [Sfide](BackEnd/sfide-simulazione.md)                |
 | F08 | Storico e dettaglio dei turni                                              | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Storico](BackEnd/storico-partite.md)                |
 | F09 | Pagine informative                                                         | DA DEFINIRE; solo segnaposto                | Sintetica   | Non iniziata    | Non eseguita | [Pagine informative](FrontEnd/pagine-informative.md) |
 | F10 | Backoffice carte e prodotti                                                | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Backoffice](BackEnd/gestione-amministrativa.md)     |
@@ -71,7 +73,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 
 | Tema | Traccia | Decisione o chiarimento del gruppo |
 | --- | --- | --- |
-| Database | MySQL | PostgreSQL 18 configurato in Compose; F01 usa lo schema v1.1 via JDBC. Verifica su PostgreSQL 18 tramite Compose ancora da eseguire |
+| Database | MySQL | PostgreSQL 18 configurato in Compose; F01 usa lo schema v1.1 via JDBC. Build, avvio, migrazioni e salute verificati nello stack isolato il 2026-11-16; integrazione funzionale completa da verificare |
 | Scambi | Solo carte | Carte e crediti, privati/pubblici; approvazione del committente confermata dal gruppo |
 | Offerte del negozio | Acquisto di pacchetti | Ogni offerta contiene un solo pacchetto; prezzo e configurazione del pacchetto gestibili dal backoffice |
 | Carte | Creazione con strumenti di intelligenza artificiale | Carte non interamente generate; ripartizione del contributo umano da definire |
@@ -81,7 +83,7 @@ Le pagine si approfondiscono solo per gli aspetti disponibili, mantenendo ricono
 
 Da approfondire successivamente nelle pagine interessate:
 
-- Stack definitivo, versioni, strumenti e differenza PostgreSQL/MySQL.
+- Allineamento del prototipo React 18/Vite 5 ai contratti canonici e chiarimento della differenza PostgreSQL/MySQL rispetto alla traccia, con backend già configurato nel POM.
 - Permessi di `ADMIN` e `USER` nelle altre funzionalità; invio email e frontend del recupero password F01, con base backend già implementata.
 - Regole di assegnazione delle Scaglie, acquisto dei Nuclei Rift e recupero dei Rotami; risorse ammesse nei prezzi e negli scambi.
 - Offerte di un solo pacchetto: prezzi, limiti, contenuto del pacchetto, apertura e disponibilità.
@@ -89,7 +91,7 @@ Da approfondire successivamente nelle pagine interessate:
 - Regolamento: approvazione definitiva della Versione 2.1; soglie di energia, statistiche e punti potenza delle carte, effetti e ordine di risoluzione degli equipaggiamenti, bilanciamento di budget/rarità/copie/bonus, conferma della formula del danno con gli insegnanti e possibilità di cure o prevenzione dei danni. Riferimenti: [formula proposta](Digital/regolamento-base.md#11-danni-ai-giocatori) ed [elementi da completare e testare](Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
 - Effetti degli scambi sui mazzi e uso delle carte in più mazzi.
 - Numero di approvazioni, revisori, strategia di merge e protezioni remote.
-- Nomi del progetto e del gruppo, membri e Team Leader.
+- Conferma del nome del progetto e del numero di gruppo e completamento dell’account GitHub mancante; nove membri e Team Leader sono già riportati nel README.
 
 L'esempio «1.000 crediti → 1 pacchetto Rare» rispetta la cardinalità confermata di un solo pacchetto per offerta e non stabilisce un prezzo o un tipo definitivo.
 

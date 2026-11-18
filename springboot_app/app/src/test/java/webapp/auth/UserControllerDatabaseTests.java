@@ -41,7 +41,7 @@ class UserControllerDatabaseTests {
         AuthenticationService.IssuedSession target = createUser();
         String authorization = bearer(caller);
 
-        mvc.perform(get("/api/auth/users/me").header(HttpHeaders.AUTHORIZATION, authorization))
+        mvc.perform(get("/api/auth/user/me").header(HttpHeaders.AUTHORIZATION, authorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(caller.user().id()))
                 .andExpect(jsonPath("$.email").value(caller.user().email()));

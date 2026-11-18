@@ -7,6 +7,8 @@
 
 Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
 
+Aggiornamento dati iniziali del **2026-11-16**, su richiesta dell’utente: V5 importa 30 carte CR01 e un’arte `default` per carta; V6 assegna una copia per carta all’utente dimostrativo. Il CSV conserva i valori originali: i limiti dei round V4 e le regole di validazione non vengono modificati. Le nuove colonne del catalogo sono persistite ma non aggiunte ai payload F05. [Mapping, assunzioni e procedura](../../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05).
+
 ## Riepilogo API
 
 | Method | Path | Auth required | Purpose | Success Status | Error Statuses |
@@ -22,6 +24,8 @@ Per distinguere Bearer e CSRF e per consultare OpenAPI, vedere la [guida autenti
 L'integrazione documentale è approvata; la proposta di riferimento è ora la V2.1, mentre regole definitive e bilanciamento restano da confermare. Le decisioni aggiornate dall'utente il 2026-10-29 prevedono una PK autonoma `DECKS_CARDS.id`, una destinazione testuale `ROUND1` … `ROUND5` oppure `EQUIPMENT` e nessuna quantità per riga. Questo modello sostituisce la precedente PK composta e risolve la rappresentazione delle due copie nello stesso round e del gruppo equipaggiamenti. Le migrazioni V3/V4 e le API backend implementate sono descritte sotto. I test coprono le rotte e le regole iniziali, ma non costituiscono verifica completa della funzionalità o del bilanciamento.
 
 ## Implementazione backend disponibile
+
+Verifica corrente del **2026-11-13** sulla copia con base `97200d9`: **118 test** superati nella suite completa su PostgreSQL **18.6**, inclusi controller e servizio mazzi; JAR prodotto. [Ambiente, correzioni e limiti](../report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze di 70 test riportate sotto precedono questa revisione.
 
 Il package `webapp.deck` usa `JdbcClient`, record Java, Jakarta Bean Validation e transazioni Spring. `DeckRepository` esegue CRUD su `decks` e sulle singole righe `decks_cards`; ogni lettura o mutazione di un mazzo è vincolata al proprietario autenticato, con lock della riga utente e poi del mazzo per le operazioni di scrittura. `CardCatalogRepository` carica carte, arti, configurazioni e copie possedute. `DeckService` coordina le operazioni; la cancellazione del mazzo usa la cascata FK prevista da V3. `DeckController` espone le rotte riportate sotto, risolvendo l'identità esclusivamente da `@AuthenticationPrincipal UserProfile`; non è persistito un flag di validità.
 
@@ -384,7 +388,7 @@ Verifica mirata dei test MockMvc F05 del **2026-11-13**: `./mvnw -q -Dtest=DeckC
 
 Adattare il flusso «aggiunta → raccolta regole e dati → validazione → salvataggio oppure errori» alla V2.1, mantenendo `submitDeck(userId, deckId)` come verifica completa prima dell'utilizzo. Ogni utente può comporre e salvare più mazzi; salvare una bozza incompleta non significa renderla utilizzabile.
 
-Questa pagina approfondisce il riferimento tecnico canonico F05 già esistente. Il precedente aggiornamento del 2026-11-02 resta la fonte delle proposte V2.1. La versione corrente recepisce invece la base di dati v1.1: destinazioni e limiti dei round sono persistiti in `ROUND_CONFIGURATIONS`, mentre le altre regole proposte devono ancora essere concordate. Restano lo pseudocodice descrittivo con l'eccezione preesistente dei commenti in italiano e l'assenza di revisioni/versioni di mazzi e catalogo. Il protocollo di accesso è comune fra servizi. Non sono eseguite migrazioni o prove applicative; regole di gioco e API ancora proposte restano riconoscibili come tali.
+Questa pagina approfondisce il riferimento tecnico canonico F05 già esistente. Il precedente aggiornamento del 2026-11-02 resta la fonte delle proposte V2.1. La versione corrente recepisce invece la base di dati v1.1: destinazioni e limiti dei round sono persistiti in `ROUND_CONFIGURATIONS`, mentre le altre regole proposte devono ancora essere concordate. Restano lo pseudocodice descrittivo con l'eccezione preesistente dei commenti in italiano e l'assenza di revisioni/versioni di mazzi e catalogo. Il protocollo di accesso è comune fra servizi. Il precedente allineamento del modello non eseguiva migrazioni o prove applicative; l?implementazione corrente V3/V4 e le verifiche backend sono descritte sopra. Regole di gioco e API ancora proposte restano riconoscibili come tali.
 
 Dipendenze: F01 per l'identità, F04 per il possesso, F06 per gli scambi, F07 per validazione e snapshot prima della partita, F10 per catalogo e regole. Mescolamento, effetti e simulazione spettano a F07. Gli equipaggiamenti formano un gruppo separato: F05 non li assegna a round specifici.
 

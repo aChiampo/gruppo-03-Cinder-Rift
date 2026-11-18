@@ -1,6 +1,6 @@
 # Specifica della base di dati — v1.1
 
-**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-12. **Motore del modello:** PostgreSQL 18. Nessuna modifica DDL o migrazione eseguita da questo aggiornamento. Su richiesta dell’utente sono allineate le responsabilità applicative di recupero password alla base F01. La struttura resta quella del 2026-11-09: inventario con Scaglie, Nuclei Rift e Rotami e sistema mercy; rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
+**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-13. **Motore del modello:** PostgreSQL 18. Nessuna modifica DDL o migrazione eseguita da questo aggiornamento. La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. La struttura resta quella del 2026-11-09: inventario con Scaglie, Nuclei Rift e Rotami e sistema mercy; rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
 
 Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
@@ -10,7 +10,13 @@ Questo documento è la fonte canonica e autonoma della struttura della base di d
 
 **Legenda.** `PK` è una chiave primaria, anche composta; `FK` una relazione dichiarata; `UK` l'unicità della colonna. I commenti riportano nullabilità, default e auto-incremento. `||` indica esattamente uno, `o|`/`|o` zero o uno e `o{`/`}o` zero o molti. La linea è continua se la FK appartiene alla PK dipendente, tratteggiata negli altri casi. Ogni tabella compare nello schema integrale e in una sola sezione di dettaglio; le relazioni esterne ai dettagli compaiono nello schema integrale.
 
-**Confine delle garanzie.** PK, FK, unicità e `CHECK` sono vincoli del modello; note, protocolli e validazioni backend descrivono il comportamento da implementare. Non attestano l'esistenza di trigger, servizi, API o migrazioni già eseguiti.
+**Confine delle garanzie.** PK, FK, unicità e `CHECK` sono vincoli del modello; note e protocolli descrivono il comportamento richiesto. L’implementazione corrente è parziale e va distinta dal modello completo.
+
+### Perimetro SQL implementato
+
+Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. Pacchetti, mercy, amicizie, scambi, missioni e partite del modello completo non hanno ancora migrazioni in questa applicazione. Le evidenze correnti sono nel [report di verifica](../../report/2026-11-13-revisione-stato-sviluppo.md).
+
+**Differenza da riconciliare.** V3 dichiara `decks_cards.id_deck → decks.id ON DELETE CASCADE`, usata dalla cancellazione dei mazzi F05; il DBML v1.1 e i diagrammi non dichiarano questa cascata. Il comportamento SQL corrente è descritto nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile); il modello completo richiede un successivo allineamento esplicito. Questa revisione non modifica DBML o DDL e non considera implementato il guard condiviso del catalogo.
 
 ### Schema integrale
 
@@ -504,6 +510,8 @@ erDiagram
 **Identità e dati.** `USERS.id` è l'unico identificativo dell'utente: `int` auto-incrementale, obbligatorio e PK, usato anche nei riferimenti pubblici. Nickname ed email sono obbligatori e univoci; hash della password e ruolo sono obbligatori. L’icona è facoltativa. `id_role` riferisce `ROLES.id`; `ranking_points` parte da `1000`, `registration_date` da `now()` e `is_deleted` da `false`. Il backend normalizza l'email prima di scrittura e ricerca: il solo `UNIQUE` non ne normalizza la forma.
 
 **Inventario obbligatorio nel servizio.** La registrazione crea utente e inventario nella stessa transazione. La FK obbligatoria e univoca `INVENTORY.id_user` consente al massimo un inventario per utente; non ne impone da sola l'esistenza per ciascun utente.
+
+La [cancellazione account F01](../accesso-utenti.md#cancellazione-account), approvata dall’utente il **2026-11-13**, coordina il flag `USERS.is_deleted`, la revoca delle sessioni e la rimozione dei token di recupero in una transazione applicativa con lock utente. Il contratto F01 definisce autorizzazioni, API e richieste concorrenti.
 
 **Notifiche.** `NOTIFICATIONS.id_sender` e `id_receiver` sono interi obbligatori riferiti a `USERS.id`. Non esiste un mittente testuale “system”. Messaggio e data sono obbligatori; lo stato ha default `new` e il `CHECK` ammette soltanto `new`, `read`, `archived`. Il backend verifica autorizzazioni per invii di massa e regali; una notifica non costituisce da sola un trasferimento economico.
 

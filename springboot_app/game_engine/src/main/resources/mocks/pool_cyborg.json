@@ -1,0 +1,452 @@
+[
+  {
+    "id": "CYB_R1_1",
+    "name": "Cyborg Prime R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 6
+  },
+  {
+    "id": "CYB_R1_2",
+    "name": "Cyborg Nexus R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "CYB_R1_3",
+    "name": "Cyborg Beta R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R1_4",
+    "name": "Cyborg Nexus R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 7
+  },
+  {
+    "id": "CYB_R1_5",
+    "name": "Cyborg Epsilon R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R1_6",
+    "name": "Cyborg Beta R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 3,
+    "initialDef": 8
+  },
+  {
+    "id": "CYB_R1_7",
+    "name": "Cyborg Delta R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 3,
+    "initialDef": 7
+  },
+  {
+    "id": "CYB_R1_8",
+    "name": "Cyborg Nexus R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 5,
+    "initialDef": 6
+  },
+  {
+    "id": "CYB_R1_9",
+    "name": "Cyborg Omega R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 6
+  },
+  {
+    "id": "CYB_R1_10",
+    "name": "Cyborg Gamma R1",
+    "faction": "CYBORG",
+    "energyCost": 1,
+    "powerPoints": 1,
+    "baseAtk": 4,
+    "initialDef": 8
+  },
+  {
+    "id": "CYB_R2_1",
+    "name": "Cyborg Prime R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R2_2",
+    "name": "Cyborg Alpha R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "CYB_R2_3",
+    "name": "Cyborg Omega R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R2_4",
+    "name": "Cyborg Gamma R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 10
+  },
+  {
+    "id": "CYB_R2_5",
+    "name": "Cyborg Beta R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R2_6",
+    "name": "Cyborg Epsilon R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R2_7",
+    "name": "Cyborg Delta R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "CYB_R2_8",
+    "name": "Cyborg Epsilon R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R2_9",
+    "name": "Cyborg Epsilon R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 3,
+    "baseAtk": 4,
+    "initialDef": 9
+  },
+  {
+    "id": "CYB_R2_10",
+    "name": "Cyborg Nexus R2",
+    "faction": "CYBORG",
+    "energyCost": 2,
+    "powerPoints": 2,
+    "baseAtk": 5,
+    "initialDef": 8
+  },
+  {
+    "id": "CYB_R3_1",
+    "name": "Cyborg Delta R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "CYB_R3_2",
+    "name": "Cyborg Nexus R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R3_3",
+    "name": "Cyborg Alpha R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 12
+  },
+  {
+    "id": "CYB_R3_4",
+    "name": "Cyborg Alpha R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "CYB_R3_5",
+    "name": "Cyborg Delta R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 6,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R3_6",
+    "name": "Cyborg Epsilon R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "CYB_R3_7",
+    "name": "Cyborg Gamma R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 5,
+    "initialDef": 11
+  },
+  {
+    "id": "CYB_R3_8",
+    "name": "Cyborg Omega R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 7,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R3_9",
+    "name": "Cyborg Nexus R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 4,
+    "baseAtk": 6,
+    "initialDef": 11
+  },
+  {
+    "id": "CYB_R3_10",
+    "name": "Cyborg Gamma R3",
+    "faction": "CYBORG",
+    "energyCost": 3,
+    "powerPoints": 3,
+    "baseAtk": 7,
+    "initialDef": 10
+  },
+  {
+    "id": "CYB_R4_1",
+    "name": "Cyborg Epsilon R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 15
+  },
+  {
+    "id": "CYB_R4_2",
+    "name": "Cyborg Omega R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R4_3",
+    "name": "Cyborg Prime R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R4_4",
+    "name": "Cyborg Beta R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "CYB_R4_5",
+    "name": "Cyborg Prime R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R4_6",
+    "name": "Cyborg Alpha R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 4,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "CYB_R4_7",
+    "name": "Cyborg Alpha R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 15
+  },
+  {
+    "id": "CYB_R4_8",
+    "name": "Cyborg Prime R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 6,
+    "initialDef": 15
+  },
+  {
+    "id": "CYB_R4_9",
+    "name": "Cyborg Delta R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 7,
+    "initialDef": 13
+  },
+  {
+    "id": "CYB_R4_10",
+    "name": "Cyborg Nexus R4",
+    "faction": "CYBORG",
+    "energyCost": 4,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 15
+  },
+  {
+    "id": "CYB_R5_1",
+    "name": "Cyborg Nexus R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 14
+  },
+  {
+    "id": "CYB_R5_2",
+    "name": "Cyborg Prime R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 14
+  },
+  {
+    "id": "CYB_R5_3",
+    "name": "Cyborg Beta R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 16
+  },
+  {
+    "id": "CYB_R5_4",
+    "name": "Cyborg Alpha R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 9,
+    "initialDef": 14
+  },
+  {
+    "id": "CYB_R5_5",
+    "name": "Cyborg Beta R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 7,
+    "initialDef": 17
+  },
+  {
+    "id": "CYB_R5_6",
+    "name": "Cyborg Delta R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 9,
+    "initialDef": 16
+  },
+  {
+    "id": "CYB_R5_7",
+    "name": "Cyborg Alpha R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "CYB_R5_8",
+    "name": "Cyborg Delta R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "CYB_R5_9",
+    "name": "Cyborg Alpha R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 6,
+    "baseAtk": 8,
+    "initialDef": 17
+  },
+  {
+    "id": "CYB_R5_10",
+    "name": "Cyborg Alpha R5",
+    "faction": "CYBORG",
+    "energyCost": 5,
+    "powerPoints": 5,
+    "baseAtk": 8,
+    "initialDef": 16
+  }
+]

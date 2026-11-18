@@ -1,8 +1,8 @@
 # Accesso utenti
 
-ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita e base del recupero password.
+ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita, cancellazione account e base del recupero password.
 Implementazione: backend disponibile nel branch `feature/f01-accesso-utenti`; integrazione FrontEnd da avviare. Responsabile: DA DEFINIRE.
-Ultimo aggiornamento significativo il **2026-11-13**: implementati i profili utente pubblici e la modifica autenticata del proprio profilo, con limiti di validazione allineati al contratto. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
+Ultimo aggiornamento significativo il **2026-11-13**: allineamento al codice corrente di profili pubblici, modifica del proprio profilo, percorsi rinominati e cancellazione account; corretto il limite di 50 caratteri del nickname anche in registrazione, dopo la normalizzazione. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-autenticazione-e-autorizzazione).
 
 ## Riepilogo API
@@ -10,13 +10,14 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-d
 | Method | Path | Auth required | Purpose | Success Status | Error Statuses |
 | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/auth/csrf-tokens` | No | Ottiene il token CSRF per le scritture browser F01 | `200` | — |
-| `POST` | `/api/auth/users` | CSRF | Registra un account e apre una sessione | `201` | `400`, `403`, `409`, `415` |
-| `POST` | `/api/auth/sessions` | CSRF | Autentica email e password | `200` | `400`, `401`, `403`, `415` |
+| `POST` | `/api/auth/signin` | CSRF | Registra un account e apre una sessione | `201` | `400`, `403`, `409`, `415` |
+| `POST` | `/api/auth/login` | CSRF | Autentica email e password | `200` | `400`, `401`, `403`, `415` |
 | `POST` | `/api/auth/password-reset-requests` | CSRF | Accetta una richiesta di recupero senza rivelare l’idoneità dell’account | `202` | `400`, `403`, `415` |
 | `POST` | `/api/auth/password-resets` | CSRF | Cambia la password con un token di recupero | `204` | `400`, `403`, `415` |
-| `GET` | `/api/auth/users/me` | Bearer JWT | Restituisce il profilo privato corrente | `200` | `401` |
+| `GET` | `/api/auth/user/me` | Bearer JWT | Restituisce il profilo privato corrente | `200` | `401` |
 | `POST` | `/api/auth/session-renewals` | Cookie refresh + CSRF | Ruota la sessione e restituisce un nuovo access token | `200` | `401`, `403` |
-| `POST` | `/api/auth/session-revocations` | CSRF; cookie refresh facoltativo | Revoca la sessione corrente e scade il cookie refresh | `204` | `403` |
+| `POST` | `/api/auth/logout` | CSRF; cookie refresh facoltativo | Revoca la sessione corrente e scade il cookie refresh | `204` | `403` |
+| `DELETE` | `/api/auth/users/{userId}` | Bearer JWT + CSRF | Cancella logicamente un account e invalida i suoi token | `204` | `400`, `401`, `403`, `404` |
 | `GET` | `/api/users/{userId}` | Bearer JWT | Legge un profilo pubblico attivo | `200` | `400`, `401`, `404` |
 | `PATCH` | `/api/users/me` | Bearer JWT | Aggiorna parzialmente il proprio profilo | `200` | `400`, `401`, `404`, `409` |
 
@@ -39,24 +40,25 @@ F01 usa Java 21, Spring Boot 4.1.2, Spring MVC, Bean Validation e Spring Securit
 
 Le richieste di registrazione e accesso inviano `Content-Type: application/json`. Tutte le risposte che contengono credenziali o profilo usano `Cache-Control` con `no-store`.
 
-Tutti gli endpoint F01 del controller usano il prefisso `/api/auth`. La modifica sostituisce i precedenti percorsi sotto `/api`, senza alias di compatibilità: i client devono aggiornare le chiamate al nuovo prefisso. I percorsi delle altre funzionalità non cambiano.
+Gli endpoint di `AuthController` usano `/api/auth`; `UserController` espone invece le rotte profilo sotto `/api/users`. Registrazione, accesso, profilo privato e uscita usano rispettivamente `/api/auth/signin`, `/api/auth/login`, `/api/auth/user/me` e `/api/auth/logout`, senza alias dei nomi precedenti. I percorsi F05 non cambiano.
 
 | Metodo e percorso | Credenziali richieste | Corpo della richiesta | Risposta di successo |
 | --- | --- | --- | --- |
 | `GET /api/auth/csrf-tokens` | Nessuna | Assente | `200` con `headerName` e `token`, entrambi stringhe. Imposta il cookie CSRF quando serve. |
-| `POST /api/auth/users` | Cookie CSRF e header `X-XSRF-TOKEN` | `nickname`, `email`, `password` | `201` con la risposta di sessione e il cookie di rinnovo. |
-| `POST /api/auth/sessions` | Cookie CSRF e header `X-XSRF-TOKEN` | `email`, `password` | `200` con la risposta di sessione e il cookie di rinnovo. |
-| `GET /api/auth/users/me` | `Authorization: Bearer <accessToken>` | Assente | `200` con il profilo. |
+| `POST /api/auth/signin` | Cookie CSRF e header `X-XSRF-TOKEN` | `nickname`, `email`, `password` | `201` con la risposta di sessione e il cookie di rinnovo. |
+| `POST /api/auth/login` | Cookie CSRF e header `X-XSRF-TOKEN` | `email`, `password` | `200` con la risposta di sessione e il cookie di rinnovo. |
+| `GET /api/auth/user/me` | `Authorization: Bearer <accessToken>` | Assente | `200` con il profilo. |
 | `POST /api/auth/session-renewals` | Cookie di rinnovo, cookie CSRF e header `X-XSRF-TOKEN` | Assente | `200` con una nuova risposta di sessione e il cookie di rinnovo sostitutivo. |
-| `POST /api/auth/session-revocations` | Cookie CSRF e header `X-XSRF-TOKEN`. Cookie di rinnovo, se presente. | Assente | `204` con scadenza immediata del cookie di rinnovo. Ripetere la richiesta produce lo stesso esito. |
+| `POST /api/auth/logout` | Cookie CSRF e header `X-XSRF-TOKEN`. Cookie di rinnovo, se presente. | Assente | `204` con scadenza immediata del cookie di rinnovo. Ripetere la richiesta produce lo stesso esito. |
 | `POST /api/auth/password-reset-requests` | Cookie CSRF e header `X-XSRF-TOKEN`; nessun JWT richiesto | `email` | `202` con `message` generico; nessun token o cookie di rinnovo. Invio email non implementato. |
 | `POST /api/auth/password-resets` | Cookie CSRF e header `X-XSRF-TOKEN`; nessun JWT richiesto | `token`, `newPassword` | `204`, senza credenziali o cookie di rinnovo. |
+| `DELETE /api/auth/users/{userId}` | Bearer JWT, cookie CSRF e header `X-XSRF-TOKEN` | Assente | `204`; scade il cookie refresh solo per cancellazione propria. [Permessi e transazione](#cancellazione-account). |
 
 ### Guida autenticazione, header e OpenAPI
 
-Il client ottiene il token leggibile da `GET /api/auth/csrf-tokens`: la risposta JSON espone `headerName` e `token`, mentre la risposta imposta il cookie `__Host-cinder-csrf` (HttpOnly, Secure, SameSite Strict). Su tutte le sei scritture `POST /api/auth/*` il browser invia il cookie e il valore JSON in `X-XSRF-TOKEN`: registrazione, accesso, richiesta e conferma recupero password, rinnovo e revoca sessione. Il rinnovo richiede anche `__Host-cinder-refresh`; la revoca lo usa se presente. Queste route non richiedono un bearer JWT.
+Il client ottiene il token leggibile da `GET /api/auth/csrf-tokens`: la risposta JSON espone `headerName` e `token`, mentre la risposta imposta il cookie `__Host-cinder-csrf` (HttpOnly, Secure, SameSite Strict). Su tutte le sei scritture `POST /api/auth/*` il browser invia il cookie e il valore JSON in `X-XSRF-TOKEN`: registrazione, accesso, richiesta e conferma recupero password, rinnovo e revoca sessione. Il rinnovo richiede anche `__Host-cinder-refresh`; la revoca lo usa se presente. Queste route non richiedono un bearer JWT. `DELETE /api/auth/users/{userId}` richiede invece sia Bearer sia CSRF.
 
-`GET /api/auth/users/me` e tutte le rotte `/api/users/**` e `/api/decks/**` richiedono invece `Authorization: Bearer <accessToken>` e non richiedono CSRF. Il JWT viene restituito nel body di sessione; il client dovrebbe conservarlo in memoria. Il cookie refresh è HttpOnly e non va letto dal JavaScript.
+`GET /api/auth/user/me` e tutte le rotte `/api/users/**` e `/api/decks/**` richiedono invece `Authorization: Bearer <accessToken>` e non richiedono CSRF. Il JWT viene restituito nel body di sessione; il client dovrebbe conservarlo in memoria. Il cookie refresh è HttpOnly e non va letto dal JavaScript.
 
 Con il backend locale avviato sulla porta `8081`, la specifica OpenAPI live è [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs); l’interfaccia è [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html), che reindirizza alla UI Springdoc.
 
@@ -75,7 +77,7 @@ Non richiede autenticazione né body. Risponde `200 OK`, imposta `__Host-cinder-
 }
 ```
 
-#### `POST /api/auth/users`
+#### `POST /api/auth/signin`
 
 Richiede CSRF. Body esatto:
 
@@ -87,7 +89,7 @@ Richiede CSRF. Body esatto:
 }
 ```
 
-`nickname` e `password` sono `@NotBlank`; `email` è `@NotBlank`, `@Email` e lunga al massimo 254 caratteri. Il server rimuove gli spazi esterni da `nickname` e normalizza `email` con `strip().toLowerCase(Locale.ROOT)`. `password` è verificata come non vuota e non composta solo da spazi e non può superare 72 byte UTF-8; gli spazi non vengono rimossi. `201 Created` restituisce una `SessionResponse` e imposta `__Host-cinder-refresh`:
+`nickname` è normalizzato con `strip()` prima della validazione, è `@NotBlank` e ha massimo 50 caratteri; `password` è `@NotBlank`; `email` è `@NotBlank`, `@Email` e lunga al massimo 254 caratteri. Il server rimuove gli spazi esterni da `nickname` e normalizza `email` con `strip().toLowerCase(Locale.ROOT)`. `password` è verificata come non vuota e non composta solo da spazi e non può superare 72 byte UTF-8; gli spazi non vengono rimossi. `201 Created` restituisce una `SessionResponse` e imposta `__Host-cinder-refresh`:
 
 ```json
 {
@@ -105,7 +107,7 @@ Richiede CSRF. Body esatto:
 }
 ```
 
-#### `POST /api/auth/sessions`
+#### `POST /api/auth/login`
 
 Richiede CSRF. Body:
 
@@ -149,7 +151,7 @@ Richiede CSRF, non JWT. Body:
 
 Entrambi i campi sono `@NotBlank`; `newPassword` non può superare 72 byte UTF-8 e conserva gli spazi. Token mancante, malformato, scaduto, usato o non associato a un account attivo produce `400`. In caso di successo risponde `204 No Content`, senza body o nuova sessione.
 
-#### `GET /api/auth/users/me`
+#### `GET /api/auth/user/me`
 
 Richiede `Authorization: Bearer <accessToken>`, senza body. `200 OK` restituisce `UserProfile`:
 
@@ -170,7 +172,7 @@ Richiede `Authorization: Bearer <accessToken>`, senza body. `200 OK` restituisce
 
 Richiede CSRF e il cookie `__Host-cinder-refresh`; non richiede bearer né body. `200 OK` restituisce la `SessionResponse` illustrata per la registrazione, ruota il cookie refresh e invalida il token precedente. Cookie mancante, malformato, scaduto o revocato produce `401`.
 
-#### `POST /api/auth/session-revocations`
+#### `POST /api/auth/logout`
 
 Richiede CSRF; non richiede bearer né body. Il cookie `__Host-cinder-refresh` è facoltativo. Risponde sempre `204 No Content` e imposta il cookie refresh con scadenza immediata; ripetere la richiesta mantiene lo stesso esito.
 
@@ -271,7 +273,7 @@ Gli errori applicativi di validazione, credenziali e conflitto usano `applicatio
   "title": "Unauthorized",
   "status": 401,
   "detail": "Invalid credentials",
-  "instance": "/api/auth/sessions"
+  "instance": "/api/auth/login"
 }
 ```
 
@@ -283,7 +285,7 @@ Gli errori MVC usano `application/problem+json` con i campi standard `type`, `ti
   "title": "Bad Request",
   "status": 400,
   "detail": "Invalid request content.",
-  "instance": "/api/auth/users"
+  "instance": "/api/auth/signin"
 }
 ```
 
@@ -308,6 +310,19 @@ Gli errori MVC usano `application/problem+json` con i campi standard `type`, `ti
 ```
 
 `401`/`403` emessi direttamente dai filtri di autenticazione, autorizzazione o CSRF non hanno attualmente un body RFC 7807 garantito; per questi casi il client deve basarsi sullo status (e su `WWW-Authenticate` per Bearer). Non viene definito un esempio ProblemDetail `403` non corrispondente alla risposta effettiva.
+
+## Cancellazione account
+
+`DELETE /api/auth/users/{userId}` non ha body e richiede `Authorization: Bearer <accessToken>`, cookie `__Host-cinder-csrf` e header `X-XSRF-TOKEN`. L’ID deve essere un intero positivo nel dominio Java `int`.
+
+- `USER` può cancellare soltanto il proprio account. Un altro ID restituisce `403` prima della ricerca del destinatario, anche se inesistente.
+- `ADMIN` può cancellare qualsiasi account, inclusi altri amministratori o account con ruolo non ammesso all’accesso. Un ID inesistente restituisce `404`; ripetere la cancellazione di un destinatario già cancellato restituisce `204`.
+- Il servizio blocca chiamante e destinatario in ordine crescente di ID, ricontrolla ruolo e stato del chiamante, poi revoca tutte le sessioni del destinatario, elimina tutti i suoi token di recupero e imposta `users.is_deleted = true` nella stessa transazione. Un errore annulla tutte le scritture. Login, rinnovo e recupero condividono il lock utente.
+- Le righe utente, inventario, collezione e mazzi sono conservate; non è una cancellazione fisica o anonimizzazione. I vincoli di unicità su email e nickname restano attivi. I token del destinatario non autenticano più le richieste successive.
+- Il successo restituisce `204` senza body. Se il destinatario è il chiamante, scade anche `__Host-cinder-refresh`; il client elimina il JWT in memoria e torna all’accesso. Cancellare un altro account non cambia il cookie del chiamante.
+- ID malformato o non positivo: `400`; Bearer assente o non valido, con CSRF valido: `401`; CSRF mancante/non valido o permesso insufficiente: `403`. Il filtro CSRF precede l’autorizzazione e può quindi restituire `403` anche senza Bearer.
+
+[Controller](../../springboot_app/app/src/main/java/webapp/auth/AuthController.java) · [Servizio](../../springboot_app/app/src/main/java/webapp/auth/AuthenticationService.java) · [Test PostgreSQL](../../springboot_app/app/src/test/java/webapp/auth/AccountDeletionDatabaseTests.java).
 
 ## Ciclo di vita, dati e concorrenza
 
@@ -335,7 +350,8 @@ I cookie `__Host-cinder-csrf` e `__Host-cinder-refresh` usano `Secure`, `HttpOnl
 - Configurare una chiave casuale di almeno 32 byte in Base64 tramite `APP_SECURITY_JWT_SECRET`. Fornire lo stesso valore alle istanze che devono verificare gli stessi JWT.
 - Impostare `APP_SECURITY_ALLOWED_ORIGINS` come elenco di origini esatte separate da virgola. Il valore predefinito è `http://localhost:8082`. Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token-lifetime` controllano le durate, con default `15m` e `14d`: la prima deve essere almeno un secondo, la seconda almeno pari alla prima. Le relative variabili `APP_SECURITY_ACCESS_TOKEN_LIFETIME` e `APP_SECURITY_REFRESH_TOKEN_LIFETIME` sono lette da Spring, ma non sono inoltrate dal Compose corrente. [Configurazione backend](../../springboot_app/app/README.md).
 - Su un database vuoto, all’avvio V1 crea `roles`, `users`, `inventory`, `refresh_tokens` e `password_reset_tokens`. V2 inserisce i codici `USER` e `ADMIN` con ID generati dal database e conserva le righe dei ruoli già presenti.
-- Per adottare un database F01 esistente, eseguire un backup e confrontare lo schema con V1 su un database di riferimento isolato. Riconciliare le differenze prima di registrare esplicitamente la baseline a 1. Applicare V2 e verificare i dati e gli ID esistenti. Baseline automatica, DDL Hibernate e inizializzazione SQL Spring sono disabilitati. [Procedura operativa](../../springboot_app/app/README.md#migrazioni-flyway-f01).
+- Per adottare un database F01 esistente, eseguire un backup e confrontare lo schema con V1 su un database di riferimento isolato. Riconciliare le differenze prima di registrare esplicitamente la baseline a 1. Applicare V2–V6 e verificare dati, ID e cronologia; V3 richiede che le tabelle F05 non siano già presenti senza una riconciliazione preventiva. Baseline automatica, DDL Hibernate e inizializzazione SQL Spring sono disabilitati. [Procedura operativa](../../springboot_app/app/README.md#migrazioni-flyway-f01).
+- Dopo V1/V2, Flyway applica anche V3 (catalogo, collezione e mazzi) e V4 (tipi, rarità, fazioni e configurazioni dei round). V5 aggiunge il catalogo iniziale di 30 carte CR01; V6 crea l’account dimostrativo richiesto, con ruolo `USER`, inventario ai default F01 e una copia per carta. Email/nickname, credenziali dimostrative, comportamento in caso di conflitto e dettagli operativi sono nella [guida delle migrazioni](../../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05). Questo seed non modifica il comportamento della registrazione ordinaria. [Migrazioni correnti](../../springboot_app/app/README.md#migrazioni-flyway-f01).
 - Il documento OpenAPI è disponibile su `GET /v3/api-docs`. Swagger UI è disponibile su `/swagger-ui/index.html`. Il controllo di salute usato da Compose è `GET /actuator/health`.
 - `app.security.session-token-cleanup-cron` usa il formato cron Spring a sei campi e vale `0 0 3 * * *`; `app.security.session-token-cleanup-zone` vale `UTC`. Le corrispondenti variabili `APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON` e `APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE` sono inoltrate da Compose. Impostare il cron a `-` per disabilitare il job su un’istanza. [Configurazione e verifiche](../../springboot_app/app/README.md#pulizia-delle-sessioni-f01).
 - Il job opera mentre il backend è avviato; un’esecuzione persa durante un arresto non viene recuperata all’avvio. Il passaggio successivo elimina tutte le righe allora inutilizzabili. Ogni istanza abilitata esegue il job: con più repliche si può abilitarlo su una sola, senza necessità di coordinamento per la correttezza della cancellazione. Il log riporta solo il numero di righe eliminate; gli errori sono registrati dal scheduler e il tentativo successivo segue il cron.
@@ -393,7 +409,13 @@ Costruzione e validazione dell’URL HTTPS di recupero sono rinviate insieme all
 
 ## Verifiche ed evidenze
 
-### Migrazioni F01
+### Verifica corrente del 2026-11-13
+
+Sulla copia di lavoro con base `97200d9`, Windows e JDK 21.0.11, la suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test su PostgreSQL 18.6**, senza fallimenti, errori o casi saltati, e ha prodotto il JAR. La prova include cancellazione account, JWT reali, bootstrap/cookie/header CSRF, profili, recupero password, rollback, concorrenza e mazzi. Il database era un container isolato rimosso al termine; l’avvio dell’applicazione tramite Compose e il browser non sono verificati. [Report corrente con correzioni, ambiente e limiti](../report/2026-11-13-revisione-stato-sviluppo.md).
+
+Le sezioni seguenti conservano le evidenze precedenti; i loro limiti non sostituiscono il risultato corrente.
+
+### Migrazioni F01: evidenza precedente
 
 Il **2026-11-12**, su PostgreSQL 18.1 isolato e Java 21.0.11, sono passati tutti i **44 test** di `mvnw.cmd verify` e le prove di avvio del JAR. Le verifiche sono state ripetute dopo l’attivazione predefinita di Flyway, con nuovi database isolati.
 

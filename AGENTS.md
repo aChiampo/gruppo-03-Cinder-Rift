@@ -2,10 +2,13 @@
 
 ## Contesto e fonti
 
-- Il backend F01 è implementato in `springboot_app/app/` con Java 21,
+- I backend F01 (autenticazione e profili) e F05 (mazzi) sono implementati
+  in `springboot_app/app/` con Java 21,
   Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18.
   Il frontend React e la relativa integrazione F01 sono ancora da avviare.
-  Il contratto corrente è in `docs/BackEnd/accesso-utenti.md`.
+  I contratti correnti sono in `docs/BackEnd/accesso-utenti.md` e
+  `docs/BackEnd/gestione-mazzi.md`; Flyway applica V1–V6,
+  incluso il set iniziale CR01 e l’utente dimostrativo.
 - Leggi [README](README.md), [linee guida](Linee-Guida-e-Regole.md) e
   [indice della documentazione](docs/README.md) prima di intervenire.
 - Per ogni attività consulta le pagine pertinenti di `docs/Digital/`,
@@ -53,8 +56,8 @@
 
 ## Verifiche
 
-- Il backend dispone di Maven Wrapper e test di autenticazione, autorizzazione
-  e pulizia sessioni. Distinguere i report già presenti dalle verifiche eseguite
+- Il backend dispone di Maven Wrapper e test di autenticazione, autorizzazione,
+  cancellazione account, profili, mazzi e pulizie dei token. Distinguere i report già presenti dalle verifiche eseguite
   nell'attività corrente; riportare esiti, prerequisiti e limiti reali.
 - Per modifiche documentali controlla link relativi, indici, ID, coerenza tra
   aree e assenza di decisioni inventate; riporta controlli effettivi e limiti.
