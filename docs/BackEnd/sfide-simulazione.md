@@ -1,10 +1,10 @@
 # Sfide e simulazione
 
 ID: F07 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
+Implementazione: endpoint HTTP dimostrativo PvE per campagna/tutorial disponibile per il SAL; implementazione completa F07 non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo il 2026-11-18, allineamento ai limiti F05 di energia per carta e potenza per destinazione approvati dall’utente. Verifiche applicative F07 e di bilanciamento da eseguire.
+Ultimo aggiornamento significativo il 2026-11-18, documentazione dell'endpoint dimostrativo e dei limiti F05 di energia per carta e potenza per destinazione approvati dall’utente. Verifica della suite JUnit disponibile; integrazione applicativa completa F07 e bilanciamento da verificare.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-battaglie).
 
 ## Obiettivo e decisioni note
@@ -27,14 +27,142 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 
 - Le sezioni 6–13 della Versione 2.1 propongono il comportamento del motore: [fazioni](../Digital/regolamento-base.md#6-fazioni), [equipaggiamenti](../Digital/regolamento-base.md#7-equipaggiamenti), [preparazione](../Digital/regolamento-base.md#8-preparazione-della-partita), [inizio del round](../Digital/regolamento-base.md#9-inizio-di-ogni-round), [combattimento](../Digital/regolamento-base.md#10-combattimento) e condizioni di [fine round](../Digital/regolamento-base.md#12-conclusione-del-round) e [fine partita](../Digital/regolamento-base.md#13-conclusione-della-partita).
 - La [formula dei danni ai giocatori](../Digital/regolamento-base.md#11-danni-ai-giocatori) richiede ancora conferma con gli insegnanti. Gli altri punti aperti sono raccolti nella [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare).
-- Le regole restano nella pagina Digital. Questa pagina ospiterà il contratto tecnico canonico di sfide e simulazione; la proposta non stabilisce endpoint, payload, stati della sfida o garanzie tecniche non ancora concordate.
+- Le regole restano nella pagina Digital. Questa pagina ospita il riferimento tecnico canonico: l'endpoint dimostrativo PvE per il SAL è descritto sotto, mentre il contratto completo F07 (sfide PvP, stati, autorizzazioni e persistenza) resta da consolidare.
 - Il risultato destinato allo [storico](storico-partite.md) dovrà riferirsi al [resoconto proposto](../Digital/regolamento-base.md#14-resoconto-della-partita), dopo la conferma del relativo contratto.
+
+## Endpoint dimostrativo PvE per il SAL
+
+L'implementazione disponibile espone `POST http://localhost:8083/api/battle/pve/{id}` per simulare uno stage di campagna/tutorial. È una dimostrazione per il SAL, non il contratto completo F07 ancora da consolidare: non sostituisce le sfide PvP, l'autenticazione JWT o la persistenza dei risultati su PostgreSQL. Il servizio usa H2 in memoria. CORS consente le origini `http://localhost:8082` e `http://localhost:5173`.
+
+Gli identificativi risolti sono `1`, `stage_01` e `stage_01_fazioni` per lo stage 1, attivo per impostazione predefinita, e `3`, `stage_03` e `stage_03_evento_speciale` per lo stage 3, bloccato finché l'evento `BLOOD_MOON` non è attivo su H2.
+
+### Richiesta
+
+Il controller usa l'identificativo nel percorso e sovrascrive l'eventuale `stageId` nel body. Il body può contenere il partecipante dimostrativo e il mazzo sfidante:
+
+| Posizione/campo | Tipo | Obbligo e significato |
+| --- | --- | --- |
+| Percorso `id` | stringa | Identificativo dello stage, nei formati elencati sopra. |
+| `stageId` | stringa | Facoltativo nel DTO; il controller lo sostituisce con `id` del percorso. |
+| `challenger` | oggetto | Facoltativo; metadati `userId`, `username` e `displayName`. Non rappresenta autenticazione. |
+| `deck.entries` | array | Necessario e non vuoto; contiene le carte sfidanti. |
+| `deck.entries[].cardId` | stringa | Necessario; deve identificare una carta esistente nei pool JSON `src/main/resources/mocks/pool_*.json`. |
+| `deck.entries[].destination` | stringa | Necessario; `ROUND1`..`ROUND5` o `EQUIPMENT`. |
+| `deck.entries[].artworkId` | intero | Facoltativo nel DTO; la mappatura demo corrente non lo usa. |
+
+Il mazzo deve assegnare da 1 a 5 creature a ciascuno dei cinque round e esattamente 5 carte alla destinazione `EQUIPMENT`; il totale non può superare 30 carte. Il tipo di carta deve corrispondere alla destinazione. Gli ID dell'esempio sono presenti in `pool_sapiens.json` e `pool_equipments.json`.
+
+Esempio completo e utilizzabile per `POST /api/battle/pve/1`:
+
+```json
+{
+  "challenger": {
+    "userId": "user-test-01",
+    "username": "test_challenger",
+    "displayName": "Commander Test"
+  },
+  "deck": {
+    "entries": [
+      { "cardId": "SAP_R1_1", "destination": "ROUND1" },
+      { "cardId": "SAP_R1_2", "destination": "ROUND1" },
+      { "cardId": "SAP_R1_3", "destination": "ROUND1" },
+      { "cardId": "SAP_R1_4", "destination": "ROUND1" },
+      { "cardId": "SAP_R1_5", "destination": "ROUND1" },
+      { "cardId": "SAP_R2_1", "destination": "ROUND2" },
+      { "cardId": "SAP_R2_2", "destination": "ROUND2" },
+      { "cardId": "SAP_R2_3", "destination": "ROUND2" },
+      { "cardId": "SAP_R2_4", "destination": "ROUND2" },
+      { "cardId": "SAP_R2_5", "destination": "ROUND2" },
+      { "cardId": "SAP_R3_1", "destination": "ROUND3" },
+      { "cardId": "SAP_R3_2", "destination": "ROUND3" },
+      { "cardId": "SAP_R3_3", "destination": "ROUND3" },
+      { "cardId": "SAP_R3_4", "destination": "ROUND3" },
+      { "cardId": "SAP_R3_5", "destination": "ROUND3" },
+      { "cardId": "SAP_R4_1", "destination": "ROUND4" },
+      { "cardId": "SAP_R4_2", "destination": "ROUND4" },
+      { "cardId": "SAP_R4_3", "destination": "ROUND4" },
+      { "cardId": "SAP_R4_4", "destination": "ROUND4" },
+      { "cardId": "SAP_R4_5", "destination": "ROUND4" },
+      { "cardId": "SAP_R5_1", "destination": "ROUND5" },
+      { "cardId": "SAP_R5_2", "destination": "ROUND5" },
+      { "cardId": "SAP_R5_3", "destination": "ROUND5" },
+      { "cardId": "SAP_R5_4", "destination": "ROUND5" },
+      { "cardId": "SAP_R5_5", "destination": "ROUND5" },
+      { "cardId": "EQ_1", "destination": "EQUIPMENT" },
+      { "cardId": "EQ_2", "destination": "EQUIPMENT" },
+      { "cardId": "EQ_3", "destination": "EQUIPMENT" },
+      { "cardId": "EQ_4", "destination": "EQUIPMENT" },
+      { "cardId": "EQ_5", "destination": "EQUIPMENT" }
+    ]
+  }
+}
+```
+
+### Risposta
+
+Con `200 OK`, il body segue `PveBattleResponse`:
+
+| Campo | Tipo | Significato |
+| --- | --- | --- |
+| `stageId` | stringa | ID canonico letto dallo stage, per esempio `stage_01`. |
+| `stageNumber` | intero | Numero dello stage. |
+| `stageTitle` | stringa | Titolo dello stage. |
+| `challenger` | oggetto o `null` | Metadati del partecipante ricevuti nella request. |
+| `enemyName` | stringa | Nome del nemico configurato per lo stage. |
+| `outcome` | stringa | `VICTORY`, `DEFEAT` o `DRAW`. |
+| `winner` | stringa | Nome del vincitore oppure `NONE` in caso di pareggio. |
+| `tutorialHints` | array di stringhe | Suggerimenti dello stage. |
+| `battleLog` | array di stringhe | Suggerimenti seguiti dal resoconto prodotto dal motore. |
+
+Esempio di risposta per lo stage 1. `battleLog` è abbreviato qui; la risposta effettiva contiene tutto il resoconto della simulazione.
+
+```json
+{
+  "stageId": "stage_01",
+  "stageNumber": 1,
+  "stageTitle": "Tutorial: Il Vantaggio di Fazione",
+  "challenger": {
+    "userId": "user-test-01",
+    "username": "test_challenger",
+    "displayName": "Commander Test"
+  },
+  "enemyName": "Recluta Cultista",
+  "outcome": "VICTORY",
+  "winner": "Commander Test",
+  "tutorialHints": [
+    "[TUTORIAL] Benvenuto comandante! In Cinder Rift ogni fazione possiede un vantaggio strategico su due fazioni rivali.",
+    "[TUTORIAL] Quando una creatura attacca una fazione su cui ha vantaggio, riceve un bonus di +2 ATK per tutto lo scontro!",
+    "[TUTORIAL] Ricorda: i SAPIENS hanno vantaggio sui CULTISTI (+2 ATK) e sugli ALIENI. Approfittane per vincere i round!"
+  ],
+  "battleLog": [
+    "[TUTORIAL] Benvenuto comandante! In Cinder Rift ogni fazione possiede un vantaggio strategico su due fazioni rivali.",
+    "[TUTORIAL] Quando una creatura attacca una fazione su cui ha vantaggio, riceve un bonus di +2 ATK per tutto lo scontro!",
+    "[TUTORIAL] Ricorda: i SAPIENS hanno vantaggio sui CULTISTI (+2 ATK) e sugli ALIENI. Approfittane per vincere i round!",
+    "=========================================="
+  ]
+}
+```
+
+### Errori
+
+Gli errori sono restituiti come `ProblemDetail` secondo RFC 7807. Gli status gestiti sono:
+
+| HTTP | Caso | Estensioni specifiche |
+| --- | --- | --- |
+| `400 Bad Request` | JSON non leggibile o argomenti non validi | Nessuna |
+| `404 Not Found` | Stage inesistente | `stageId`, se disponibile |
+| `409 Conflict` | Evento richiesto assente o inattivo, come `BLOOD_MOON` | `eventCode`, se disponibile |
+| `422 Unprocessable Entity` | Mazzo sfidante non valido | `violations` |
+
+Il formato standard include `type`, `title`, `status` e `detail`; può includere `instance`. Le estensioni indicate dipendono dal caso di errore.
+
+La suite `./mvnw test` è stata eseguita il **2026-11-18**: 24 test JUnit, 0 fallimenti e 0 errori, inclusi i 5 test di `BattleControllerTest`. La suite usa H2 e non verifica l'integrazione con PostgreSQL, l'autenticazione o la persistenza prevista per F07.
 
 ## Da definire
 
 - Conferma delle regole proposte, della formula del danno e dei casi limite; effetti degli equipaggiamenti e ordine di risoluzione restano da definire.
 - Stati e persistenza della sfida, implementazione della rivalidazione prima dello snapshot, deduplicazione degli avvii e formato definitivo dei JSON.
-- Contratto tecnico condiviso: operazioni, dati, autorizzazioni, errori, persistenza e criteri di accettazione del motore.
+- Contratto tecnico completo condiviso: sfide PvP, dati, autorizzazioni JWT, errori, persistenza PostgreSQL e criteri di accettazione del motore. La demo PvE sopra non determina tali decisioni.
 
 ## Collegamenti
 
