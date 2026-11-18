@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -155,6 +157,42 @@ class DeckControllerDatabaseTests {
                 .andExpect(status().isNoContent());
         mvc.perform(get("/api/decks/{deckId}", deckId).header(HttpHeaders.AUTHORIZATION, ownerAuthorization))
                 .andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"2, 1, CARD_ENERGY_LIMIT_EXCEEDED", "1, 15, DESTINATION_POWER_LIMIT_EXCEEDED"})
+    void rejectsConfiguredLimitsWithProblemDetailsAndPreservesEntries(
+            int energyCost, int power, String code) throws Exception {
+        AuthenticationService.IssuedSession owner = createUser();
+        int[] card = createOwnedCard(owner.user().id());
+        String authorization = bearer(owner);
+        String body = """
+                {"entries":[{"cardId":%d,"cardArtId":%d,"destination":"ROUND1"}]}
+                """.formatted(card[0], card[1]);
+        int deckId = createEmptyDeck(authorization);
+
+        mvc.perform(put("/api/decks/{deckId}", deckId)
+                        .header(HttpHeaders.AUTHORIZATION, authorization)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+        int entryId = jdbc.sql("SELECT id FROM decks_cards WHERE id_deck = :deckId")
+                .param("deckId", deckId).query(Integer.class).single();
+
+        jdbc.sql("UPDATE cards SET energy_cost = :energy, power = :power WHERE id = :cardId")
+                .param("energy", energyCost).param("power", power).param("cardId", card[0]).update();
+
+        mvc.perform(put("/api/decks/{deckId}", deckId)
+                        .header(HttpHeaders.AUTHORIZATION, authorization)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.errors[?(@.code == '%s')]".formatted(code)).isNotEmpty());
+
+        mvc.perform(get("/api/decks/{deckId}", deckId)
+                        .header(HttpHeaders.AUTHORIZATION, authorization))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries.length()").value(1))
+                .andExpect(jsonPath("$.entries[0].entryId").value(entryId));
     }
 
     private AuthenticationService.IssuedSession createUser() {

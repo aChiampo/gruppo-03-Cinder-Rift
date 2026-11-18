@@ -8,12 +8,13 @@ Versione 2.1 — Proposta per il prototipo e le prove di bilanciamento
 - **Funzionalità collegate:** F08 — storico delle partite; D01 — lore, identità e carte; F10 — gestione amministrativa.
 - **Perimetro:** supporto alle funzionalità confermate di gestione dei mazzi e simulazione delle partite; regolamento finale da confermare.
 - **Specifica:** in approfondimento; proposta per il prototipo e le prove di bilanciamento.
-- **Implementazione:** non iniziata.
+- **Implementazione:** F05 applica energia per carta e potenza per destinazione, approvate per il prototipo il 2026-11-18. Lo stato delle altre regole è descritto nei contratti tecnici collegati.
 - **Responsabile:** DA DEFINIRE (Digital Strategist).
 - **Fonte:** documento Versione 2.0, + modifica aChiampo. 
 - **Data della bozza di integrazione:** 2026-11-02.
-- **Ultimo aggiornamento documentale nel repository:** 2026-11-09, allineamento dei riferimenti alla Versione 2.1 su richiesta dell’utente. La V2.1 rimuove il limite combinato di epiche e leggendarie per mazzetto di creature; restano i limiti complessivi per categoria della sezione 4.
-- **Ultima verifica del regolamento:** non eseguita; approvazione, prove di bilanciamento e verifiche applicative non documentate.
+- **Ultimo aggiornamento documentale nel repository** il 2026-11-18, recepimento dei limiti F05 approvati dall’utente. L’allineamento alla Versione 2.1 risale al 2026-11-09. La V2.1 rimuove il limite combinato di epiche e leggendarie per mazzetto di creature; restano i limiti complessivi per categoria della sezione 4.
+- **Recepimento tecnico del 2026-11-18:** approvati dall’utente i limiti energetici individuali dei cinque round e il budget di 14 punti potenza per mazzetto creature. Per il gruppo equipaggiamenti la configurazione tecnica usa energia massima 6 e budget di 10 punti potenza, come descritto nel [contratto F05](../BackEnd/gestione-mazzi.md#implementazione-backend-disponibile).
+- **Ultima verifica del regolamento** con prove di bilanciamento da eseguire; le verifiche applicative F05 sono descritte nel [contratto tecnico](../BackEnd/gestione-mazzi.md#implementazione-backend-disponibile).
 
 
 La Versione 2.1 costituisce una proposta: la sua presenza nella documentazione non equivale all'approvazione definitiva delle regole o alla loro implementazione. Le decisioni ancora necessarie sono indicate nel testo, in particolare nelle sezioni 11 e 15.
@@ -298,7 +299,7 @@ Il sistema conserva e rende consultabili:
 
 Prima dell’implementazione definitiva, il team dovrà:
 
-- Confermare le soglie di energia proposte e l’accesso delle creature di costo inferiore ai round successivi.
+- Verificare il bilanciamento delle soglie energetiche e dell’accesso delle creature di costo inferiore ai round successivi, approvati per il prototipo F05 il 2026-11-18.
 - Definire statistiche e punti potenza delle carte.
 - Scrivere gli effetti precisi degli equipaggiamenti e il loro ordine di risoluzione.
 - Verificare budget, rarità, copie e bonus di fazione.

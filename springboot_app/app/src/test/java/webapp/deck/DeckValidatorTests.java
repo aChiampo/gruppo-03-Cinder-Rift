@@ -44,7 +44,6 @@ class DeckValidatorTests {
         assertThat(result.valid()).isFalse();
         assertThat(result.errors()).anyMatch(v -> v.code().equals("CARD_ART_NOT_FOUND"));
         assertThat(result.errors()).anyMatch(v -> v.code().equals("INSUFFICIENT_OWNERSHIP"));
-        assertThat(result.errors()).anyMatch(v -> v.code().equals("DESTINATION_ENERGY_LIMIT_EXCEEDED"));
         assertThat(result.errors()).anyMatch(v -> v.code().equals("DECK_COUNT_INCOMPLETE"));
         assertThat(result.warnings()).isEmpty();
     }
@@ -112,17 +111,17 @@ class DeckValidatorTests {
     }
 
     private static DeckValidationContext context(List<DeckEntry> entries, boolean requireComplete,
-            int owned, int maxEnergy) {
-        return context(entries, requireComplete, owned, maxEnergy, false);
+            int owned, int maxCardEnergy) {
+        return context(entries, requireComplete, owned, maxCardEnergy, false);
     }
 
     private static DeckValidationContext context(List<DeckEntry> entries, boolean requireComplete,
-            int owned, int maxEnergy, boolean deleted) {
+            int owned, int maxCardEnergy, boolean deleted) {
         return new DeckValidationContext(7, entries,
                 Map.of(1, new CardDefinition(1, "CREATURE", 1, 1, "COMMON", deleted)),
                 Set.of(new CardArtworkKey(1, 11)),
-                Map.of("ROUND1", new RoundConfiguration("ROUND1", 1, maxEnergy, 5),
-                        "EQUIPMENT", new RoundConfiguration("EQUIPMENT", 6, 5, 5)),
+                Map.of("ROUND1", new RoundConfiguration("ROUND1", 1, maxCardEnergy, 14, 5),
+                        "EQUIPMENT", new RoundConfiguration("EQUIPMENT", 6, 6, 10, 5)),
                 Map.of(new CardArtworkKey(1, 11), owned), requireComplete);
     }
 
@@ -130,9 +129,9 @@ class DeckValidatorTests {
         Map<String, RoundConfiguration> rounds = new HashMap<>();
         for (int round = 1; round <= 5; round++) {
             String name = "ROUND" + round;
-            rounds.put(name, new RoundConfiguration(name, round, 5, 5));
+            rounds.put(name, new RoundConfiguration(name, round, round, 14, 5));
         }
-        rounds.put("EQUIPMENT", new RoundConfiguration("EQUIPMENT", 6, 5, 5));
+        rounds.put("EQUIPMENT", new RoundConfiguration("EQUIPMENT", 6, 6, 10, 5));
         return new DeckValidationContext(7, entries,
                 Map.of(1, new CardDefinition(1, "CREATURE", 1, 1, "COMMON", false),
                         2, new CardDefinition(2, "EQUIPMENT", 1, 1, "COMMON", false)),

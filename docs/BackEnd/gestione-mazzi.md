@@ -2,12 +2,12 @@
 
 - ID: F05 · Perimetro: confermato; specifica in approfondimento.
 - Implementazione: persistenza, validazione e API REST backend implementate; frontend non implementato. Responsabile: DA DEFINIRE (Software Developer).
-- Ultimo aggiornamento significativo: **2026-11-13**, esposizione delle rotte HTTP F05 e test MockMvc su PostgreSQL.
+- Ultimo aggiornamento significativo **2026-11-18**, separazione approvata dall’utente fra energia per carta e potenza per destinazione, con aggiornamento delle migrazioni V3/V4.
 - Branch documentale richiesto: `docs/f05-deck-validation-v2`.
 
 Fonti: richiesta e pseudocodice dell'utente del 2026-10-28, aggiornamento del modello e chiarimenti su configurazione, assenza di revisioni e retry del 2026-10-29; [regolamento Versione 2.1](../Digital/regolamento-base.md), sezioni 2–4, 7, 8 e 15, e richiesta di allineamento del 2026-11-02; [specifica canonica della base di dati v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte), fonte corrente di strutture, identificativi e vincoli.
 
-Aggiornamento dati iniziali del **2026-11-16**, su richiesta dell’utente: V5 importa 30 carte CR01 e un’arte `default` per carta; V6 assegna una copia per carta all’utente dimostrativo. Il CSV conserva i valori originali: i limiti dei round V4 e le regole di validazione non vengono modificati. Le nuove colonne del catalogo sono persistite ma non aggiunte ai payload F05. [Mapping, assunzioni e procedura](../../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05).
+Aggiornamento dati iniziali del **2026-11-16**, su richiesta dell’utente: V5 importa 30 carte CR01 e un’arte `default` per carta; V6 assegna una copia per carta all’utente dimostrativo. Quell’importazione conservava i valori originali del CSV e i limiti V4 allora disponibili; la correzione del 2026-11-18 è descritta sotto. Le nuove colonne del catalogo sono persistite ma non aggiunte ai payload F05. [Mapping, assunzioni e procedura](../../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05).
 
 ## Riepilogo API
 
@@ -25,13 +25,15 @@ L'integrazione documentale è approvata; la proposta di riferimento è ora la V2
 
 ## Implementazione backend disponibile
 
-Verifica corrente del **2026-11-13** sulla copia con base `97200d9`: **118 test** superati nella suite completa su PostgreSQL **18.6**, inclusi controller e servizio mazzi; JAR prodotto. [Ambiente, correzioni e limiti](../report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze di 70 test riportate sotto precedono questa revisione.
+Verifica corrente del **2026-11-18** sulla copia di lavoro con gli obiettivi Maven `clean verify`, usando il POM corrente con directory di build isolata `target/f05-verification`, Java **21.0.11** e PostgreSQL **18.6** in un container di prova dedicato. Superati **135 test**, con zero fallimenti, errori o casi saltati; JAR prodotto. Coperti soglie inclusive, copie ripetute, costi mancanti o negativi, controlli indipendenti, overflow, isolamento delle destinazioni, errori HTTP e conservazione delle righe dopo rifiuto. Verificati installazione V1–V6 su uno schema vuoto con V3/V4 aggiornate, limiti iniziali, vincoli positivi ed esecuzioni successive senza ulteriori migrazioni. Bilanciamento e integrazione React restano da verificare.
+
+Verifica storica del **2026-11-13** sulla copia con base `97200d9`, con **118 test** superati nella suite completa su PostgreSQL **18.6**, inclusi controller e servizio mazzi; JAR prodotto. [Ambiente, correzioni e limiti](../report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze di 70 test riportate sotto precedono quella revisione.
 
 Il package `webapp.deck` usa `JdbcClient`, record Java, Jakarta Bean Validation e transazioni Spring. `DeckRepository` esegue CRUD su `decks` e sulle singole righe `decks_cards`; ogni lettura o mutazione di un mazzo è vincolata al proprietario autenticato, con lock della riga utente e poi del mazzo per le operazioni di scrittura. `CardCatalogRepository` carica carte, arti, configurazioni e copie possedute. `DeckService` coordina le operazioni; la cancellazione del mazzo usa la cascata FK prevista da V3. `DeckController` espone le rotte riportate sotto, risolvendo l'identità esclusivamente da `@AuthenticationPrincipal UserProfile`; non è persistito un flag di validità.
 
-`DeckValidator` raccoglie i bean `DeckValidationRule` e restituisce esito, errori, avvisi e riepilogo. Sono implementati controlli strutturali, esistenza di carte e arti attive, compatibilità tipo/destinazione, possesso per variante, conteggio ed energia aggregata per destinazione, nonché la composizione di 30 copie (25 creature, 5 equipaggiamenti e 5 creature per ciascun round). L'incompletezza è un avviso per le bozze e un errore quando si richiede la validità completa; solo un mazzo valido può essere reso `is_challengeable`. Potenza, quote di rarità e limiti di copie della proposta V2.1 non sono implementati.
+`DeckValidator` raccoglie i bean `DeckValidationRule` e restituisce esito, errori, avvisi e riepilogo. Sono implementati controlli strutturali, esistenza di carte e arti attive, compatibilità tipo/destinazione, possesso per variante, conteggio, energia per carta e potenza aggregata per destinazione, nonché la composizione di 30 copie (25 creature, 5 equipaggiamenti e 5 creature per ciascun round). L'incompletezza è un avviso per le bozze e un errore quando si richiede la validità completa; solo un mazzo valido può essere reso `is_challengeable`. Budget complessivo delle creature, fasce di potenza per rarità, quote di rarità e limiti di copie della proposta V2.1 restano da implementare.
 
-Il guard condiviso del catalogo previsto dal protocollo transazionale resta **DA DEFINIRE**; il lock utente non sostituisce quel guard né coordina scrittori di catalogo che non lo acquisiscano. Inoltre, la regola implementata confronta la somma di `energy_cost` con `max_energy`, mentre il seed V4 configura i massimi dei round da 1 a 5. Con questi valori, cinque carte con costo positivo in `ROUND1` non possono superare il controllo: la compatibilità dei parametri iniziali con la regola aggregata resta da concordare prima dell'uso di mazzi completi con il catalogo reale.
+Il guard condiviso del catalogo previsto dal protocollo transazionale resta **DA DEFINIRE**; il lock utente non sostituisce quel guard né coordina scrittori di catalogo che non lo acquisiscano. Dal **2026-11-18**, `DestinationLimitsRule` confronta ogni `CARDS.energy_cost` con `max_card_energy` e la somma di `CARDS.power` per destinazione con `max_round_power`, includendo tutte le copie e ammettendo l’uguaglianza. Costi mancanti o negativi producono `INVALID_ENERGY_COST` o `INVALID_POWER_COST`; i due controlli sono indipendenti. Il superamento dell’energia produce `CARD_ENERGY_LIMIT_EXCEEDED` con ambito carta; quello della potenza produce `DESTINATION_POWER_LIMIT_EXCEEDED` con ambito round. V4 inizializza cinque carte per destinazione, energia uguale a `round_number`, potenza 14 per `ROUND1`–`ROUND5` e 10 per `EQUIPMENT`, la cui energia è 6. Le configurazioni correnti sono lette dal database. `summary.energyByDestination` espone il totale descrittivo dell’energia. La [procedura di aggiornamento](../../springboot_app/app/README.md#aggiornamento-dei-limiti-f05-del-2026-11-18) descrive la ricreazione del database tramite il reset dei volumi Docker Compose scelto dall’utente.
 
 ## API HTTP implementate
 
@@ -395,14 +397,15 @@ Dipendenze: F01 per l'identità, F04 per il possesso, F06 per gli scambi, F07 pe
 
 ## Requisiti di validazione derivati dalla V2.1
 
-La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di regole indipendente. I numeri proposti non sono seed o parametri già inseriti nella v1.1. Per persistenza, arti e limiti configurabili prevale la specifica della base di dati; il raccordo delle restanti regole di gioco richiede conferma. I valori restano governati dalle [sezioni 2–4 del regolamento](../Digital/regolamento-base.md#2-struttura-del-mazzo). Ogni occorrenza logica vale una copia; i totali si calcolano contando le occorrenze, non gli ID carta distinti. Ogni riga persistita rappresenta una copia, senza campo quantità, e ha un ID autonomo anche quando carta e destinazione coincidono con un'altra riga.
+La tabella è una **traduzione tecnica della proposta V2.1**, con energia per carta e potenza per destinazione approvate dall’utente il **2026-11-18** e configurate da V4. Per persistenza, arti e limiti configurabili prevale la specifica della base di dati; il raccordo delle restanti regole di gioco richiede conferma. I valori restano governati dalle [sezioni 2–4 del regolamento](../Digital/regolamento-base.md#2-struttura-del-mazzo). Ogni occorrenza logica vale una copia; i totali si calcolano contando le occorrenze, non gli ID carta distinti. Ogni riga persistita rappresenta una copia, senza campo quantità, e ha un ID autonomo anche quando carta e destinazione coincidono con un'altra riga.
 
 | Ambito | Controllo |
 | --- | --- |
 | Mazzo | Esattamente 30 carte: 25 creature e 5 equipaggiamenti |
 | Creature | Cinque gruppi assegnati ai round 1–5, esattamente 5 carte per gruppo |
 | Equipaggiamenti | Un gruppo separato di 5 carte differenti, senza assegnazione al round |
-| Energia persistente v1.1 | Somma di `CARDS.energy_cost` per destinazione ≤ `ROUND_CONFIGURATIONS.max_energy`; valori iniziali DA DEFINIRE |
+| Energia per carta | `CARDS.energy_cost` ≤ `ROUND_CONFIGURATIONS.max_card_energy`; seed uguale a `round_number`, da 1 a 5 per i round e 6 per `EQUIPMENT` |
+| Potenza per destinazione | Somma di `CARDS.power` ≤ `ROUND_CONFIGURATIONS.max_round_power`; seed 14 per ogni round creature e 10 per `EQUIPMENT` |
 | Potenza | Totale ≤ 75; creature ≤ 65; equipaggiamenti ≤ 10; ogni gruppo creature ≤ 14 |
 | Rarità creature, intero mazzo | Comuni ≥ 13; rare ≤ 8; epiche ≤ 3; leggendarie ≤ 1 |
 | Copie creature | ≤ 2 per stessa carta nell'insieme dei cinque gruppi, anche divise fra round |
@@ -413,9 +416,9 @@ La tabella è una **traduzione tecnica della proposta V2.1**, non una fonte di r
 
 Nella V2.1 non si applica il precedente limite di un'epica o leggendaria per gruppo creature: più copie epiche e/o leggendarie possono condividere un round se rispettano tutti gli altri vincoli. Restano i massimi di rarità per categoria riportati nelle tabelle della sezione 4 del regolamento: creature epiche ≤ 3 e leggendarie ≤ 1; equipaggiamenti epici ≤ 1 e nessun leggendario nel primo set.
 
-I budget sono massimi indipendenti, non obiettivi esatti: risparmi in una categoria non aumentano il limite dell'altra. La v1.1 richiede il controllo della somma dei costi energetici per destinazione, distinto dalla potenza. L'accesso individuale proposto dalla V2.1 è una regola aggiuntiva da riconciliare, non sostituisce `max_energy`. La potenza è il costo fisso della carta, da caricare dal catalogo, non da dedurre dalla sola rarità. Le fasce V2.1 per carta sono: comune 1–2, rara 2–3, epica 3–4, leggendaria 5; valgono anche per gli equipaggiamenti ammessi.
+I budget sono massimi indipendenti, non obiettivi esatti: risparmi in una categoria non aumentano il limite dell'altra. La configurazione aggiornata applica una soglia energetica a ogni carta e un budget di potenza alla destinazione. I limiti sono indipendenti e inclusivi. La validazione usa `long` per sommare la potenza di tutte le copie. La potenza è il costo fisso della carta, da caricare dal catalogo, non da dedurre dalla sola rarità. Le fasce V2.1 per carta sono: comune 1–2, rara 2–3, epica 3–4, leggendaria 5; valgono anche per gli equipaggiamenti ammessi.
 
-Soglie e accesso delle creature meno costose ai round successivi restano proposti, come indicato nella [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare). Non introdurre limiti statistici o quote di fazione non definiti. Il controllo aggregato dell'energia è invece richiesto dalla v1.1; i numeri proposti non sono default di `ROUND_CONFIGURATIONS`. La restrizione sugli equipaggiamenti leggendari riguarda il primo set: la gestione di eventuali set successivi è **DA DEFINIRE**.
+Soglie energetiche per carta e budget di potenza per destinazione sono implementati per il prototipo con l’approvazione del 2026-11-18. Bilanciamento e restanti regole seguono la [sezione 15](../Digital/regolamento-base.md#15-elementi-da-completare-e-testare). I limiti correnti sono parametri persistiti e configurabili. La restrizione sugli equipaggiamenti leggendari riguarda il primo set: la gestione di eventuali set successivi è **DA DEFINIRE**.
 
 ## Attori, autorizzazioni e precondizioni
 
@@ -438,9 +441,9 @@ Soglie e accesso delle creature meno costose ai round successivi restano propost
 | Energia/potenza | `CARDS.energy_cost`, `power`, nullable | Metadati mancanti bloccano i controlli che li richiedono |
 | Possesso | `COLLECTIONS(id_user, id_card, id_card_art)` | Contare per variante; limite copie di gioco per carta logica |
 | Scambiabilità | `tradable_replica` meno hold non scaduti | Non coincide con la disponibilità per giocare |
-| Destinazioni e limiti | `ROUND_CONFIGURATIONS.round_name`, `round_number`, `max_energy`, `max_cards` | FK dalla destinazione; parametri positivi; aggregati verificati dal backend |
+| Destinazioni e limiti | `ROUND_CONFIGURATIONS.round_name`, `round_number`, `max_card_energy`, `max_round_power`, `max_cards` | FK dalla destinazione; parametri positivi; aggregati verificati dal backend |
 | Parole chiave | `CARDS_KEYWORDS.id_card` PK e `keyword_list` JSONB | Al massimo una lista per carta; ID interi annidati senza FK |
-| Altre regole di gioco | Non sono colonne della v1.1 | Proposte V2.1 da concordare; nessun seed o valore implicito |
+| Altre regole di gioco | Non sono colonne della v1.1 | Budget complessivo delle creature, fasce di potenza per rarità, copie e quote di rarità da completare |
 | Validazione precedente | Nessuno stato persistito di validazione | Nessuna revisione di mazzo/catalogo; rivalidare i dati correnti |
 
 
@@ -517,7 +520,7 @@ Esempio: aggiungere una creatura comune posseduta da 1 punto, energia 1, con des
 | `INVALID_DECK_STRUCTURE` | Occorrenze logiche malformate, ID o tipi dei campi non validi; nessun campo quantità nelle righe del mazzo |
 | `CARD_NOT_FOUND`, `CARD_METADATA_INVALID` | Carta assente, tipo/rarità non mappati, potenza mancante/fuori fascia, energia creatura non interpretabile |
 | `CARD_NOT_PLAYABLE` | Utilizzabile soltanto dopo aver concordato la politica di legalità catalogo |
-| `INVALID_DESTINATION`, `ENERGY_LIMIT_EXCEEDED` | Destinazione assente/sconosciuta, tipo nel gruppo errato oppure somma energetica sopra il limite della destinazione |
+| `INVALID_DESTINATION`, `CARD_ENERGY_LIMIT_EXCEEDED`, `DESTINATION_POWER_LIMIT_EXCEEDED` | Destinazione assente/sconosciuta, energia della carta sopra soglia oppure potenza aggregata sopra il budget della destinazione |
 | `COPY_LIMIT_EXCEEDED`, `INSUFFICIENT_OWNERSHIP` | Copie aggregate oltre limite o possesso |
 | `CARD_COUNT_EXCEEDED`, `CARD_COUNT_MISMATCH` | Massimi superati durante modifica o verifica completa; conteggi sotto target rilevati dalla verifica completa |
 | `POWER_BUDGET_EXCEEDED` | Totale/categoria/round fuori budget |
@@ -567,7 +570,7 @@ function loadValidationContext(userId, deck, rules):
     return { rules, cards, arts, owned }
 ```
 
-`prepareOwnedDeckValidation` acquisisce nell'ordine il guard condiviso del catalogo, il guard della collezione dell'utente e il lock del mazzo; carica il mazzo verificandone la proprietà, poi carica destinazioni e limiti da `ROUND_CONFIGURATIONS`, completandoli soltanto con le regole di gioco aggiuntive esplicitamente concordate. Verifica presenza, tipi e coerenza delle regole e mantiene lo stesso insieme immutabile per tutta l'operazione: nessun valore mancante viene saltato o sostituito da default. Valori iniziali e trattamento di `EQUIPMENT` restano DA DEFINIRE; formato e distribuzione delle regole aggiuntive non modellate restano da concordare. Il protocollo resta quello proposto nella sezione sulle transazioni.
+`prepareOwnedDeckValidation` acquisisce nell'ordine il guard condiviso del catalogo, il guard della collezione dell'utente e il lock del mazzo; carica il mazzo verificandone la proprietà, poi carica destinazioni e limiti da `ROUND_CONFIGURATIONS`, completandoli soltanto con le regole di gioco aggiuntive esplicitamente concordate. Verifica presenza, tipi e coerenza delle regole e mantiene lo stesso insieme immutabile per tutta l'operazione: nessun valore mancante viene saltato o sostituito da default. V4 definisce i valori iniziali, inclusi energia 6 e potenza 10 per `EQUIPMENT`; formato e distribuzione delle ulteriori regole non modellate restano da concordare. Il protocollo resta quello proposto nella sezione sulle transazioni.
 
 `inTransaction` garantisce rollback e rilascio lock su errori di autorizzazione, lettura, salvataggio e commit. La risposta positiva segue un commit riuscito. Il batch comprende carte già presenti e carta proposta, con tipo e rarità senza query per riga. Una riga collezione assente vale zero solo dopo una lettura riuscita; valori presenti nulli, negativi o non interi interrompono il flusso. Aggiungere al mazzo non scala copie dalla collezione.
 
@@ -627,9 +630,9 @@ Le funzioni di supporto applicano questi controlli, usando i valori della tabell
 | Funzione | Responsabilità |
 | --- | --- |
 | `checkCanonicalEntries` | Forma e tipi dei campi, ID salvati non ripetuti, destinazioni testuali presenti nelle configurazioni e ammesse dal servizio; rifiuta quantità, destinazioni nulle o sconosciute, senza deduplicare le copie |
-| `checkReferencedCardMetadata` | Esistenza di carte e arti coerenti, tipo/rarità mappati, potenza valida ed energia interpretabile per la configurazione; trattamento di `EQUIPMENT` DA DEFINIRE |
+| `checkReferencedCardMetadata` | Esistenza di carte e arti coerenti, tipo/rarità mappati, potenza valida ed energia interpretabile per la configurazione; fasce di potenza per rarità e ulteriori vincoli da completare |
 | `summarizeOccurrences` | Conta ogni riga una volta e somma la sua potenza nel mazzo e nella categoria; nelle creature conta anche il round se la destinazione è compatibile. Produce rarità per categoria, copie per carta e per coppia carta/arte e somma energetica per destinazione; inizializza a zero anche gruppi vuoti e rarità assenti e rileva overflow |
-| `checkDestinationsAndEnergy` | Destinazioni esistenti e tipo compatibile; somma energetica ≤ `max_energy` per destinazione, letto da `ROUND_CONFIGURATIONS`; nessun limite dedotto dal nome del round. Regole di `EQUIPMENT` DA DEFINIRE |
+| `checkDestinationsAndEnergy` | Destinazioni esistenti e tipo compatibile; energia per carta ≤ `max_card_energy` e potenza aggregata per destinazione ≤ `max_round_power`, letti da `ROUND_CONFIGURATIONS`; seed `EQUIPMENT` con energia 6 e potenza 10 |
 | `checkCountMaximums` | Numero per destinazione ≤ `max_cards`; gli ulteriori massimi proposti di 30 carte, 25 creature, 5 equipaggiamenti e 5 creature per round richiedono il raccordo delle regole di gioco |
 | `checkPowerBudgets` | Potenza mazzo ≤ 75, creature ≤ 65, equipaggiamenti ≤ 10, creature per round ≤ 14; nessun trasferimento di budget |
 | `checkRarityMaximums` | Massimi di rarità per categoria, contando le copie; zero equipaggiamenti leggendari nel primo set. Nessun limite combinato di epiche e leggendarie per round |
@@ -709,7 +712,7 @@ Per le aggiunte non è prevista deduplicazione automatica delle richieste: ogni 
 
 ## Criteri di accettazione e casi limite
 
-Scenari **previsti, non eseguiti**; ID locali F05, non issue assegnate. Preparare fixture con potenza fissa entro fascia e, salvo il vincolo in esame, dati validi.
+Scenari di accettazione con ID locali F05. La copertura corrente e i relativi limiti sono descritti nella sezione di implementazione backend. Preparare fixture con potenza fissa entro fascia e, salvo il vincolo in esame, dati validi.
 
 | ID | Dato / quando | Risultato previsto |
 | --- | --- | --- |
@@ -717,7 +720,7 @@ Scenari **previsti, non eseguiti**; ID locali F05, non issue assegnate. Preparar
 | F05-02 | 25 creature in cinque gruppi + 5 equipaggiamenti distinti, tutti i vincoli rispettati | `submitDeck` positivo, nessuna violazione |
 | F05-03 | 29/31 carte; oppure 30 con 24 creature e 6 equipaggiamenti | `submitDeck` fallisce; un'aggiunta che supera un massimo viene rifiutata prima del salvataggio |
 | F05-04 | 25 creature ripartite 4/6/5/5/5 | Errori sui primi due gruppi, indipendenti dal totale |
-| F05-05 | Somma energetica uguale/sopra/sotto `max_energy` di una destinazione | Uguale/inferiore ammesse; superiore respinta anche se ogni carta singolarmente rientra nel limite |
+| F05-05 | Energia di una carta uguale/sopra/sotto `max_card_energy` e potenza aggregata uguale/sopra/sotto `max_round_power` | Uguaglianza e valori inferiori ammessi; superamenti producono rispettivamente `CARD_ENERGY_LIMIT_EXCEEDED` e `DESTINATION_POWER_LIMIT_EXCEEDED`; copie contate separatamente |
 | F05-06 | Potenza creature 65/66 con gruppi ≤ 14 e totale ≤ 75 | 65 ammesso, 66 respinto senza trasferimenti di budget |
 | F05-07 | Potenza equipaggiamenti 10/11 con creature sotto 65 | 10 ammesso, 11 respinto anche con punti creature inutilizzati |
 | F05-08 | Gruppo potenza 14/15, totale creature ≤ 65 | 14 ammesso, 15 respinto con riferimento al round |
@@ -744,19 +747,19 @@ Scenari **previsti, non eseguiti**; ID locali F05, non issue assegnate. Preparar
 | F05-29 | Destinazione nulla, numerica, sconosciuta oppure con grafia diversa dai sei valori ammessi | Richiesta rifiutata dal servizio; `NOT NULL` impedisce valori nulli e la FK a `ROUND_CONFIGURATIONS.round_name` impedisce destinazioni inesistenti; non esiste un `CHECK` sui sei nomi |
 | F05-30 | Rimozione o spostamento di una copia per `entryId`, anche con un'altra copia identica nello stesso gruppo; ID appartenente a un altro mazzo | Si modifica solo l'occorrenza autorizzata, preservando l'altra; l'ID di un altro mazzo viene rifiutato senza scritture |
 
-Fixture illustrativa F05-02: 25 creature comuni differenti da 1 punto e con energia 1, cinque per round; cinque equipaggiamenti comuni differenti da 1 punto, tutti posseduti nella precisa arte richiesta. Le configurazioni sintetiche della fixture ammettono cinque carte e almeno cinque punti energia per destinazione; non sono seed o valori iniziali approvati. Isolare le frontiere con fixture ammissibili: un gruppo di sole comuni, per esempio, non può raggiungere 14 punti dato il massimo di 2 per carta.
+Fixture illustrativa F05-02: 25 creature comuni differenti da 1 punto e con energia 1, cinque per round; cinque equipaggiamenti comuni differenti da 1 punto, tutti posseduti nella precisa arte richiesta. Le configurazioni della fixture seguono il seed V4 per numero di carte, energia individuale e potenza per destinazione. Isolare le frontiere con fixture ammissibili: un gruppo di sole comuni, per esempio, non può raggiungere 14 punti dato il massimo di 2 per carta.
 
 ## Decisioni aperte e impatto
 
 | Decisione | Impatto prima dell'implementazione |
 | --- | --- |
-| Conferma V2.1, soglie energia e accesso ai round successivi | Regole attive e prove definitive |
+| Bilanciamento e restanti regole V2.1 | Energia individuale e potenza per destinazione approvate per il prototipo il 2026-11-18; restanti regole e prove definitive da completare |
 | Statistiche, potenza fissa, codici tipi/rarità | Catalogo interpretabile senza deduzioni arbitrarie |
 | Migrazione delle vecchie quantità e versioni del modello | Distribuzione ai round da fornire esplicitamente; il vecchio `deck_replica` non indica i round e non può essere cancellato dai dati esistenti senza una trasformazione verificata |
 | Riutilizzo copie in più mazzi; carte prenotate | Possesso/disponibilità per giocare e rapporto con F06 |
 | Avviso/veto pre-scambio, prenotazioni o lock partita | Comportamento F06/F07, senza introdurre politiche economiche implicite |
 | Significato dei flag di eliminazione e di attività delle espansioni | Legalità delle carte dopo variazioni del catalogo |
-| Valori iniziali dei round e regole aggiuntive | Parametri in `ROUND_CONFIGURATIONS`; raccordo V2.1, energia di `EQUIPMENT` e distribuzione delle regole non modellate |
+| Regole aggiuntive | Parametri iniziali in V4; completare budget complessivo delle creature, fasce di potenza per rarità, copie e quote di rarità |
 | Protocollo atomico e snapshot | Coerenza fra scambi, avvio e pubblicazione regole |
 | Riparazione, API, payload, errori, retry | Integrazione FrontEnd e recupero delle bozze |
 

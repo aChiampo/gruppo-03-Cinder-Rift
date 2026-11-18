@@ -1,10 +1,10 @@
 # Applicazione backend
 
-Ultimo aggiornamento significativo il **2026-11-13**, con la rinomina degli endpoint F01 e la cancellazione logica degli account approvate dall’utente. Le migrazioni Flyway F01 e la verifica su PostgreSQL 18.1 risalgono al 2026-11-12. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
+Ultimo aggiornamento significativo il **2026-11-18**, con i limiti F05 di energia per carta e potenza per destinazione approvati dall’utente nelle migrazioni V3/V4. La rinomina degli endpoint F01 e la cancellazione logica degli account risalgono al 2026-11-13. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [prototipo React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Autenticazione frontend e API di gioco restano da integrare. [Avvio e configurazione comune](../../guida-avvio.md).
 
-Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V4. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
+Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V6. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
 
 Questo documento descrive dipendenze, configurazione e stato del backend. F01 è implementato con JWT emessi localmente e verificati da Spring Security; il [contratto F01](../../docs/BackEnd/accesso-utenti.md) riporta comportamento ed evidenze. La sola presenza di una dipendenza non attesta l’implementazione delle altre funzionalità o il funzionamento delle integrazioni.
 
@@ -124,7 +124,7 @@ Usare PostgreSQL 18 e configurare la connessione con `SPRING_DATASOURCE_URL`, `S
 
 ### Set iniziale e utente dimostrativo F01/F05
 
-Aggiornamento del **2026-11-16**, su richiesta dell’utente. [V5](src/main/resources/db/migration/V5__seed_initial_card_set.sql) importa le **30 carte** di `cinder-rift-cards.csv`; una copia del CSV è conservata nelle [risorse dei test](src/test/resources/cinder-rift-cards.csv). Sono importate soltanto le 30 carte originali, da `CR01-001` a `CR01-030`, associate a `CR01` / «Set Dimostrativo». Le 90 carte successive del CSV sono escluse, anche dalla collezione dimostrativa. Celle vuote e valori testuali `NULL` diventano SQL `NULL`.
+Aggiornamento del **2026-11-16**, su richiesta dell’utente. [V5](src/main/resources/db/migration/V5__seed_initial_card_set.sql) importa le **30 carte** di `cinder-rift-cards.csv`; i valori importati sono riportati direttamente nella migrazione. Sono importate soltanto le 30 carte originali, da `CR01-001` a `CR01-030`, associate a `CR01` / «Set Dimostrativo». Le 90 carte successive del CSV sono escluse, anche dalla collezione dimostrativa. Celle vuote e valori testuali `NULL` diventano SQL `NULL`.
 
 Gli ID numerici restano generati dal database. `cards.code` conserva l’ID editoriale; V5 aggiunge anche `transfer_and_discard`, `duration` e `flavor_text`. Le nuove colonne sono nullable per conservare la compatibilità con le carte esistenti. «Radioactive monsters» usa la fazione `RADIOACTIVE` già presente; gli equipaggiamenti usano la nuova fazione `NEUTRAL`. Ogni carta riceve un’arte `default`, anche senza immagine. `cards_arts.source_image` conserva il nome originale del file; `url_card_art` resta nullo finché gli asset non sono pubblicati.
 
@@ -132,7 +132,7 @@ Gli ID numerici restano generati dal database. `cards.code` conserva l’ID edit
 
 V6 è una migrazione ordinaria applicata automaticamente: crea questo account dimostrativo in ogni database che applica V6. Un’email o un nickname già occupati fanno fallire la migrazione senza sovrascrivere account esistenti. Un nuovo avvio non duplica i dati grazie alla cronologia Flyway.
 
-I [test delle migrazioni](src/test/java/webapp/auth/SeedMigrationsDatabaseTests.java) verificano il CSV completo (30 carte presenti e 90 escluse), le relazioni, l’accesso con la password richiesta, l’installazione da zero, l’aggiornamento da V4 e il secondo avvio. Richiedono PostgreSQL e le stesse variabili della suite; comando mirato: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=SeedMigrationsDatabaseTests" test`.
+I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V6 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
 
 ### Pulizia delle sessioni F01
 
@@ -169,8 +169,21 @@ I [test PostgreSQL del recupero](src/test/java/webapp/auth/PasswordResetDatabase
 Per le verifiche senza database (con JDK 21 e `JAVA_HOME` impostato alla sua cartella):
 
 ```sh
-mvnw.cmd -o "-Dtest=AccountDeletionTests,RegistrationRequestTests,SecurityConfigurationTests,SessionTokenCleanupTests,PasswordResetTokenCleanupTests,UserServiceTests,UserProfileUpdateRequestTests,DeckValidatorTests" test
+mvnw.cmd -o "-Dtest=AccountDeletionTests,RegistrationRequestTests,SecurityConfigurationTests,SessionTokenCleanupTests,PasswordResetTokenCleanupTests,UserServiceTests,UserProfileUpdateRequestTests,DeckValidatorTests,DestinationLimitsRuleTests" test
 ```
+
+### Aggiornamento dei limiti F05 del 2026-11-18
+
+Su approvazione dell’utente, V3 definisce `max_card_energy` e `max_round_power`. V4 configura energia individuale uguale a `round_number`, cinque carte per destinazione, potenza 14 per `ROUND1`–`ROUND5` e 10 per `EQUIPMENT`, la cui energia massima è 6. Il server applica `cards.energy_cost <= max_card_energy` per ogni copia e `sum(cards.power) <= max_round_power` per destinazione. La potenza è sommata con `long`; costi mancanti o negativi producono errori bloccanti. I limiti sono inclusivi e configurabili nel database. Il [contratto F05](../../docs/BackEnd/gestione-mazzi.md#implementazione-backend-disponibile) descrive i nuovi codici di errore.
+
+La procedura scelta dall’utente per il prototipo ricrea il database tramite il reset dei volumi Docker Compose. Al successivo avvio Flyway applica V1–V6 su un database vuoto, usando lo schema V3 e i dati iniziali V4 aggiornati. Dalla radice del repository eseguire la procedura seguente.
+
+```sh
+docker compose down --volumes
+docker compose up --build --wait
+```
+
+Verificare V1–V6 in `flyway_schema_history` e i limiti di `round_configurations`, inclusi energia 6 e potenza 10 per `EQUIPMENT`.
 
 ### Cancellazione account F01
 
@@ -180,7 +193,9 @@ I [test senza database](src/test/java/webapp/auth/AccountDeletionTests.java) ese
 
 ## Verifiche e limiti
 
-Verifica del **2026-11-16** per V5/V6 sulla copia di lavoro: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **241 test**, senza fallimenti, errori o casi saltati, e prodotto il JAR con Java **21.0.11** e PostgreSQL **18.6** in un container dedicato. I 123 nuovi casi verificano le 30 carte originali, l’assenza delle 90 successive, installazione vuota, aggiornamento da V4 con dati esistenti, secondo avvio senza duplicati, inventario, collezione e login dell’account dimostrativo. La fixture CSV coincide byte per byte con il file fornito; controllati 161 collegamenti relativi nei documenti modificati e `git diff --check`. Le prove non modificano il database applicativo dell’utente e non verificano browser o integrazione React.
+Verifica F05 del **2026-11-18** sulla copia di lavoro con gli obiettivi Maven `clean verify`, usando il POM corrente con directory di build isolata `target/f05-verification`, Java **21.0.11** e PostgreSQL **18.6** in un container di prova dedicato. Superati **135 test**, con zero fallimenti, errori o casi saltati, e prodotto il JAR. Verificati energia individuale, potenza aggregata, frontiere inclusive, metadati invalidi, overflow, errori HTTP e conservazione delle righe dopo rifiuto. Le prove Flyway coprono installazione V1–V6 su uno schema vuoto con V3/V4 aggiornate, limiti iniziali, vincoli positivi ed esecuzioni successive senza ulteriori migrazioni. Bilanciamento e integrazione React restano da verificare.
+
+Verifica storica del **2026-11-16** per V5/V6 sulla copia di lavoro: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **241 test**, senza fallimenti, errori o casi saltati, e prodotto il JAR con Java **21.0.11** e PostgreSQL **18.6** in un container dedicato. I 123 nuovi casi verificano le 30 carte originali, l’assenza delle 90 successive, installazione vuota, aggiornamento da V4 con dati esistenti, secondo avvio senza duplicati, inventario, collezione e login dell’account dimostrativo. La fixture CSV coincide byte per byte con il file fornito; controllati 161 collegamenti relativi nei documenti modificati e `git diff --check`. Le prove non modificano il database applicativo dell’utente e non verificano browser o integrazione React.
 
 Verifica storica del **2026-11-13**, copia di lavoro con base `97200d9`: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test** su PostgreSQL **18.6** in un container dedicato e ha prodotto il JAR. Applicate V1–V4 su database vuoto; corretti CSRF con Bearer, limite nickname e isolamento dei test. `docker compose config --quiet` è passato. La build dell’immagine, l’avvio applicativo tramite Compose e il frontend non sono verificati. [Report con risultati e limiti](../../docs/report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze seguenti sono precedenti.
 

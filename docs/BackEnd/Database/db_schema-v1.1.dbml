@@ -1,3 +1,4 @@
+
 // Schema v1.1; complete DBML representation of database-schema-v1.1.md.
 Project cinder_rift_v1_1 {
   database_type: 'PostgreSQL'
@@ -60,15 +61,17 @@ Table ROUND_CONFIGURATIONS {
   id int [pk, not null, increment]
   round_name varchar [not null, unique, note: 'ROUND1, ROUND2, ROUND3, ROUND4, ROUND5, EQUIPMENT.']
   round_number int [not null]
-  max_energy int [not null]
+  max_card_energy int [not null]
+  max_round_power int [not null]
   max_cards int [not null]
 
   checks {
     `round_number > 0` [name: 'round_configurations_round_number_check']
-    `max_energy > 0` [name: 'round_configurations_max_energy_check']
+    `max_card_energy > 0` [name: 'round_configurations_max_card_energy_check']
+    `max_round_power > 0` [name: 'round_configurations_max_round_power_check']
     `max_cards > 0` [name: 'round_configurations_max_cards_check']
   }
-  Note: 'Round configurations are immutable by application policy; no database trigger enforces immutability. The backend validates the required deck composition, the max_cards limit and total energy cost against max_energy. round_name values are documented labels, not an enum or CHECK constraint.'
+  Note: 'Round configurations are immutable by application policy; no database trigger enforces immutability. The backend validates the required deck composition, max_cards, each card energy_cost against max_card_energy, and summed card power against max_round_power. V4 seeds energy equal to round_number, power 14 for ROUND1 through ROUND5, and power 10 for EQUIPMENT. round_name values are documented labels, not an enum or CHECK constraint.'
 }
 
 Table CARDS {

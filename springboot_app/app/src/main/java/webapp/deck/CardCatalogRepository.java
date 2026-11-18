@@ -56,7 +56,7 @@ public class CardCatalogRepository {
     public Map<String, RoundConfiguration> findRoundConfigurations() {
         Map<String, RoundConfiguration> rounds = new HashMap<>();
         jdbc.sql("""
-                SELECT round_name, round_number, max_energy, max_cards
+                SELECT round_name, round_number, max_card_energy, max_round_power, max_cards
                 FROM round_configurations
                 """)
                 .query((row, rowNumber) -> mapRound(row))
@@ -103,6 +103,6 @@ public class CardCatalogRepository {
 
     private static RoundConfiguration mapRound(ResultSet row) throws SQLException {
         return new RoundConfiguration(row.getString("round_name"), row.getInt("round_number"),
-                row.getInt("max_energy"), row.getInt("max_cards"));
+                row.getInt("max_card_energy"), row.getInt("max_round_power"), row.getInt("max_cards"));
     }
 }

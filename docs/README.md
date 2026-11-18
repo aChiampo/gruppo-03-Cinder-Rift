@@ -12,12 +12,14 @@ Verifica storica del **2026-11-13** sulla copia di lavoro con base `97200d9`: ba
 
 La suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test su PostgreSQL 18.6** e prodotto il JAR. Configurazione Compose, 16 rotte nei riepiloghi API e collegamenti documentali controllati; avvio dell’applicazione tramite Compose e browser non verificati. [Report datato con ambiente, riferimento, risultati e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le evidenze precedenti nelle schede F01/F05 restano storiche.
 
+Aggiornamento F05 del **2026-11-18**, su approvazione dell’utente, con energia per carta (`max_card_energy`) e potenza per destinazione (`max_round_power`). V4 configura energia da 1 a 5 e potenza 14 per i round creature, energia 6 e potenza 10 per `EQUIPMENT`. Le migrazioni V3/V4 sono aggiornate per la ricreazione del database tramite il reset dei volumi scelto dall’utente; [contratto e procedura di migrazione](BackEnd/gestione-mazzi.md#implementazione-backend-disponibile).
+
 ## Aree e strumenti comuni
 
 - [Digital](Digital/README.md)
 - [FrontEnd](FrontEnd/README.md)
 - [BackEnd](BackEnd/README.md)
-- [Guida API per il Frontend](BackEnd/GUIDA-API-FRONTEND.md)
+- [Riepilogo degli endpoint](BackEnd/GUIDA-API-FRONTEND.md)
 - [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
 - [Configurazione locale dei servizi Docker Compose](../compose.yaml)
 - [Build e limiti del frontend](../cinder-rift/README.md#avvio-con-docker-compose)
@@ -40,7 +42,7 @@ Questo è il riepilogo corrente. I riferimenti principali collegano i dettagli e
 | F01 | Registrazione, accesso, profilo, rinnovo, uscita, cancellazione account, recupero password e ruoli `ADMIN` e `USER` | Confermato | Contratto backend aggiornato il 2026-11-13 | Backend, pulizie, base recupero, migrazioni Flyway e cancellazione account implementati. Login React prototipale con contratto mock; integrazione Spring, altre schermate F01 ed email da completare | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Accesso](BackEnd/accesso-utenti.md) |
 | F03 | Offerte di un solo pacchetto; risorsa del prezzo da definire                      | Confermato                                  | In approfondimento   | Non iniziata    | Non eseguita | [Pacchetti](BackEnd/acquisto-pacchetti.md)           |
 | F04 | Collezione                                                                 | Confermato                                  | In approfondimento   | Interfaccia React con dati dimostrativi; backend e integrazione da implementare | Integrazione non verificata | [Collezione](BackEnd/collezione-carte.md)            |
-| F05 | Gestione e validazione mazzi                                               | Confermato                                  | In approfondimento; contratto API aggiornato il 2026-11-13 | Persistenza, validazione e API REST backend implementate; deck builder React dimostrativo non integrato | 118 test superati il 2026-11-13 nella suite completa su PostgreSQL 18.6; JAR prodotto. [Evidenze e limiti](report/2026-11-13-revisione-stato-sviluppo.md) | [Mazzi](BackEnd/gestione-mazzi.md) |
+| F05 | Gestione e validazione mazzi | Confermato | Energia per carta e potenza per destinazione approvate il 2026-11-18; altre regole in approfondimento | Persistenza, API REST, energia individuale e potenza aggregata implementate; deck builder React dimostrativo non integrato | 135 test superati il 2026-11-18 nella suite completa su PostgreSQL 18.6; JAR prodotto; installazione V1–V6 su schema vuoto verificata. Limiti nel contratto F05 | [Mazzi](BackEnd/gestione-mazzi.md) |
 | F06 | Scambi di carte e token, privati/pubblici, consenso e prenotazioni | Confermato; approvato anche dal committente | In approfondimento | Non iniziata    | Non eseguita | [Scambi](BackEnd/scambi-mercato.md)                  |
 | F07 | Sfide e simulazione                                                        | Confermato                                  | In approfondimento | Motore e campagna dimostrativi con build Docker; API di sfida e integrazione non implementate | Evidenze JUnit e limiti nel [README motore](../springboot_app/game_engine/README.md#avvio-e-verifiche); integrazione non verificata | [Sfide](BackEnd/sfide-simulazione.md)                |
 | F08 | Storico e dettaglio dei turni                                              | Confermato                                  | In approfondimento | Non iniziata    | Non eseguita | [Storico](BackEnd/storico-partite.md)                |

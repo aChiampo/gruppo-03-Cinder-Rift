@@ -83,7 +83,7 @@ class DeckServiceDatabaseTests {
     }
 
     @Test
-    void validatesArtworkOwnershipDestinationAndConfiguredEnergyBeforeSaving() {
+    void validatesArtworkOwnershipDestinationAndConfiguredLimitsBeforeSaving() {
         DeckValidationResult missingArtwork = decks.addCard(ownerId, deckId,
                 new DeckEntry(cardId, Integer.MAX_VALUE, "ROUND1"));
         assertThat(missingArtwork.errors()).anyMatch(v -> v.code().equals("CARD_ART_NOT_FOUND"));
@@ -105,11 +105,24 @@ class DeckServiceDatabaseTests {
                 .update();
         DeckValidationResult firstCopy = decks.addCard(ownerId, deckId,
                 new DeckEntry(cardId, cardArtId, "ROUND1"));
-        DeckValidationResult overEnergy = decks.addCard(ownerId, deckId,
+        DeckValidationResult secondCopy = decks.addCard(ownerId, deckId,
                 new DeckEntry(cardId, cardArtId, "ROUND1"));
         assertThat(firstCopy.valid()).isTrue();
-        assertThat(overEnergy.errors()).anyMatch(v -> v.code().equals("DESTINATION_ENERGY_LIMIT_EXCEEDED"));
-        assertThat(decks.getEntries(ownerId, deckId)).hasSize(1);
+        assertThat(secondCopy.valid()).isTrue();
+        assertThat(decks.getEntries(ownerId, deckId)).hasSize(2);
+
+        jdbc.sql("UPDATE cards SET energy_cost = 2 WHERE id = :cardId")
+                .param("cardId", cardId).update();
+        DeckValidationResult overEnergy = decks.moveCard(ownerId, deckId,
+                decks.getEntries(ownerId, deckId).getFirst().id(), "ROUND1");
+        assertThat(overEnergy.errors()).anyMatch(v -> v.code().equals("CARD_ENERGY_LIMIT_EXCEEDED"));
+
+        jdbc.sql("UPDATE cards SET energy_cost = 1, power = 8 WHERE id = :cardId")
+                .param("cardId", cardId).update();
+        DeckValidationResult overPower = decks.moveCard(ownerId, deckId,
+                decks.getEntries(ownerId, deckId).getFirst().id(), "ROUND1");
+        assertThat(overPower.errors()).anyMatch(v -> v.code().equals("DESTINATION_POWER_LIMIT_EXCEEDED"));
+        assertThat(decks.getEntries(ownerId, deckId)).hasSize(2);
     }
 
     @Test

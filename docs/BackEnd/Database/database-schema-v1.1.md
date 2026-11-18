@@ -1,6 +1,6 @@
 # Specifica della base di dati — v1.1
 
-**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-13. **Motore del modello:** PostgreSQL 18. Nessuna modifica DDL o migrazione eseguita da questo aggiornamento. La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. La struttura resta quella del 2026-11-09: inventario con Scaglie, Nuclei Rift e Rotami e sistema mercy; rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
+**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-18. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
 
 Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
@@ -14,9 +14,11 @@ Questo documento è la fonte canonica e autonoma della struttura della base di d
 
 ### Perimetro SQL implementato
 
-Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. Pacchetti, mercy, amicizie, scambi, missioni e partite del modello completo non hanno ancora migrazioni in questa applicazione. Le evidenze correnti sono nel [report di verifica](../../report/2026-11-13-revisione-stato-sviluppo.md).
+Aggiornamento del **2026-11-18** con `max_card_energy` e `max_round_power` nelle configurazioni dei round. V4 configura energia uguale al numero del round, potenza 14 per i cinque gruppi creature e 10 per `EQUIPMENT`, con energia 6. La [procedura scelta dall’utente](../../../springboot_app/app/README.md#aggiornamento-dei-limiti-f05-del-2026-11-18) ricrea il database tramite il reset dei volumi Docker Compose e applica V1–V6 su uno schema vuoto. V5/V6 inizializzano il set CR01 e l’utente dimostrativo.
 
-**Differenza da riconciliare.** V3 dichiara `decks_cards.id_deck → decks.id ON DELETE CASCADE`, usata dalla cancellazione dei mazzi F05; il DBML v1.1 e i diagrammi non dichiarano questa cascata. Il comportamento SQL corrente è descritto nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile); il modello completo richiede un successivo allineamento esplicito. Questa revisione non modifica DBML o DDL e non considera implementato il guard condiviso del catalogo.
+Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. Pacchetti, mercy, amicizie, scambi, missioni e partite del modello completo non hanno ancora migrazioni in questa applicazione. Le evidenze di quella revisione sono nel [report di verifica](../../report/2026-11-13-revisione-stato-sviluppo.md).
+
+**Differenza da riconciliare.** V3 dichiara `decks_cards.id_deck → decks.id ON DELETE CASCADE`, usata dalla cancellazione dei mazzi F05; il DBML v1.1 e i diagrammi non dichiarano questa cascata. Il comportamento SQL corrente è descritto nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile); il modello completo richiede un successivo allineamento esplicito. Il guard condiviso del catalogo resta da implementare.
 
 ### Schema integrale
 
@@ -132,7 +134,8 @@ erDiagram
         int id PK "NOT NULL; auto-incremento"
         varchar round_name UK "NOT NULL"
         int round_number "NOT NULL"
-        int max_energy "NOT NULL"
+        int max_card_energy "NOT NULL"
+        int max_round_power "NOT NULL"
         int max_cards "NOT NULL"
     }
     COLLECTIONS {
@@ -427,7 +430,8 @@ erDiagram
         int id PK "NOT NULL; auto-incremento"
         varchar round_name UK "NOT NULL"
         int round_number "NOT NULL"
-        int max_energy "NOT NULL"
+        int max_card_energy "NOT NULL"
+        int max_round_power "NOT NULL"
         int max_cards "NOT NULL"
     }
     COLLECTIONS {
@@ -463,7 +467,7 @@ erDiagram
 
 **Mazzi e copie.** `DECKS.id_user` è obbligatorio; ogni utente può avere più mazzi. `is_challengeable` è obbligatorio con default `false`: se vero, il mazzo può essere selezionato dal matchmaking, ma deve comunque essere rivalidato. Ogni riga di `DECKS_CARDS` rappresenta una copia, con `id` intero auto-incrementale, carta, arte e destinazione obbligatorie. Non esiste un campo quantità né un vincolo univoco sulla combinazione mazzo/carta/arte/destinazione: due copie possono avere ID diversi. La FK composta `(id_card, id_card_art) → CARDS_ARTS.(id_card, id_art)` garantisce la coerenza della variante, non il suo possesso.
 
-**Configurazioni dei round.** `ROUND_CONFIGURATIONS` conserva ID auto-incrementale, `round_name` obbligatorio univoco e interi obbligatori `round_number`, `max_energy`, `max_cards`, ciascuno maggiore di zero tramite `CHECK`. `DECKS_CARDS.destination` riferisce `round_name`. I nomi documentati sono `ROUND1` … `ROUND5` ed `EQUIPMENT`; non sono un enum o un dominio SQL chiuso. L'immutabilità delle configurazioni è una politica applicativa. Per ogni destinazione il backend verifica composizione, numero di carte entro `max_cards` e somma dei costi energetici entro `max_energy`. Valori iniziali, minimi di carte, trattamento degli equipaggiamenti e ulteriori limiti di potenza, copie e rarità restano da definire; non sono introdotti valori numerici impliciti.
+**Configurazioni dei round.** `ROUND_CONFIGURATIONS` conserva ID auto-incrementale, `round_name` obbligatorio univoco e interi obbligatori `round_number`, `max_card_energy`, `max_round_power`, `max_cards`, ciascuno maggiore di zero tramite `CHECK`. `DECKS_CARDS.destination` riferisce `round_name`. I nomi documentati sono `ROUND1` … `ROUND5` ed `EQUIPMENT`; non sono un enum o un dominio SQL chiuso. L'immutabilità delle configurazioni è una politica applicativa. Per ogni destinazione il backend verifica composizione, numero di carte entro `max_cards`, energia di ogni carta entro `max_card_energy` e somma di `CARDS.power` entro `max_round_power`. I confronti sono inclusivi e ogni copia contribuisce alla potenza totale, sommata con `long`. Costi energetici o di potenza mancanti o negativi bloccano la validazione. V4 inizializza cinque carte per destinazione, energia uguale a `round_number`, potenza 14 per `ROUND1`–`ROUND5` e 10 per `EQUIPMENT`, la cui energia è 6. I valori sono configurabili e letti dal database; l’uguaglianza fra energia e numero è una scelta del seed. Budget complessivo delle creature, fasce di potenza per rarità, copie e quote di rarità restano responsabilità applicative da completare.
 
 **Collezione.** `COLLECTIONS` ha PK `(id_user, id_card, id_card_art)`, FK a utente, carta e coppia carta/arte, `owned_replica > 0` e `0 <= tradable_replica <= owned_replica`. Una tripla assente vale zero solo dopo una lettura riuscita. Il backend elimina la riga quando il possesso finale arriva a zero, dopo aver consumato o rilasciato le prenotazioni attive. Possesso e scambiabilità sono distinti per arte. Il mazzo non riferisce la riga volatile della collezione: il backend verifica le occorrenze per carta/arte e coordina trasferimenti e validità del mazzo. Il riutilizzo delle copie in più mazzi e la giocabilità delle copie prenotate restano aperti.
 
@@ -812,7 +816,8 @@ I diagrammi riportano PK, FK, unicità delle colonne, default e auto-incremento.
 | Tabella | CHECK | Nome |
 | --- | --- | --- |
 | ROUND_CONFIGURATIONS | `round_number > 0` | `round_configurations_round_number_check` |
-| ROUND_CONFIGURATIONS | `max_energy > 0` | `round_configurations_max_energy_check` |
+| ROUND_CONFIGURATIONS | `max_card_energy > 0` | `round_configurations_max_card_energy_check` |
+| ROUND_CONFIGURATIONS | `max_round_power > 0` | `round_configurations_max_round_power_check` |
 | ROUND_CONFIGURATIONS | `max_cards > 0` | `round_configurations_max_cards_check` |
 | NOTIFICATIONS | `status IN ('new', 'read', 'archived')` | `notifications_status_check` |
 | COLLECTIONS | `owned_replica > 0` | `collections_owned_replica_check` |

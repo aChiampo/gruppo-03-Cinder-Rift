@@ -4,7 +4,7 @@ ID: F05 · Perimetro: confermato; specifica in approfondimento.
 Implementazione frontend: non iniziata. Il backend espone le rotte HTTP F05 documentate nel [contratto BackEnd](../BackEnd/gestione-mazzi.md#api-http-implementate). Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-13, collegamento al contratto HTTP F05 implementato. Verifiche frontend: non eseguite.
+Ultimo aggiornamento significativo il 2026-11-18, collegamento ai controlli approvati di energia per carta e potenza per destinazione. Verifiche frontend: non eseguite.
 
 ## Obiettivo e decisioni note
 
@@ -15,6 +15,7 @@ Ultimo aggiornamento significativo: 2026-11-13, collegamento al contratto HTTP F
 
 - La proposta di [struttura dei mazzi](../Digital/regolamento-base.md#2-struttura-del-mazzo) introduce l'assegnazione delle creature ai round e un gruppo separato di equipaggiamenti: l'interfaccia dovrà renderne comprensibile la composizione dopo la conferma delle regole.
 - [Energia e punti potenza](../Digital/regolamento-base.md#3-energia-e-punti-potenza) hanno funzioni differenti. La presentazione dei [vincoli di composizione](../Digital/regolamento-base.md#4-budget-e-vincoli-di-composizione) dovrà rispettare questa distinzione senza mantenere una specifica numerica indipendente.
+- La presentazione degli errori segue i controlli server di energia per carta e potenza per destinazione approvati il 2026-11-18, con i codici del [contratto F05](../BackEnd/gestione-mazzi.md#implementazione-backend-disponibile).
 - Dati scambiati, payload HTTP ed esiti di validazione dipendono dal [contratto canonico BackEnd di F05](../BackEnd/gestione-mazzi.md#api-http-implementate). Layout, flussi di interfaccia e comportamento client restano da definire.
 
 ## Da definire

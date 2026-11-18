@@ -4,7 +4,7 @@ ID: F07 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente; dati coerenti con la base di dati v1.1. Verifiche applicative e di bilanciamento: non eseguite.
+Ultimo aggiornamento significativo il 2026-11-18, allineamento ai limiti F05 di energia per carta e potenza per destinazione approvati dall’utente. Verifiche applicative F07 e di bilanciamento da eseguire.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-battaglie).
 
 ## Obiettivo e decisioni note
@@ -17,7 +17,7 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 ## Dati e confini della persistenza v1.1
 
 - Utenti, mazzi, carte, arti e battaglie hanno identificativi `int`; le PK autonome sono auto-incrementali. Le FK copiano gli ID esistenti. `DECKS.is_challengeable`, obbligatorio con default `false`, abilita la selezione nel matchmaking senza attestare la validità del mazzo.
-- Prima dello snapshot il backend rivalida proprietà, composizione, possesso della precisa variante e configurazioni di `ROUND_CONFIGURATIONS`, inclusi numero massimo di carte e somma dei costi energetici per destinazione. Numeri iniziali, minimi e regole di equipaggiamento restano da definire.
+- Prima dello snapshot il backend dovrà rivalidare proprietà, composizione, possesso della precisa variante e configurazioni di `ROUND_CONFIGURATIONS`, inclusi numero massimo di carte, energia di ogni carta entro `max_card_energy` e potenza aggregata per destinazione entro `max_round_power`. Il [contratto F05](gestione-mazzi.md#implementazione-backend-disponibile) descrive i limiti iniziali, incluso `EQUIPMENT`; l’integrazione della rivalidazione in F07 resta da implementare.
 - `BATTLE_HISTORY` conserva due partecipanti, vincitore nullable, `deck_player1` e `deck_player2` JSONB obbligatori, data e `ranking_reward` nullable. Vincitore nullo significa pareggio; altrimenti il `CHECK` lo limita a uno dei partecipanti. La diversità dei partecipanti è applicativa.
 - `ranking_reward` non nullo è la variazione con segno applicata esclusivamente a `player1_id`, nella transazione del risultato. `player2_id` non riceve variazioni per questa battaglia; nelle amichevoli il valore è `NULL`. Le formule non sono fissate dallo schema.
 - Gli snapshot preservano carte e arti usate dopo modifiche dei mazzi o del catalogo. Lo schema non contiene sfide attive, log dei round o un vincolo contro doppi avvii della stessa partita; contratto JSON e idempotenza restano da definire.
