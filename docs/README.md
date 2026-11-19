@@ -26,7 +26,6 @@ Ultimo aggiornamento significativo dell'indice: **2026-11-15**. L'ultimo aggiorn
 - [BackEnd](BackEnd/README.md)
 - [Guida per avviare l'applicazione sul proprio computer](../guida-avvio.md)
 - [Configurazione locale dei servizi Docker Compose](../compose.yaml)
-- [Schema dati preliminare](BackEnd/schema-dati-preliminare.md) — proposta trasversale non ancora concordata.
 - [Linee guida e collaborazione Git](../Linee-Guida-e-Regole.md)
 - [Istruzioni condivise per gli assistenti](../AGENTS.md) e [importazione Claude](../CLAUDE.md)
 - [Modello di funzionalità](modello-funzionalita.md)

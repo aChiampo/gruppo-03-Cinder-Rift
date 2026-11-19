@@ -155,7 +155,7 @@ Se sarà scelta l'apertura differita, il risultato delle carte dovrà essere rap
 
 - [Interfaccia negozio](../FrontEnd/acquisto-pacchetti.md)
 - [Economia](../Digital/economia-crediti-pacchetti.md)
-- [Schema dati preliminare](schema-dati-preliminare.md)
+- [Schema dati v1.1](Database/database-schema-v1.1.md)
 - [Backoffice](gestione-amministrativa.md)
 - [Collezione](collezione-carte.md)
 - [Indice BackEnd](README.md)

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -51,6 +52,28 @@ public class CardCatalogRepository {
                         row.energyCost(), row.attack(), row.defense(), row.power(), row.type(),
                         row.expansion(), artworks.getOrDefault(row.id(), List.of())))
                 .toList();
+    }
+
+    public Optional<CardCatalogItem> findById(int cardId) {
+        List<CardCatalogRow> rows = jdbc.sql("""
+                SELECT c.id, c.name, c.energy_cost, c.value_atk, c.value_def, c.power,
+                       f.id AS faction_id, f.code AS faction_code, f.name AS faction_name,
+                       r.id AS rarity_id, r.code AS rarity_code, r.name AS rarity_name,
+                       t.id AS type_id, t.code AS type_code, t.name AS type_name,
+                       e.id AS expansion_id, e.code AS expansion_code, e.name AS expansion_name
+                """ + CardSearchSql.FROM_AND_JOINS + """
+                WHERE c.id = :cardId AND NOT c.is_deleted
+                """)
+                .param("cardId", cardId)
+                .query(CardCatalogRepository::mapCard)
+                .list();
+        if (rows.isEmpty()) {
+            return Optional.empty();
+        }
+        CardCatalogRow row = rows.getFirst();
+        return Optional.of(new CardCatalogItem(row.id(), row.name(), row.faction(), row.rarity(),
+                row.energyCost(), row.attack(), row.defense(), row.power(), row.type(), row.expansion(),
+                findArtworks(List.of(cardId)).getOrDefault(cardId, List.of())));
     }
 
     private Map<Integer, List<CardArtwork>> findArtworks(List<Integer> cardIds) {

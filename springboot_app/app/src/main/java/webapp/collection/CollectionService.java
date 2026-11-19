@@ -1,4 +1,9 @@
-package webapp.card;
+package webapp.collection;
+
+import java.util.Optional;
+
+import webapp.card.CardPage;
+import webapp.card.CardSearchCriteria;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,5 +27,10 @@ public class CollectionService {
                 criteria.size(),
                 total,
                 totalPages);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CollectionItem> findOwnCollectionItem(int authenticatedUserId, int cardId, int cardArtId) {
+        return collections.findItem(authenticatedUserId, cardId, cardArtId);
     }
 }

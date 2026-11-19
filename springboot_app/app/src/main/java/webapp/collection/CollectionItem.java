@@ -1,4 +1,6 @@
-package webapp.card;
+package webapp.collection;
+
+import webapp.card.CardReference;
 
 /** One owned card-art variant and its stored copy counts. */
 public record CollectionItem(

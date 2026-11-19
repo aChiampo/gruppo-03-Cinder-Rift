@@ -22,6 +22,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -150,6 +152,75 @@ class CardCollectionControllerDatabaseTests {
     }
 
     @Test
+    void returnsCollectionArtworkOnlyToItsOwner() throws Exception {
+        mvc.perform(get("/api/users/me/collections/{cardId}/{cardArtId}",
+                        fixture.firstCardId(), fixture.firstArtworkId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cardId").value(fixture.firstCardId()))
+                .andExpect(jsonPath("$.cardArtId").value(fixture.firstArtworkId()))
+                .andExpect(jsonPath("$.ownedReplica").value(2));
+
+        mvc.perform(get("/api/users/me/collections/{cardId}/{cardArtId}",
+                        fixture.firstCardId(), fixture.firstArtworkId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(otherUser)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void adminCanCreateReplaceAndSoftDeleteUnusedCards() throws Exception {
+        promoteToAdmin(owner);
+        String createRequest = """
+                {"name":"Backoffice Card","artworks":[
+                    {"artCode":"STANDARD","imageUrl":"https://example.invalid/backoffice-card.svg"}
+                ]}
+                """;
+        MvcResult created = mvc.perform(post("/api/admin/cards")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createRequest))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Backoffice Card"))
+                .andExpect(jsonPath("$.artworks[0].artCode").value("STANDARD"))
+                .andReturn();
+        int cardId = objectMapper.readTree(created.getResponse().getContentAsString()).path("id").asInt();
+
+        mvc.perform(put("/api/admin/cards/{cardId}", cardId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Revised Card","artworks":[]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Revised Card"))
+                .andExpect(jsonPath("$.artworks").isEmpty());
+
+        mvc.perform(delete("/api/admin/cards/{cardId}", cardId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/cards/{cardId}", cardId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void adminCannotModifyCardsAlreadyOwnedByPlayersAndUsersCannotUseBackoffice() throws Exception {
+        mvc.perform(post("/api/admin/cards")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Forbidden Card","artworks":[]}
+                                """))
+                .andExpect(status().isForbidden());
+
+        promoteToAdmin(owner);
+        mvc.perform(delete("/api/admin/cards/{cardId}", fixture.firstCardId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void rejectsUnsupportedSortsAndInvertedRanges() throws Exception {
         mvc.perform(get("/api/cards")
                         .header(HttpHeaders.AUTHORIZATION, bearer(owner))
@@ -185,6 +256,16 @@ class CardCollectionControllerDatabaseTests {
                 .andReturn();
         JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
         return new TestSession(response.path("accessToken").asText(), response.path("user").path("id").asInt());
+    }
+
+    private void promoteToAdmin(TestSession user) {
+        jdbc.sql("""
+                UPDATE users
+                SET id_role = (SELECT id FROM roles WHERE code = 'ADMIN')
+                WHERE id = :userId
+                """)
+                .param("userId", user.userId())
+                .update();
     }
 
     private static String bearer(TestSession session) {

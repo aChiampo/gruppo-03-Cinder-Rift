@@ -7,22 +7,22 @@ import java.util.Locale;
 import java.util.Map;
 
 /** Builds parameterized predicates and allow-listed ordering for card read queries. */
-final class CardSearchSql {
-    static final String REFERENCE_JOINS = """
+public final class CardSearchSql {
+    public static final String REFERENCE_JOINS = """
             LEFT JOIN factions f ON f.id = c.id_faction AND NOT f.is_deleted
             LEFT JOIN rarities r ON r.id = c.id_rarity AND NOT r.is_deleted
             LEFT JOIN card_types t ON t.id = c.id_type AND NOT t.is_deleted
             LEFT JOIN expansions e ON e.id = c.id_expansion AND NOT e.is_deleted
             """;
 
-    static final String FROM_AND_JOINS = """
+    public static final String FROM_AND_JOINS = """
             FROM cards c
             """ + REFERENCE_JOINS;
 
     private CardSearchSql() {
     }
 
-    static QueryParts build(CardSearchCriteria criteria, Integer ownerId) {
+    public static QueryParts build(CardSearchCriteria criteria, Integer ownerId) {
         List<String> predicates = new ArrayList<>();
         Map<String, Object> parameters = new LinkedHashMap<>();
         predicates.add("c.is_deleted = false");
@@ -92,6 +92,6 @@ final class CardSearchSql {
         return column + " " + direction.toUpperCase(Locale.ROOT) + " NULLS LAST, c.id ASC" + tieBreaker;
     }
 
-    record QueryParts(String where, Map<String, Object> parameters, String orderBy) {
+    public record QueryParts(String where, Map<String, Object> parameters, String orderBy) {
     }
 }

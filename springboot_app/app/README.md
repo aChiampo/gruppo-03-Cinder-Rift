@@ -1,6 +1,6 @@
 # Applicazione backend
 
-Ultimo aggiornamento significativo il **2026-11-12** con le migrazioni Flyway F01 e la verifica su PostgreSQL 18.1. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
+Ultimo aggiornamento significativo il **2026-11-19** con la separazione dei package F04 e le API CRUD amministrative F10 per il catalogo carte. Il backend include inoltre F01 e le letture F04/F05. Le nuove API F04/F10 sono compilate; i rispettivi test database non sono stati eseguiti. Invio email, interfaccia di recupero e UI React sono rinviati. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Il frontend è realizzato con React.
 
@@ -60,7 +60,7 @@ Tutte le dipendenze seguenti utilizzano lo scope Maven `test`.
 | `starter-validation-test` | Test dei comportamenti di validazione. |
 | `starter-websocket-test` | Supporto ai test WebSocket; resta dichiarato anche se lo starter applicativo è commentato. La coerenza di questa scelta va rivalutata quando viene deciso il canale di comunicazione. |
 
-Sono presenti test F01 per profilo protetto e CSRF, restrizioni del namespace amministrativo, scheduler e cancellazione delle sessioni. I report esistenti e i limiti sono descritti nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#verifiche-ed-evidenze). F04 include fixture database e test MockMvc per catalogo e collezione, ma la verifica mirata non è completata; le altre funzionalità restano da coprire. Swagger UI non sostituisce i test automatici.
+Sono presenti test F01 per profilo protetto e CSRF, restrizioni del namespace amministrativo, scheduler e cancellazione delle sessioni. Il **2026-11-19**, `mvnw.cmd -o "-Dtest=SecurityConfigurationTests" test` ha superato 25 test di sicurezza; `mvnw.cmd -o -DskipTests test` ha compilato backend e test sorgenti senza eseguirli. F04/F10 includono fixture e test MockMvc con database, ma i test non sono stati eseguiti perché le variabili di connessione PostgreSQL e la chiave JWT non erano configurate. I report F01 e i relativi limiti sono descritti nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#verifiche-ed-evidenze); le altre funzionalità restano da coprire. Swagger UI non sostituisce i test automatici.
 
 Il motore di gioco deve restare un componente Java isolato e coperto da test JUnit, come richiesto dalla [traccia](../../Laboratorio-Integrato-TRACCIA.md). I suoi test unitari devono verificare le regole senza richiedere Spring o un database. Se organizzato come modulo separato, il motore deve dichiarare autonomamente le proprie dipendenze di test.
 

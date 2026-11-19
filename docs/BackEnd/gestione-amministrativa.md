@@ -1,10 +1,10 @@
 # Gestione amministrativa
 
 ID: F10 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
+Implementazione: API CRUD del catalogo carte aggiunte; altre funzioni di backoffice non implementate.
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-12, correzione della protezione del namespace amministrativo su richiesta dell’utente. L’allineamento alle risorse in inventario, alla configurazione mercy dei pacchetti e al regolamento Versione 2.1 risale al 2026-11-09. Verifiche delle funzionalità di backoffice: non eseguite.
+Ultimo aggiornamento significativo: 2026-11-19, aggiunta delle API CRUD amministrative per le carte. La protezione del namespace è stata corretta il 2026-11-12; l’allineamento alle risorse in inventario, alla configurazione mercy dei pacchetti e al regolamento Versione 2.1 risale al 2026-11-09. Build e test di sicurezza eseguiti; test database delle API non eseguiti.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
 
 ## Obiettivo e decisioni note
@@ -24,11 +24,9 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio
 - Cancellare logicamente carte o espansioni richiede il guard esclusivo del catalogo, invalidazione di annunci/trattative e rilascio di tutti gli hold prima della conversione e pulizia di collezione e mazzi. Applicare il [protocollo transazionale comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune); non è un trigger. Tassi, frammenti e recupero per lotti restano da definire.
 - `NOTIFICATIONS` usa FK intere per mittente e destinatario, messaggio obbligatorio e stato `new`, `read` o `archived`. Invii di massa e regali richiedono autorizzazione backend e aggiornamenti economici separati dalla notifica.
 
-## Bozza di classi per il catalogo carte
+## Separazione dei servizi
 
-Per F04 è stata abbozzata una `CardRepository` di lettura e un `CardCatalogService` nella pagina canonica della [collezione](collezione-carte.md#bozza-di-classi-di-servizio-e-repository). Le operazioni di consultazione sono separate dalla gestione amministrativa.
-
-La bozza non introduce ancora un `CardManagementService` di scrittura: ruoli autorizzati, campi modificabili, validazioni e compatibilità delle modifiche con mazzi e partite esistenti sono ancora da definire. Dopo l'accordo su F10, le operazioni amministrative potranno essere aggiunte qui senza sovrapporre le responsabilità della collezione.
+F04 mantiene catalogo e collezione in package separati. `CardCatalogService` gestisce la consultazione; `CardManagementService` gestisce le scritture F10; `CollectionService` espone soltanto letture della collezione autenticata. Il controllo `ADMIN` è applicato dal namespace `/api/admin/**`.
 
 ## Riferimenti alla proposta di regolamento
 
@@ -43,8 +41,8 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 
 - Matrice dei permessi e operazioni consentite su cataloghi già utilizzati.
 - Eventuali altre funzioni amministrative.
-- Contratto tecnico del catalogo e validazioni; compatibilità delle modifiche alle carte con mazzi e partite esistenti, in coordinamento con F05 e F07.
-- Operazioni di creazione, aggiornamento, disattivazione o versionamento delle carte e relativa autorizzazione.
+- Compatibilità e versionamento delle modifiche con mazzi, partite e flussi futuri, in coordinamento con F03, F05, F06 e F07.
+- Altri endpoint amministrativi, compresa la gestione dei pacchetti.
 
 ## Collegamenti
 
@@ -53,8 +51,8 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 - [Offerte di pacchetti](acquisto-pacchetti.md)
 - [Carte e identità](../Digital/lore-identita-carte.md)
 - [Regolamento Versione 2.0](../Digital/regolamento-base.md)
-- [Bozza di servizi e repository per la collezione](collezione-carte.md#bozza-di-classi-di-servizio-e-repository)
-- [Schema dati preliminare](schema-dati-preliminare.md)
+- [Catalogo e collezione F04](collezione-carte.md)
+- [Schema dati v1.1](Database/database-schema-v1.1.md)
 - [Mazzi](gestione-mazzi.md)
 - [Sfide](sfide-simulazione.md)
 - [Indice BackEnd](README.md)

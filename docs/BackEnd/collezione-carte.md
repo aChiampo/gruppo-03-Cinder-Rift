@@ -12,13 +12,15 @@ Ultimo aggiornamento significativo: 2026-11-15. Fonte: richiesta F04 e scelte de
 - La collezione è privata: il backend usa l'ID del principal autenticato; il client non può specificare l'ID di un altro proprietario.
 - Filtri concordati: nome, fazione, rarità, tipo, espansione e intervalli inclusivi di energia, attacco, difesa e punti potenza.
 - Ordinamenti concordati: nome, fazione, rarità, energia, attacco, difesa e punti potenza, con direzione crescente o decrescente.
-- Le rotte richiedono un bearer token valido secondo F01. Non viene introdotta una distinzione di accesso per ruolo.
+- Le rotte di consultazione richiedono un bearer token valido secondo F01. La scrittura del catalogo è amministrativa e descritta nel contratto [F10](gestione-amministrativa.md).
+- La collezione non espone scritture dirette: le copie sono gestite dai flussi di dominio, non dal client.
 
 ## Contratto HTTP condiviso
 
 | Metodo e percorso | Accesso | Esito |
 | --- | --- | --- |
 | `GET /api/cards` | Bearer richiesto | Carte non cancellate logicamente, filtrate e paginate; ogni carta include l'elenco delle varianti grafiche. |
+| `GET /api/cards/{cardId}` | Bearer richiesto | Dettaglio di una carta attiva con tutte le varianti grafiche; `404` se non disponibile. |
 | `GET /api/users/me/collections` | Bearer richiesto | Collezione dell'utente autenticato, filtrata e paginata per carta e variante grafica. |
 
 Entrambe le risposte hanno forma `CardPage<T>`: `items`, `page`, `size`, `totalElements`, `totalPages`. Gli ID sono interi. Nessun parametro di percorso o query seleziona il proprietario della collezione.
@@ -117,11 +119,12 @@ Esempio illustrativo:
 | `200` | Lettura riuscita, anche senza risultati. |
 | `400` | Parametri non validi, intervalli invertiti, ordinamento o direzione non supportati, pagina o dimensione fuori limite. |
 | `401` | Bearer assente o non valido, secondo F01. |
+| `404` | Carta non attiva o variante non appartenente alla collezione del chiamante. |
 | `500` | Errore interno, compreso un errore di persistenza. |
 
 Il catalogo legge `CARDS` non cancellate logicamente, i riferimenti dei cataloghi e tutte le righe `CARDS_ARTS`. `EXPANSIONS.is_active` non è usato come filtro: l'inattività non equivale alla cancellazione logica secondo lo schema v1.1. La collezione legge solo le righe `COLLECTIONS` del principal e la variante corrispondente in `CARDS_ARTS`; anche le carte cancellate logicamente sono escluse. Le letture sono JDBC e paginano lato database. `CARDS` ammette campi descrittivi nullabili nello schema: il contratto conserva tale nullabilità.
 
-La composizione e il bilanciamento delle carte non sono approvati definitivamente. Le statistiche dimostrative non attestano valori di gioco definitivi. I riferimenti relativi alla creazione e modifica amministrativa del catalogo appartengono al contratto F10.
+La composizione e il bilanciamento delle carte non sono approvati definitivamente. Le statistiche dimostrative non attestano valori di gioco definitivi. Le operazioni di scrittura amministrative del catalogo appartengono al contratto F10.
 
 ## Dati dimostrativi e verifica
 
@@ -134,7 +137,7 @@ La prima esecuzione mirata del **2026-11-15** si è fermata al caricamento del c
 - Conferma definitiva del regolamento V2.1, dei valori numerici e dei contenuti delle carte.
 - Modalità di caricamento di un catalogo dimostrativo consultabile nell'ambiente locale; al momento i dati demo sono fixture di test.
 - Comportamento UI per immagini mancanti, filtri attivi, paginazione e ordinamento; integrazione FrontEnd non implementata.
-- Contratti di scrittura del catalogo e operazioni amministrative, da definire in F10.
+- Compatibilità delle modifiche amministrative con flussi e dati di gioco non ancora presenti, da coordinare nelle funzionalità F03, F05 e F06.
 
 ## Collegamenti
 

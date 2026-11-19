@@ -25,7 +25,6 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 ## Collegamenti
 
 - [Indice generale e stato delle funzionalità](../README.md)
-- [Endpoint backend e guida al collegamento API](../BackEnd/endpoint.md)
 - [Area Digital](../Digital/README.md)
 - [Area BackEnd](../BackEnd/README.md)
 - [Modello di documentazione](../modello-funzionalita.md)
