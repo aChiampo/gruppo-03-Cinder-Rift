@@ -4,7 +4,7 @@
 
 > **Stato:** il codice presente è una prima implementazione dimostrativa. Include l'endpoint HTTP PvE descritto sotto, limitato alla simulazione di campagna/tutorial prevista per il SAL; non costituisce l'implementazione completa delle funzionalità F05, F07 o F08, né conferma le regole proposte come definitive.
 
-Ultimo aggiornamento significativo: **2026-11-18**, documentazione dell'endpoint HTTP dimostrativo PvE. Fonte: controller, DTO, configurazione CORS, risorse e test del modulo.
+Ultimo aggiornamento significativo: **2026-11-19**, documentazione dell'uso server-to-server dell'endpoint HTTP dimostrativo PvE. Fonte: controller, DTO, risorse e test del modulo.
 
 ## Motore di gioco
 
@@ -31,7 +31,7 @@ Lo stage 3 richiede l'evento `BLOOD_MOON`. L'applicazione usa H2 in memoria e cr
 
 ## API dimostrativa PvE
 
-L'applicazione espone `POST http://localhost:8083/api/battle/pve/{id}` per simulare una partita della campagna/tutorial. La porta `8083` è quella configurata per il servizio nel container; l'avvio locale può usare una porta diversa. CORS è abilitato per `http://localhost:8082` e `http://localhost:5173`.
+L'applicazione espone l'API interna `POST /api/battle/pve/{id}` per simulare una partita della campagna/tutorial. Nella rete Docker Compose è raggiungibile esclusivamente dal backend applicativo (`springboot_app/app`) all'indirizzo `http://game-engine:8083/api/battle/pve/{id}`. Nel flusso previsto `frontend -> springboot_app/app -> game-engine`, il frontend dovrà rivolgersi al backend applicativo; l'orchestrazione PvE in `springboot_app/app` non è ancora implementata e non è definita né disponibile una rotta pubblica dell'applicazione per questa funzione. Compose pubblica `127.0.0.1:8083` sulla macchina host; `ENGINE_PORT` modifica solo la porta host. Questo binding è riservato al debug e alle prove locali da terminale o `curl`, non all'accesso dal browser. CORS non è configurato e le richieste preflight sono rifiutate con `403`.
 
 Gli identificativi accettati sono:
 
@@ -137,9 +137,9 @@ All'avvio il `CommandLineRunner` presenta un menu:
 
 Il menu è un flusso CLI dimostrativo, non un matchmaking online né un'interfaccia web. La scelta del giocatore determina quale flusso invocare; un input terminato prima della scelta produce un errore esplicito. Per disabilitare il prompt in un ambiente senza input interattivo, avviare con `--game-engine.cli.enabled=false`. I test verificano il caricamento del contesto, entrambe le scelte, l'input non valido e il caricamento e l'esecuzione degli stage.
 
-Verifica del **2026-11-18**: `./mvnw test` completato con **24 test JUnit eseguiti, 0 fallimenti e 0 errori**, incluso `BattleControllerTest` (5 test). La verifica usa la configurazione H2; non attesta l'integrazione con PostgreSQL né le funzionalità applicative complete.
+Verifica del **2026-11-19**: `./mvnw test` completato con **25 test JUnit eseguiti, 0 fallimenti e 0 errori**, inclusi i 6 test aggiornati di `BattleControllerTest`. Sono verificati anche la POST senza header `Origin` e il rifiuto dei preflight, senza configurare CORS. La verifica usa H2; non attesta l'integrazione con PostgreSQL, l'orchestrazione in `springboot_app/app` né le funzionalità applicative complete.
 
-La verifica Docker del **2026-11-16** ha superato **19 test** nello stage Java del build, costruito l'immagine e rilevato il servizio sano su `8083` nello stack Compose isolato, con menu disabilitato e filesystem in sola lettura. [Evidenze e limiti](../../docs/report/2026-11-16-verifica-docker-compose.md). Questa evidenza resta distinta dalla suite eseguita il 2026-11-18.
+La verifica Docker del **2026-11-16** ha superato **19 test** nello stage Java del build, costruito l'immagine e rilevato il servizio sano su `8083` nello stack Compose isolato, con menu disabilitato e filesystem in sola lettura. [Evidenze e limiti](../../docs/report/2026-11-16-verifica-docker-compose.md). Questa evidenza resta distinta dalla suite eseguita il 2026-11-19.
 
 Il POM dichiara Java 21 e Spring Boot 4.1.2. La configurazione predefinita usa H2; il driver PostgreSQL è incluso come dipendenza runtime.
 
@@ -156,9 +156,9 @@ Il secondo comando avvia anche backend e PostgreSQL e richiede la [configurazion
 
 Il [Dockerfile](Dockerfile) usa Java 21, Maven Wrapper e un’immagine runtime JRE Alpine con `curl`; il processo gira con UID/GID `10001`. Il packaging salta l’esecuzione dei test, da eseguire separatamente con `./mvnw test` o `mvnw.cmd test` su Windows con JDK 21. Il POM genera anche un JAR non eseguibile: Docker seleziona precisamente `game_engine-0.0.1-SNAPSHOT-exec.jar`, con classifier `exec`. Aggiornare il percorso se cambiano artifactId o versione.
 
-L’immagine imposta `SERVER_PORT=8083` e `GAME_ENGINE_CLI_ENABLED=false`, anche per l’avvio diretto senza Compose. Lo starter Actuator fornisce `GET /actuator/health`, usato da Docker e Compose. Con le porte predefinite: `http://localhost:8083/actuator/health`; `ENGINE_PORT` modifica solo la porta host. Compose usa filesystem in sola lettura e `/tmp` scrivibile.
+L’immagine imposta `SERVER_PORT=8083` e `GAME_ENGINE_CLI_ENABLED=false`, anche per l’avvio diretto senza Compose. Lo starter Actuator fornisce `GET /actuator/health`, usato da Docker e Compose. Per debug locale da terminale o `curl`, il controllo è disponibile su `http://127.0.0.1:8083/actuator/health`; `ENGINE_PORT` modifica solo la porta host. Compose usa filesystem in sola lettura e `/tmp` scrivibile.
 
-La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. È disponibile soltanto l'endpoint HTTP dimostrativo PvE descritto sopra; il controllo di salute non attesta integrazione con il backend. Il menu dimostrativo resta disponibile nell'avvio Maven interattivo descritto sopra.
+La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. È disponibile soltanto l'endpoint HTTP dimostrativo PvE interno descritto sopra; il controllo di salute non attesta l'orchestrazione applicativa, che non è implementata. Il menu dimostrativo resta disponibile nell'avvio Maven interattivo descritto sopra.
 
 ## Struttura essenziale
 

@@ -4,7 +4,7 @@ ID: F07 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: endpoint HTTP dimostrativo PvE per campagna/tutorial disponibile per il SAL; implementazione completa F07 non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo il 2026-11-18, documentazione dell'endpoint dimostrativo e dei limiti F05 di energia per carta e potenza per destinazione approvati dall’utente. Verifica della suite JUnit disponibile; integrazione applicativa completa F07 e bilanciamento da verificare.
+Ultimo aggiornamento significativo il 2026-11-19, documentazione dell'uso server-to-server dell'endpoint dimostrativo PvE. Verifica della suite JUnit disponibile; integrazione applicativa completa F07 e bilanciamento da verificare.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-battaglie).
 
 ## Obiettivo e decisioni note
@@ -32,7 +32,7 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 
 ## Endpoint dimostrativo PvE per il SAL
 
-L'implementazione disponibile espone `POST http://localhost:8083/api/battle/pve/{id}` per simulare uno stage di campagna/tutorial. È una dimostrazione per il SAL, non il contratto completo F07 ancora da consolidare: non sostituisce le sfide PvP, l'autenticazione JWT o la persistenza dei risultati su PostgreSQL. Il servizio usa H2 in memoria. CORS consente le origini `http://localhost:8082` e `http://localhost:5173`.
+L'implementazione disponibile espone l'API interna `POST /api/battle/pve/{id}` per simulare uno stage di campagna/tutorial. Nella rete Docker Compose è raggiungibile da `springboot_app/app` all'indirizzo `http://game-engine:8083/api/battle/pve/{id}` ed è destinata esclusivamente alla chiamata server-to-server dal backend applicativo. Il flusso previsto è `frontend -> springboot_app/app -> game-engine`: il frontend dovrà rivolgersi al backend applicativo. L'orchestrazione PvE in `springboot_app/app` non è ancora implementata; non è definita né disponibile una rotta pubblica futura dell'applicazione per questa funzione. Il binding host `127.0.0.1:8083`, modificabile con `ENGINE_PORT`, è riservato al debug e alle prove locali da terminale o `curl`. È una dimostrazione per il SAL, non il contratto completo F07 ancora da consolidare: non sostituisce le sfide PvP, l'autenticazione JWT o la persistenza dei risultati su PostgreSQL. Il servizio usa H2 in memoria. CORS non è configurato e le richieste preflight sono rifiutate con `403`.
 
 Gli identificativi risolti sono `1`, `stage_01` e `stage_01_fazioni` per lo stage 1, attivo per impostazione predefinita, e `3`, `stage_03` e `stage_03_evento_speciale` per lo stage 3, bloccato finché l'evento `BLOOD_MOON` non è attivo su H2.
 
@@ -156,7 +156,7 @@ Gli errori sono restituiti come `ProblemDetail` secondo RFC 7807. Gli status ges
 
 Il formato standard include `type`, `title`, `status` e `detail`; può includere `instance`. Le estensioni indicate dipendono dal caso di errore.
 
-La suite `./mvnw test` è stata eseguita il **2026-11-18**: 24 test JUnit, 0 fallimenti e 0 errori, inclusi i 5 test di `BattleControllerTest`. La suite usa H2 e non verifica l'integrazione con PostgreSQL, l'autenticazione o la persistenza prevista per F07.
+La suite `./mvnw test` è stata eseguita il **2026-11-19**: 25 test JUnit, 0 fallimenti e 0 errori, inclusi i 6 test aggiornati di `BattleControllerTest`. I test verificano anche la POST senza header `Origin` e il rifiuto delle richieste preflight senza abilitare CORS. La suite usa H2 e non verifica l'integrazione con PostgreSQL, l'autenticazione, l'orchestrazione in `springboot_app/app` o la persistenza prevista per F07. Questa evidenza aggiorna la precedente registrazione del 2026-11-18, che non rifletteva la rimozione di CORS e i test aggiornati.
 
 ## Da definire
 

@@ -4,7 +4,7 @@ ID: F07 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: interfaccia e integrazione React non iniziate; disponibile endpoint PvE dimostrativo BackEnd limitato al SAL. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: **2026-11-18**, nota di integrazione con l'endpoint dimostrativo PvE. Verifiche dell'integrazione React: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-19**, nota di integrazione server-to-server con l'endpoint dimostrativo PvE. Verifiche dell'integrazione React: non eseguite.
 
 ## Obiettivo e decisioni note
 
@@ -19,7 +19,9 @@ Ultimo aggiornamento significativo: **2026-11-18**, nota di integrazione con l'e
 
 ## Integrazione dimostrativa per il SAL
 
-Per la simulazione campagna/tutorial del SAL, i componenti React possono invocare `POST http://localhost:8083/api/battle/pve/1`. Usare `cardId` allineati ai pool JSON del motore. Endpoint, struttura dei dati, risposta ed errori sono descritti nella [sezione tecnica BackEnd dell'endpoint dimostrativo PvE](../BackEnd/sfide-simulazione.md#endpoint-dimostrativo-pve-per-il-sal); questa nota non duplica il payload e non definisce l'integrazione F07 completa.
+Il flusso previsto per la simulazione campagna/tutorial è `frontend -> springboot_app/app -> game-engine`: il frontend dovrà rivolgersi al backend applicativo, che a sua volta chiamerà l'API interna `POST /api/battle/pve/{id}` all'indirizzo Compose `http://game-engine:8083/api/battle/pve/{id}`. L'orchestrazione PvE in `springboot_app/app` non è ancora implementata e non è definita né disponibile una rotta pubblica dell'applicazione per questa funzione. Il binding host `127.0.0.1:8083`, modificabile con `ENGINE_PORT`, è riservato al debug e alle prove locali da terminale o `curl`, non all'accesso dal browser. Usare `cardId` allineati ai pool JSON del motore. Payload, risposta ed errori dell'API interna sono descritti nella [sezione tecnica BackEnd dell'endpoint dimostrativo PvE](../BackEnd/sfide-simulazione.md#endpoint-dimostrativo-pve-per-il-sal) e nella [guida al payload](../BackEnd/GUIDA-FRONTEND-SIMULAZIONE-PVE.md); questa nota non duplica il contratto e non definisce l'integrazione F07 completa.
+
+La suite del motore eseguita il **2026-11-19** ha superato 25 test JUnit, 0 fallimenti e 0 errori, inclusi i test aggiornati che verificano la chiamata server-to-server senza header `Origin` e il rifiuto delle richieste preflight senza configurare CORS. L'integrazione React con `springboot_app/app` non è stata implementata né verificata.
 
 ## Da definire
 

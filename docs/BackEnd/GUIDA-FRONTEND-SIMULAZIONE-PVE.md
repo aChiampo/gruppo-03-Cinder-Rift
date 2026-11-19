@@ -1,20 +1,27 @@
 # Guida FrontEnd: simulazione PvE
 
-Questa guida descrive la chiamata dal browser al servizio `game-engine` e il
-formato necessario per avviare una battaglia PvE.
+Questa guida descrive il payload e la risposta dell'API interna PvE di
+`game_engine`, come riferimento per l'integrazione applicativa.
 
-## Endpoint e rete
+## Flusso e rete
 
-Chiamare direttamente:
+L'endpoint interno è `POST /api/battle/pve/{id}` ed è raggiungibile nella rete
+Docker Compose all'indirizzo:
 
 ```text
-POST http://localhost:8083/api/battle/pve/1
+http://game-engine:8083/api/battle/pve/{id}
 ```
 
-Il servizio `game-engine` risponde sulla porta `8083`. **Non anteporre un proxy
-relativo come `/api` sulle porte `8081` o `8082`**: quelle porte non sono
-l'endpoint di questa chiamata. Il CORS del servizio è già abilitato per le
-origini `http://localhost:8082` e `http://localhost:5173`.
+È destinato esclusivamente alla chiamata server-to-server da
+`springboot_app/app`. Nel flusso previsto
+`frontend -> springboot_app/app -> game-engine`, il frontend deve rivolgersi al
+backend applicativo, non direttamente a `game_engine`. L'orchestrazione PvE in
+`springboot_app/app` non è ancora implementata; non è definita né disponibile
+una rotta pubblica dell'applicazione per questo flusso.
+
+Compose mantiene il binding host `127.0.0.1:8083` (modificabile con
+`ENGINE_PORT`) esclusivamente per debug e prove locali da terminale o `curl`.
+Non usarlo come endpoint del browser.
 
 - `stageId` `1`: stage attivo subito, utilizzabile per provare la chiamata.
 - `stageId` `3`: stage legato all'evento `BLOOD_MOON`; se l'evento non è attivo,
@@ -146,19 +153,19 @@ i valori restituiti dal server):
 
 ```json
 {
-  "stageId": "1",
+  "stageId": "stage_01",
   "stageNumber": 1,
-  "stageTitle": "Stage 1",
+  "stageTitle": "Tutorial: Il Vantaggio di Fazione",
   "challenger": {
-    "userId": "frontend-demo",
-    "username": "frontend-demo",
-    "displayName": "Giocatore demo"
+    "userId": "user-test-01",
+    "username": "test_challenger",
+    "displayName": "Commander Test"
   },
-  "enemyName": "Avversario",
+  "enemyName": "Recluta Cultista",
   "outcome": "VICTORY",
-  "winner": "frontend-demo",
+  "winner": "Commander Test",
   "tutorialHints": [
-    "Suggerimento restituito dal server"
+    "[TUTORIAL] Suggerimento restituito dal server"
   ],
   "battleLog": [
     "Evento di battaglia restituito dal server"
@@ -186,59 +193,17 @@ specifiche riportate sotto.
 | `409` | `Inactive Stage Event` | Evento necessario allo stage non attivo; per lo stage `3`, verificare l'attivazione di `BLOOD_MOON`. La risposta può includere `eventCode`. |
 | `422` | `Invalid Deck` | Mazzo non valido. Leggere `violations`, un array di messaggi testuali: mostrarli all'utente e correggere ciascun problema. |
 
-## Snippet React / `fetch`
+## Stato dell'integrazione e verifica
 
-La funzione accetta l'ID dello stage, l'oggetto `challenger` e l'array di
-`entries`. In caso di errore HTTP estrae `violations` quando disponibili e le
-espone insieme allo status, senza nascondere la risposta del server.
+La guida descrive il contratto interno del motore e non un'integrazione
+disponibile al browser. Il frontend dovrà passare dal backend applicativo;
+fino all'implementazione dell'orchestrazione in `springboot_app/app`, non è
+disponibile un flusso PvE completo lato applicazione. Per i dettagli canonici
+del contratto interno vedere [F07 — Sfide e simulazione](sfide-simulazione.md#endpoint-dimostrativo-pve-per-il-sal).
 
-```js
-async function startPveBattle(stageId, challenger, entries) {
-  const response = await fetch(
-    `http://localhost:8083/api/battle/pve/${encodeURIComponent(stageId)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      body: JSON.stringify({
-        stageId: String(stageId),
-        challenger,
-        deck: { entries }
-      })
-    }
-  );
-
-  const result = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const violations = Array.isArray(result?.violations)
-      ? result.violations
-      : [];
-    const message = result?.detail || `Errore HTTP ${response.status}`;
-    const error = new Error(message);
-    error.status = response.status;
-    error.violations = violations;
-    error.problem = result;
-    throw error;
-  }
-
-  return result;
-}
-```
-
-Esempio d'uso:
-
-```js
-try {
-  const battle = await startPveBattle("1", challenger, entries);
-  setBattle(battle);
-} catch (error) {
-  if (error.status === 422) {
-    setErrors(error.violations);
-  } else {
-    setError(error.message);
-  }
-}
-```
+La verifica della suite del motore eseguita il **2026-11-19** ha completato
+25 test JUnit con 0 fallimenti e 0 errori, inclusi i 6 test aggiornati di
+`BattleControllerTest`: la chiamata POST senza header `Origin` riesce, mentre
+le richieste preflight vengono rifiutate e non è configurato CORS. Questa
+verifica usa H2 e non verifica l'orchestrazione applicativa né l'integrazione
+del frontend, che restano da implementare.

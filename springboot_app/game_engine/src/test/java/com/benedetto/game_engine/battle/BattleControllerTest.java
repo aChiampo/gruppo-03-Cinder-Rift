@@ -30,13 +30,18 @@ class BattleControllerTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
+    @Autowired
+    private BattlePreflightRejectionFilter preflightRejectionFilter;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .addFilters(preflightRejectionFilter)
+                .build();
     }
 
     private List<ChallengerDeckEntryRequest> buildValidEntries() {
@@ -89,6 +94,29 @@ class BattleControllerTest {
     }
 
     @Test
+    void executeBattle_withoutOriginHeader_succeedsForBackendCaller() throws Exception {
+        PveBattleRequest request = buildValidRequest();
+
+        mockMvc.perform(post("/api/battle/pve/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stageId").value("stage_01"))
+                .andExpect(jsonPath("$.stageNumber").value(1))
+                .andExpect(jsonPath("$.stageTitle").isNotEmpty())
+                .andExpect(jsonPath("$.challenger.userId").value("user-test-01"))
+                .andExpect(jsonPath("$.challenger.username").value("test_challenger"))
+                .andExpect(jsonPath("$.challenger.displayName").value("Commander Test"))
+                .andExpect(jsonPath("$.enemyName").isNotEmpty())
+                .andExpect(jsonPath("$.outcome").value(anyOf(is("VICTORY"), is("DEFEAT"), is("DRAW"))))
+                .andExpect(jsonPath("$.winner").isNotEmpty())
+                .andExpect(jsonPath("$.tutorialHints").isArray())
+                .andExpect(jsonPath("$.tutorialHints", not(empty())))
+                .andExpect(jsonPath("$.battleLog").isArray())
+                .andExpect(jsonPath("$.battleLog", not(empty())));
+    }
+
+    @Test
     void executeBattle_withIncompleteDeckOrNonExistentCard_returnsUnprocessableEntityWithViolations() throws Exception {
         PveBattleRequest request = PveBattleRequest.builder()
                 .challenger(ChallengerInfoRequest.builder().userId("user-err").build())
@@ -130,11 +158,17 @@ class BattleControllerTest {
     }
 
     @Test
-    void preflightCorsRequest_withAllowedOrigin_returnsCorsHeaders() throws Exception {
+    void preflightCorsRequest_fromFrontendOrigins_isRejectedWithoutCorsHeaders() throws Exception {
         mockMvc.perform(options("/api/battle/pve/1")
                         .header("Origin", "http://localhost:8082")
                         .header("Access-Control-Request-Method", "POST"))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8082"));
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+
+        mockMvc.perform(options("/api/battle/pve/1")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
     }
 }
