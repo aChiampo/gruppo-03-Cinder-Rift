@@ -31,15 +31,15 @@ class CampaignApplicationTests {
 
 	@Test
 	void loadsCampaignStageAndItsEnemyDeck() {
-		assertEquals("campaign/decks/deck_stage_01.json",
-				campaignStageLoaderService.loadStage("stage_01_fazioni.json").getEnemyDeckPath());
+		assertEquals("mocks/mirror.json",
+				campaignStageLoaderService.loadStage("stage_01_mirror.json").getEnemyDeckPath());
 	}
 
 	@Test
 	void executesTutorialStageAndPrependsHintsToMatchLog() {
-		Player player = new Player("Comandante Umano", cardLoaderService.loadDeck("mocks/deck_player_a.json"));
+		Player player = new Player("Comandante Umano", cardLoaderService.loadDeck("mocks/mirror.json"));
 
-		List<String> report = campaignService.executeStage(player, "stage_01_fazioni.json");
+		List<String> report = campaignService.executeStage(player, "stage_01_mirror.json");
 
 		assertTrue(report.get(0).startsWith("[TUTORIAL]"));
 		assertTrue(report.stream().anyMatch(line -> line.contains("INIZIO PARTITA AUTOMATICA TCG")));
@@ -47,9 +47,9 @@ class CampaignApplicationTests {
 
 	@Test
 	void skipsStageWhenRequiredSpecialEventIsInactive() {
-		Player player = new Player("Comandante Umano", cardLoaderService.loadDeck("mocks/deck_player_a.json"));
+		Player player = new Player("Comandante Umano", cardLoaderService.loadDeck("mocks/mirror.json"));
 
-		List<String> report = campaignService.executeStage(player, "stage_03_evento_speciale.json");
+		List<String> report = campaignService.executeStage(player, "stage_03_demo_event.json");
 
 		assertTrue(report.get(0).contains("BLOOD_MOON"));
 		assertTrue(report.get(0).contains("non è attivo o non esiste"));

@@ -19,7 +19,7 @@ import java.util.List;
 @ConditionalOnProperty(name = "game-engine.cli.enabled", havingValue = "true", matchIfMissing = true)
 public class GameModeRunner implements CommandLineRunner {
 
-    private static final String CAMPAIGN_STAGE = "campaign/stages/stage_01_fazioni.json";
+    private static final String CAMPAIGN_STAGE = "campaign/stages/stage_01_mirror.json";
 
     private final CardLoaderService cardLoaderService;
     private final CampaignService campaignService;
@@ -69,15 +69,15 @@ public class GameModeRunner implements CommandLineRunner {
     }
 
     private void runCampaign(PrintStream output) {
-        PlayerDeck deck = cardLoaderService.loadDeck("mocks/deck_player_a.json");
+        PlayerDeck deck = cardLoaderService.loadDeck("mocks/mirror.json");
         Player player = new Player("Comandante Umano", deck);
         List<String> report = campaignService.executeStage(player, CAMPAIGN_STAGE);
         report.forEach(output::println);
     }
 
     private void runOnlineMatch(PrintStream output) {
-        PlayerDeck deckA = cardLoaderService.loadDeck("mocks/deck_player_a.json");
-        PlayerDeck deckB = cardLoaderService.loadDeck("mocks/deck_player_b.json");
+        PlayerDeck deckA = cardLoaderService.loadDeck("mocks/mirror.json");
+        PlayerDeck deckB = cardLoaderService.loadDeck("mocks/demo.json");
         Player playerA = new Player("Giocatore A", deckA);
         Player playerB = new Player("Giocatore B", deckB);
         List<String> report = matchEngine.runMatch(playerA, playerB);

@@ -7,18 +7,10 @@ import com.benedetto.game_engine.battle.exception.InvalidDeckException;
 import com.benedetto.game_engine.model.Creature;
 import com.benedetto.game_engine.model.Equipment;
 import com.benedetto.game_engine.model.PlayerDeck;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
+import com.benedetto.game_engine.effect.EffectEngine;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ChallengerDeckMapperService {
@@ -27,94 +19,13 @@ public class ChallengerDeckMapperService {
     private static final int MAX_CARDS_PER_ROUND = 5;
     private static final int MAX_TOTAL_DECK_CARDS = 30;
 
-    private final ResourceLoader resourceLoader;
-    private final ObjectMapper objectMapper;
+    private final EffectEngine effectEngine;
 
-    private final Map<String, Creature> creaturePool = new ConcurrentHashMap<>();
-    private final Map<String, Equipment> equipmentPool = new ConcurrentHashMap<>();
-
-    public ChallengerDeckMapperService(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-        this.objectMapper = new ObjectMapper();
-    }
-
-    @PostConstruct
-    public void init() {
-        loadPools();
-    }
-
-    public synchronized void loadPools() {
-        creaturePool.clear();
-        equipmentPool.clear();
-
-        try {
-            ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
-            Resource[] resources = resolver.getResources("classpath*:mocks/pool_*.json");
-            if (resources == null || resources.length == 0) {
-                resources = resolver.getResources("classpath:mocks/pool_*.json");
-            }
-
-            List<Resource> resourceList = new ArrayList<>();
-            if (resources != null && resources.length > 0) {
-                resourceList.addAll(Arrays.asList(resources));
-            } else {
-                List<String> fallbackPaths = List.of(
-                        "mocks/pool_alieni.json",
-                        "mocks/pool_cultisti.json",
-                        "mocks/pool_cyborg.json",
-                        "mocks/pool_equipments.json",
-                        "mocks/pool_mostri_radioattivi.json",
-                        "mocks/pool_sapiens.json"
-                );
-                for (String path : fallbackPaths) {
-                    Resource r = resourceLoader.getResource("classpath:" + path);
-                    if (r.exists()) {
-                        resourceList.add(r);
-                    }
-                }
-            }
-
-            for (Resource resource : resourceList) {
-                String filename = resource.getFilename();
-                if (filename == null) {
-                    continue;
-                }
-                if (filename.toLowerCase().contains("equipment")) {
-                    List<Equipment> equipments = objectMapper.readValue(
-                            resource.getInputStream(),
-                            new TypeReference<List<Equipment>>() {}
-                    );
-                    if (equipments != null) {
-                        for (Equipment eq : equipments) {
-                            if (eq != null && eq.getId() != null) {
-                                equipmentPool.put(eq.getId(), eq);
-                            }
-                        }
-                    }
-                } else {
-                    List<Creature> creatures = objectMapper.readValue(
-                            resource.getInputStream(),
-                            new TypeReference<List<Creature>>() {}
-                    );
-                    if (creatures != null) {
-                        for (Creature c : creatures) {
-                            if (c != null && c.getId() != null) {
-                                creaturePool.put(c.getId(), c);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load mock card pools from classpath:mocks/pool_*.json", e);
-        }
+    public ChallengerDeckMapperService(EffectEngine effectEngine) {
+        this.effectEngine = effectEngine;
     }
 
     public void validateDeck(ChallengerDeckRequest deckRequest) {
-        if (creaturePool.isEmpty() && equipmentPool.isEmpty()) {
-            loadPools();
-        }
-
         if (deckRequest == null || deckRequest.getEntries() == null || deckRequest.getEntries().isEmpty()) {
             throw new InvalidDeckException("Deck request entries must not be null or empty",
                     List.of("Deck entries must not be null or empty"));
@@ -135,20 +46,13 @@ public class ChallengerDeckMapperService {
                 continue;
             }
 
-            String cardId = entry.getCardId() != null ? entry.getCardId().trim() : null;
-            if (cardId == null || cardId.isEmpty()) {
-                violations.add("Deck entry at index " + i + " has a missing or empty cardId");
+            Integer cardId = entry.getCardId();
+            if (cardId == null || cardId <= 0) {
+                violations.add("Deck entry at index " + i + " must have a positive numeric cardId");
                 continue;
             }
 
-            boolean isCreature = creaturePool.containsKey(cardId);
-            boolean isEquipment = equipmentPool.containsKey(cardId);
-
-            if (!isCreature && !isEquipment) {
-                violations.add("Card with ID '" + cardId + "' does not exist in any loaded card pool");
-            }
-
-            String destination = entry.getDestination() != null ? entry.getDestination().trim().toUpperCase() : null;
+            String destination = entry.getDestination() != null ? entry.getDestination().trim().toUpperCase(Locale.ROOT) : null;
             if (destination == null || destination.isEmpty()) {
                 violations.add("Card with ID '" + cardId + "' has a missing or empty destination");
                 continue;
@@ -163,13 +67,21 @@ public class ChallengerDeckMapperService {
                 continue;
             }
 
-            if (isRoundDest && isEquipment) {
-                violations.add("Card with ID '" + cardId
-                        + "' is an Equipment and cannot be assigned to creature destination '" + destination + "'");
+            // The app backend validates catalog data and deck legality. Only require
+            // the snapshot fields needed to construct battle objects here.
+            if (entry.getName() == null || entry.getName().isBlank()) {
+                violations.add("Card " + cardId + " must include its name");
             }
-            if (isEquipDest && isCreature) {
-                violations.add("Card with ID '" + cardId
-                        + "' is a Creature and cannot be assigned to destination 'EQUIPMENT'");
+            if (isRoundDest && (entry.getFaction() == null || entry.getBaseAtk() == null
+                    || entry.getInitialDef() == null || entry.getEnergyCost() == null
+                    || entry.getPowerPoints() == null)) {
+                violations.add("Creature " + cardId
+                        + " must include faction, baseAtk, initialDef, energyCost and powerPoints");
+            }
+            try {
+                effectEngine.validate(entry.getEffects());
+            } catch (IllegalArgumentException ex) {
+                violations.add("Card " + cardId + ": " + ex.getMessage());
             }
 
             destinationCounts.merge(destination, 1, Integer::sum);
@@ -226,25 +138,16 @@ public class ChallengerDeckMapperService {
         List<Equipment> equipmentDeck = new ArrayList<>();
 
         for (ChallengerDeckEntryRequest entry : deckRequest.getEntries()) {
-            String dest = entry.getDestination().trim().toUpperCase();
-            String cardId = entry.getCardId().trim();
-
+            String dest = entry.getDestination().trim().toUpperCase(Locale.ROOT);
             if (dest.startsWith("ROUND")) {
                 int roundNum = Integer.parseInt(dest.substring(5));
-                Creature template = creaturePool.get(cardId);
-                if (template != null) {
-                    creatureRounds.get(roundNum).add(template.cloneForBattle());
-                }
-            } else if ("EQUIPMENT".equals(dest)) {
-                Equipment template = equipmentPool.get(cardId);
-                if (template != null) {
-                    equipmentDeck.add(new Equipment(
-                            template.getId(),
-                            template.getName(),
-                            template.getAtkBonus(),
-                            template.getDefBonus()
-                    ));
-                }
+                Creature creature = new Creature(
+                        entry.getCardId(), entry.getName(), entry.getFaction(), entry.getEnergyCost(),
+                        entry.getPowerPoints(), entry.getBaseAtk(), entry.getInitialDef(), entry.getInitialDef(), null);
+                creature.setEffects(List.copyOf(entry.getEffects()));
+                creatureRounds.get(roundNum).add(creature);
+            } else {
+                equipmentDeck.add(new Equipment(entry.getCardId(), entry.getName(), List.copyOf(entry.getEffects())));
             }
         }
 
@@ -261,31 +164,4 @@ public class ChallengerDeckMapperService {
         return mapToPlayerDeck(ChallengerInfoRequest.builder().userId(playerId).build(), deckRequest);
     }
 
-    public Map<String, Creature> getCreaturePool() {
-        if (creaturePool.isEmpty()) {
-            loadPools();
-        }
-        return Collections.unmodifiableMap(creaturePool);
-    }
-
-    public Map<String, Equipment> getEquipmentPool() {
-        if (equipmentPool.isEmpty()) {
-            loadPools();
-        }
-        return Collections.unmodifiableMap(equipmentPool);
-    }
-
-    public Optional<Creature> findCreature(String id) {
-        if (creaturePool.isEmpty()) {
-            loadPools();
-        }
-        return Optional.ofNullable(creaturePool.get(id));
-    }
-
-    public Optional<Equipment> findEquipment(String id) {
-        if (equipmentPool.isEmpty()) {
-            loadPools();
-        }
-        return Optional.ofNullable(equipmentPool.get(id));
-    }
 }

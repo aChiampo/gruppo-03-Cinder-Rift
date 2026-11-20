@@ -1,0 +1,14 @@
+{
+  "stageId": "stage_03",
+  "stageNumber": 3,
+  "title": "Special Event: Demo Deck",
+  "description": "Face a deck built from CR01 cards while BLOOD_MOON is active.",
+  "enemyName": "Demo Commander",
+  "enemyDeckPath": "mocks/demo.json",
+  "deterministic": false,
+  "tutorialHints": [
+    "[SPECIAL EVENT] This stage requires the BLOOD_MOON event to be active.",
+    "[TUTORIAL] The demo deck uses up to two copies of a creature across its five rounds."
+  ],
+  "requiredEventCode": "BLOOD_MOON"
+}

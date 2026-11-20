@@ -168,7 +168,9 @@ L’equipaggiamento:
 
 Il trasferimento non cura le creature e non trasferisce alla successiva i danni subiti dalla precedente. Ogni nuova creatura entra con la propria difesa iniziale, modificata dall’equipaggiamento.
 
-Il testo della carta deve specificare chiaramente effetto, condizioni di attivazione ed eventuali limiti. Il passaggio a una nuova creatura non ripete effetti immediati, salvo indicazione esplicita.
+Il testo della carta deve specificare chiaramente effetto, condizioni di attivazione ed eventuali limiti.
+
+Decisione per il prototipo confermata dall'utente il **2026-11-20**: gli effetti si attivano quando la creatura entra in battaglia, prima quelli dell'equipaggiamento e poi quelli propri della creatura. Bersaglio e durata dipendono dal singolo effetto. Gli effetti associati a ciascuna fonte seguono l'ordine configurato; per le entrate contemporanee il motore risolve prima gli equipaggiamenti di entrambi e poi le abilità delle creature. Il trasferimento avvia gli effetti per la nuova creatura ospite secondo il comportamento della classe dedicata. Gli equipaggiamenti CR01 specificano modificatori per ogni creatura: Breach Capacitor termina il proprio bonus dopo il primo scambio di ciascuna. Questa decisione non approva abilità nuove o il bilanciamento definitivo. Il [contratto tecnico](../BackEnd/app-battaglie.md#attivazione-e-responsabilità-degli-effetti) descrive implementazione e verifiche.
 
 Se la partita termina anticipatamente, gli equipaggiamenti non ancora estratti rimangono inutilizzati.
 
@@ -301,7 +303,7 @@ Prima dell’implementazione definitiva, il team dovrà:
 
 - Verificare il bilanciamento delle soglie energetiche e dell’accesso delle creature di costo inferiore ai round successivi, approvati per il prototipo F05 il 2026-11-18.
 - Definire statistiche e punti potenza delle carte.
-- Scrivere gli effetti precisi degli equipaggiamenti e il loro ordine di risoluzione.
+- Completare gli effetti futuri e verificarne il bilanciamento; per il prototipo sono confermati attivazione all’ingresso e ordine equipaggiamenti prima delle abilità delle creature (2026-11-20).
 - Verificare budget, rarità, copie e bonus di fazione.
 - Confermare la formula dei danni in eccesso.
 - Definire se gli equipaggiamenti possono introdurre cure o impedire i danni.

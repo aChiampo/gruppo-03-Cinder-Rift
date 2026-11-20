@@ -1,0 +1,350 @@
+{
+  "playerId": "demo",
+  "creatureRounds": {
+    "1": [
+      {
+        "id": 1,
+        "name": "Sentinel K-17",
+        "faction": "CYBORG",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 3,
+        "initialDef": 5,
+        "effects": []
+      },
+      {
+        "id": 1,
+        "name": "Sentinel K-17",
+        "faction": "CYBORG",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 3,
+        "initialDef": 5,
+        "effects": []
+      },
+      {
+        "id": 2,
+        "name": "Explorer of the ruins",
+        "faction": "SAPIENS",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 3,
+        "initialDef": 5,
+        "effects": []
+      },
+      {
+        "id": 3,
+        "name": "Slaghound",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 4,
+        "effects": []
+      },
+      {
+        "id": 5,
+        "name": "Acolyte of the Fracture",
+        "faction": "CULTISTI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 4,
+        "effects": []
+      }
+    ],
+    "2": [
+      {
+        "id": 2,
+        "name": "Explorer of the ruins",
+        "faction": "SAPIENS",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 3,
+        "initialDef": 5,
+        "effects": []
+      },
+      {
+        "id": 3,
+        "name": "Slaghound",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 4,
+        "effects": []
+      },
+      {
+        "id": 4,
+        "name": "Orion’s Predator",
+        "faction": "ALIENI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 5,
+        "initialDef": 3,
+        "effects": []
+      },
+      {
+        "id": 4,
+        "name": "Orion’s Predator",
+        "faction": "ALIENI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 5,
+        "initialDef": 3,
+        "effects": []
+      },
+      {
+        "id": 5,
+        "name": "Acolyte of the Fracture",
+        "faction": "CULTISTI",
+        "energyCost": 1,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 4,
+        "effects": []
+      }
+    ],
+    "3": [
+      {
+        "id": 13,
+        "name": "Hydraulic Enforcer",
+        "faction": "CYBORG",
+        "energyCost": 3,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 6,
+        "effects": []
+      },
+      {
+        "id": 13,
+        "name": "Hydraulic Enforcer",
+        "faction": "CYBORG",
+        "energyCost": 3,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 6,
+        "effects": []
+      },
+      {
+        "id": 14,
+        "name": "Cindermaw",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 3,
+        "powerPoints": 3,
+        "baseAtk": 7,
+        "initialDef": 4,
+        "effects": []
+      },
+      {
+        "id": 15,
+        "name": "Gauss Sharpshooter",
+        "faction": "SAPIENS",
+        "energyCost": 3,
+        "powerPoints": 2,
+        "baseAtk": 6,
+        "initialDef": 4,
+        "effects": []
+      },
+      {
+        "id": 17,
+        "name": "Obsidian Harvester",
+        "faction": "ALIENI",
+        "energyCost": 3,
+        "powerPoints": 2,
+        "baseAtk": 5,
+        "initialDef": 5,
+        "effects": []
+      }
+    ],
+    "4": [
+      {
+        "id": 15,
+        "name": "Gauss Sharpshooter",
+        "faction": "SAPIENS",
+        "energyCost": 3,
+        "powerPoints": 2,
+        "baseAtk": 6,
+        "initialDef": 4,
+        "effects": []
+      },
+      {
+        "id": 17,
+        "name": "Obsidian Harvester",
+        "faction": "ALIENI",
+        "energyCost": 3,
+        "powerPoints": 2,
+        "baseAtk": 5,
+        "initialDef": 5,
+        "effects": []
+      },
+      {
+        "id": 18,
+        "name": "Siege Warden",
+        "faction": "CYBORG",
+        "energyCost": 4,
+        "powerPoints": 4,
+        "baseAtk": 5,
+        "initialDef": 9,
+        "effects": []
+      },
+      {
+        "id": 20,
+        "name": "Ark Defender",
+        "faction": "SAPIENS",
+        "energyCost": 4,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 8,
+        "effects": []
+      },
+      {
+        "id": 21,
+        "name": "Keeper of the Last Ember",
+        "faction": "CULTISTI",
+        "energyCost": 4,
+        "powerPoints": 2,
+        "baseAtk": 6,
+        "initialDef": 6,
+        "effects": []
+      }
+    ],
+    "5": [
+      {
+        "id": 19,
+        "name": "Pier Nine Abomination",
+        "faction": "MOSTRI_RADIOATTIVI",
+        "energyCost": 4,
+        "powerPoints": 3,
+        "baseAtk": 8,
+        "initialDef": 5,
+        "effects": []
+      },
+      {
+        "id": 20,
+        "name": "Ark Defender",
+        "faction": "SAPIENS",
+        "energyCost": 4,
+        "powerPoints": 2,
+        "baseAtk": 4,
+        "initialDef": 8,
+        "effects": []
+      },
+      {
+        "id": 23,
+        "name": "Second Dawn Colossus",
+        "faction": "CYBORG",
+        "energyCost": 5,
+        "powerPoints": 5,
+        "baseAtk": 8,
+        "initialDef": 8,
+        "effects": []
+      },
+      {
+        "id": 25,
+        "name": "Last Line Commander",
+        "faction": "SAPIENS",
+        "energyCost": 5,
+        "powerPoints": 2,
+        "baseAtk": 6,
+        "initialDef": 8,
+        "effects": []
+      },
+      {
+        "id": 26,
+        "name": "Voice Beyond the Rift",
+        "faction": "CULTISTI",
+        "energyCost": 5,
+        "powerPoints": 2,
+        "baseAtk": 7,
+        "initialDef": 7,
+        "effects": []
+      }
+    ]
+  },
+  "equipmentDeck": [
+    {
+      "id": 6,
+      "name": "Pulse Blade",
+      "effects": [
+        {
+          "effectId": 1,
+          "code": "ATTACK_BONUS",
+          "parameters": {
+            "amount": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Recovery Armor",
+      "effects": [
+        {
+          "effectId": 2,
+          "code": "STARTING_DEFENSE_MODIFIER",
+          "parameters": {
+            "amount": 2,
+            "minimum": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "name": "Breach Capacitor",
+      "effects": [
+        {
+          "effectId": 3,
+          "code": "FIRST_EXCHANGE_ATTACK_BONUS",
+          "parameters": {
+            "amount": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "name": "Overdrive Harness",
+      "effects": [
+        {
+          "effectId": 1,
+          "code": "ATTACK_BONUS",
+          "parameters": {
+            "amount": 2
+          }
+        },
+        {
+          "effectId": 2,
+          "code": "STARTING_DEFENSE_MODIFIER",
+          "parameters": {
+            "amount": -1,
+            "minimum": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "Bastion Rig",
+      "effects": [
+        {
+          "effectId": 1,
+          "code": "ATTACK_BONUS",
+          "parameters": {
+            "amount": 1
+          }
+        },
+        {
+          "effectId": 2,
+          "code": "STARTING_DEFENSE_MODIFIER",
+          "parameters": {
+            "amount": 2,
+            "minimum": 1
+          }
+        }
+      ]
+    }
+  ],
+  "deterministic": false
+}

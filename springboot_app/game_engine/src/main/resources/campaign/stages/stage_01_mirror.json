@@ -1,0 +1,15 @@
+{
+  "stageId": "stage_01",
+  "stageNumber": 1,
+  "title": "Tutorial: Mirror Deck",
+  "description": "Face the seeded collection and learn faction advantages.",
+  "enemyName": "Mirror Commander",
+  "enemyDeckPath": "mocks/mirror.json",
+  "deterministic": true,
+  "tutorialHints": [
+    "[TUTORIAL] Each faction has an attack advantage against two rival factions.",
+    "[TUTORIAL] A faction advantage grants +2 attack against the current opposing creature.",
+    "[TUTORIAL] Equipment transfers to the next creature and is discarded at the end of the round."
+  ],
+  "requiredEventCode": null
+}

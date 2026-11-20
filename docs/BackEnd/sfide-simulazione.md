@@ -34,7 +34,7 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 
 La specifica del **2026-11-20**, richiesta dall'utente, è raccolta in [App battaglie](app-battaglie.md). Il riferimento canonico di endpoint, header e payload pubblici è [API delle battaglie per il FrontEnd](app-battaglie-api.md). L'integrazione usa il flusso `frontend → applicazione → motore`, identità dal Bearer, ID delle carte del database, log della PR #36 senza messaggi tutorial, rifiuto degli invii sovrapposti e timeout HTTP di 10 secondi.
 
-La [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), ancora aperta alla consultazione del 2026-11-20, introduce soltanto l'endpoint interno dimostrativo. L'orchestrazione applicativa non è implementata. Opzioni di lock/recupero e gestione del lavoro dopo timeout sono documentate senza selezionarne una; persistenza PvE, ricompense, progressione e scoperta degli stage restano **DA DEFINIRE**. Questa porzione non completa F07 né modifica le regole di gioco.
+La [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36) è integrata in `dev` con `786707a` e introduce l'endpoint interno dimostrativo, ora implementato. La funzionalità applicativa è documentata; orchestrazione nell'applicazione e integrazione frontend non sono implementate. Il contratto interno e il comportamento server sono raccolti in App battaglie. Opzioni di lock/recupero e gestione del lavoro dopo timeout sono documentate senza selezionarne una; persistenza PvE, ricompense, progressione e scoperta degli stage restano **DA DEFINIRE**. Questa porzione non completa F07 né modifica le regole di gioco.
 
 ## Da definire
 

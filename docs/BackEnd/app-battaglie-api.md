@@ -1,9 +1,9 @@
 # API delle battaglie PvE per il FrontEnd
 
 ID funzionalità: F07. Ultimo aggiornamento significativo: **2026-11-20**.
-Stato: contratto pubblico pianificato, **non implementato** nell'applicazione; deriva dalle decisioni dell'utente e dalla [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), revisione `7018b4f2a1f0e1bb33d5d0afc586e4170079451d`, ancora aperta alla consultazione.
+Stato: funzionalità applicativa e contratto pubblico **documentati**, implementazione nell'applicazione **non iniziata**. L'API interna del motore è implementata dalla [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), integrata in `dev` con `786707a`; il contratto interno corrente include ID carta numerici e snapshot completi, come descritto in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
 
-Questo file è il riferimento canonico di endpoint, header e payload pubblici per l'implementazione FrontEnd. [App battaglie](app-battaglie.md) contiene il flusso applicativo e le opzioni infrastrutturali ancora da scegliere. La presenza della specifica non attesta un endpoint disponibile o una verifica integrata.
+Questo file è il riferimento canonico di endpoint, header e payload pubblici per l'implementazione FrontEnd. [App battaglie](app-battaglie.md) contiene il comportamento server, il contratto interno del motore e le opzioni infrastrutturali ancora da scegliere. Il frontend applicherà la presente specifica; l'endpoint pubblico non è ancora disponibile e l'integrazione non è verificata.
 
 ## Endpoint e header
 
@@ -109,7 +109,7 @@ Gli errori applicativi con body usano `Content-Type: application/problem+json`. 
 | `503` | Motore non disponibile o non raggiungibile. | Messaggio di indisponibilità. |
 | `504` | Deadline della chiamata al motore esaurita nel budget complessivo. | Messaggio di timeout. |
 
-Un errore interno relativo a ID dei pool non aggiornati non viene inoltrato automaticamente come colpa del mazzo dell'utente. I codici del motore non sostituiscono i controlli del backend. Il precedente caso `USER_MISMATCH` non esiste: il body non contiene `userId`.
+Un errore interno relativo a snapshot incompleti o malformati non viene inoltrato automaticamente come colpa del mazzo dell'utente. I codici del motore non sostituiscono i controlli del backend. Il precedente caso `USER_MISMATCH` non esiste: il body non contiene `userId`.
 
 ### Richiesta concorrente
 

@@ -107,7 +107,7 @@ Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token
 
 Usare PostgreSQL 18 e configurare la connessione con `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`. Con Compose, la connessione è configurata a partire dalle variabili `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`. L’utente che esegue Flyway deve poter creare oggetti nello schema e inserire righe in `roles` usando il relativo generatore di ID. DDL Hibernate, inizializzazione SQL Spring e baseline automatica di Flyway sono disabilitati. [Specifica v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md) · [Configurazione applicativa](src/main/resources/application.properties).
 
-**Database nuovo.** Creare un database vuoto e avviare normalmente il backend. Flyway applica V1 per creare le cinque tabelle F01 e V2 per inserire i ruoli `USER` e `ADMIN`. V3 crea le tabelle di catalogo, arti, collezione, configurazioni dei round e mazzi; V4 inserisce tipi, rarità, fazioni e configurazioni dei round. V5 importa le 30 carte del set iniziale CR01 e le relative arti; V6 crea l’utente dimostrativo e la sua collezione, come descritto sotto. Le migrazioni non realizzano tutto il modello v1.1. Con Compose, dalla radice del repository eseguire `docker compose up --build -d spring_app` con un database vuoto. Verificare V1–V6 in `flyway_schema_history` e lo stato di `GET /actuator/health`. [V1](src/main/resources/db/migration/V1__create_f01_schema.sql) · [V2](src/main/resources/db/migration/V2__seed_f01_roles.sql) · [V3](src/main/resources/db/migration/V3__create_f05_cards_and_decks_schema.sql) · [V4](src/main/resources/db/migration/V4__seed_f05_reference_data.sql).
+**Database nuovo.** Creare un database vuoto e avviare normalmente il backend. Flyway applica V1 per creare le cinque tabelle F01 e V2 per inserire i ruoli `USER` e `ADMIN`. V3 crea le tabelle di catalogo, arti, collezione, configurazioni dei round e mazzi; V4 inserisce tipi, rarità, fazioni e configurazioni dei round. V5 importa le 30 carte del set iniziale CR01 e le relative arti; V6 crea l’utente dimostrativo e la sua collezione, come descritto sotto. Le migrazioni non realizzano tutto il modello v1.1. Con Compose, dalla radice del repository eseguire `docker compose up --build -d spring_app` con un database vuoto. Verificare V1–V8 in `flyway_schema_history` e lo stato di `GET /actuator/health`. [V1](src/main/resources/db/migration/V1__create_f01_schema.sql) · [V2](src/main/resources/db/migration/V2__seed_f01_roles.sql) · [V3](src/main/resources/db/migration/V3__create_f05_cards_and_decks_schema.sql) · [V4](src/main/resources/db/migration/V4__seed_f05_reference_data.sql).
 
 **Database esistente senza cronologia Flyway.**
 
@@ -120,7 +120,7 @@ Usare PostgreSQL 18 e configurare la connessione con `SPRING_DATASOURCE_URL`, `S
    flyway -defaultSchema=public -schemas=public -baselineOnMigrate=false -locations=filesystem:src/main/resources/db/migration migrate
    ```
 
-4. Verificare in `flyway_schema_history` la baseline a 1 e l’applicazione di V2–V6. Verificare i dati esistenti, gli ID dei ruoli già presenti e la presenza dei due ruoli richiesti, quindi avviare il backend e verificare `GET /actuator/health`.
+4. Verificare in `flyway_schema_history` la baseline a 1 e l’applicazione di V2–V8. Verificare i dati esistenti, gli ID dei ruoli già presenti e la presenza dei due ruoli richiesti, quindi avviare il backend e verificare `GET /actuator/health`.
 
 ### Set iniziale e utente dimostrativo F01/F05
 
@@ -132,9 +132,17 @@ Gli ID numerici restano generati dal database. `cards.code` conserva l’ID edit
 
 V6 è una migrazione ordinaria applicata automaticamente: crea questo account dimostrativo in ogni database che applica V6. Un’email o un nickname già occupati fanno fallire la migrazione senza sovrascrivere account esistenti. Un nuovo avvio non duplica i dati grazie alla cronologia Flyway.
 
-I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V6 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
+I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V8 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
 
-### Pulizia delle sessioni F01
+### Effetti delle carte F07
+
+Aggiornamento richiesto dall'utente il **2026-11-20**. [V7](src/main/resources/db/migration/V7__create_card_effects_schema.sql) aggiunge `effects` e `card_effects` con FK, parametri JSONB a oggetto e ordine positivo univoco per carta. [V8](src/main/resources/db/migration/V8__seed_initial_card_effects.sql) inizializza tre comportamenti e sette associazioni ai cinque equipaggiamenti CR01, risolvendo gli ID tramite i codici delle carte e degli effetti. Il modello vale anche per le creature; non vengono aggiunte abilità non presenti nel seed originale.
+
+Per un database già a V6 basta il normale avvio con Flyway abilitato: V7/V8 vengono applicate senza reset, modifiche a V1–V6 o riparazioni della cronologia. Su database vuoto si applicano V1–V8. Le descrizioni delle carte restano testo editoriale; il comportamento eseguibile deriva da codice effetto e parametri. Il backend dovrà caricare le associazioni ordinate per `execution_order` per costruire gli snapshot del [contratto interno del motore](../../docs/BackEnd/app-battaglie.md#attivazione-e-responsabilità-degli-effetti); tale orchestrazione F07 non è ancora implementata.
+
+Verifica del **2026-11-20** con `mvnw.cmd clean test -q`, JDK 21.0.11 e PostgreSQL 18.6 in un container di prova isolato: **139 test applicativi superati**, senza fallimenti, errori o casi saltati. I [test degli effetti](src/test/java/webapp/deck/CardEffectsMigrationDatabaseTests.java) coprono installazione vuota, aggiornamento da V6, ID effetto generati non fissi, associazioni e parametri del seed, FK, JSONB a oggetto, ordine univoco/positivo, uso sulle creature e cancellazione delle associazioni con la carta. Il motore ha superato separatamente 45 test. Non sono verificate l'orchestrazione PvE, il browser o una distribuzione sul database dell'utente.
+
+## Pulizia delle sessioni F01
 
 Il job [SessionTokenCleanup](src/main/java/webapp/auth/SessionTokenCleanup.java) usa lo scheduler Spring già incluso nelle dipendenze e il clock UTC condiviso con l’autenticazione. Il comportamento di cancellazione è definito nel [contratto F01](../../docs/BackEnd/accesso-utenti.md#ciclo-di-vita-dati-e-concorrenza).
 
@@ -176,14 +184,14 @@ mvnw.cmd -o "-Dtest=AccountDeletionTests,RegistrationRequestTests,SecurityConfig
 
 Su approvazione dell’utente, V3 definisce `max_card_energy` e `max_round_power`. V4 configura energia individuale uguale a `round_number`, cinque carte per destinazione, potenza 14 per `ROUND1`–`ROUND5` e 10 per `EQUIPMENT`, la cui energia massima è 6. Il server applica `cards.energy_cost <= max_card_energy` per ogni copia e `sum(cards.power) <= max_round_power` per destinazione. La potenza è sommata con `long`; costi mancanti o negativi producono errori bloccanti. I limiti sono inclusivi e configurabili nel database. Il [contratto F05](../../docs/BackEnd/gestione-mazzi.md#implementazione-backend-disponibile) descrive i nuovi codici di errore.
 
-La procedura scelta dall’utente per il prototipo ricrea il database tramite il reset dei volumi Docker Compose. Al successivo avvio Flyway applica V1–V6 su un database vuoto, usando lo schema V3 e i dati iniziali V4 aggiornati. Dalla radice del repository eseguire la procedura seguente.
+La procedura scelta dall’utente per il prototipo ricrea il database tramite il reset dei volumi Docker Compose. Al successivo avvio Flyway applica V1–V8 su un database vuoto, usando lo schema V3 e i dati iniziali V4 aggiornati. Dalla radice del repository eseguire la procedura seguente.
 
 ```sh
 docker compose down --volumes
 docker compose up --build --wait
 ```
 
-Verificare V1–V6 in `flyway_schema_history` e i limiti di `round_configurations`, inclusi energia 6 e potenza 10 per `EQUIPMENT`.
+Verificare V1–V8 in `flyway_schema_history` e i limiti di `round_configurations`, inclusi energia 6 e potenza 10 per `EQUIPMENT`.
 
 ### Cancellazione account F01
 

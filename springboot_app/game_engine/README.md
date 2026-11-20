@@ -4,17 +4,28 @@
 
 > **Stato:** il codice presente è una prima implementazione dimostrativa. Include l'endpoint HTTP PvE descritto sotto, limitato alla simulazione di campagna/tutorial prevista per il SAL; non costituisce l'implementazione completa delle funzionalità F05, F07 o F08, né conferma le regole proposte come definitive.
 
-Ultimo aggiornamento significativo: **2026-11-19**, documentazione dell'uso server-to-server dell'endpoint HTTP dimostrativo PvE. Fonte: controller, DTO, risorse e test del modulo.
+Ultimo aggiornamento significativo: **2026-11-20**, effetti configurabili per equipaggiamenti e creature, attivazione all’ingresso e ordine equipaggiamenti prima delle creature, su richiesta dell’utente. Fonte: controller, DTO, risorse e test del modulo.
 
 ## Motore di gioco
 
 - `MatchEngine` orchestra fino a cinque round e interrompe la partita quando un giocatore raggiunge tre round vinti. Restituisce il resoconto come lista di stringhe.
 - `CombatEngine` esegue scambi simultanei fra le creature attive, gestisce la sostituzione delle creature eliminate e il danno in eccesso ai punti vita del giocatore.
-- Il bonus d'attacco di fazione è `+2` quando la fazione attaccante è avvantaggiata; al calcolo dell'attacco si somma `Equipment.atkBonus`.
+- Il bonus d'attacco di fazione è `+2` quando la fazione attaccante è avvantaggiata; al calcolo dell’attacco si sommano i modificatori installati dagli effetti, con attacco effettivo minimo zero.
 - Ogni round ripristina i punti vita a 30. Il combattimento termina anche al raggiungimento del limite difensivo di 50 scambi.
 - `CardLoaderService` deserializza un mazzo JSON da una risorsa del classpath. Il flag `deterministic` disabilita il mescolamento.
 
-Questi comportamenti descrivono il codice attuale, non un contratto di gioco approvato. `Equipment` contiene anche `defBonus`, ma il flusso di combattimento corrente non lo applica alla difesa delle creature. Il loader non esegue la validazione completa dei mazzi prevista dalla specifica F05.
+Questi comportamenti descrivono il codice attuale, non un contratto di gioco definitivo. Equipaggiamenti e creature espongono `effects`: ogni elemento contiene `effectId` numerico, `code` e `parameters`. `EffectEngine` usa un registro esplicito con `AttackBonusEffect`, `StartingDefenseModifierEffect` e `FirstExchangeAttackBonusEffect`. Gli effetti si attivano all'ingresso della creatura, prima quelli degli equipaggiamenti e poi quelli delle creature. Le classi gestiscono bersagli e durata; Breach Capacitor installa il bonus all'ingresso e lo rimuove dopo il primo scambio di ciascuna creatura. Stato e modificatori sono separati dallo snapshot. Il log include attivazioni e scadenze con prefisso `[EFFECT]`.
+
+Il payload interno con `atkBonus`, `defBonus` e `firstExchangeAtkBonus` è sostituito dall'array `effects`. Il backend deve inviare i dati degli effetti ordinati per `card_effects.execution_order`; il motore controlla codici e parametri supportati, senza confrontare ID o statistiche con pool locali. Parametri e ciclo di vita sono descritti nel [contratto interno](../../docs/BackEnd/app-battaglie.md#attivazione-e-responsabilità-degli-effetti).
+
+## Dati dimostrativi CR01
+
+I vecchi pool e mazzi sono rimossi. Le due fixture in `src/main/resources/mocks/` derivano esclusivamente da V5/V6/V8 in `../app/src/main/resources/db/migration/`:
+
+- `mirror.json`: una copia di ognuna delle 30 carte possedute dal giocatore di test V6; V6 non crea un mazzo salvato. Le dieci creature di energia 1 sono divise tra i round 1 e 2; le successive fasce occupano i round 3–5. Potenza creature 60, equipaggiamenti 10.
+- `demo.json`: composizione alternativa per il bot, con creature duplicate entro il limite di due, potenza creature 57 ed equipaggiamenti 10. Rispetta quantità, soglie energetiche, budget e rarità del regolamento V2.1. Le copie duplicate richiedono una collezione adeguata se il mazzo viene importato nell'applicazione: l'utente V6 possiede una sola copia per carta.
+
+Gli ID numerici 1–30 seguono l'inserimento ordinato per codice in un database vuoto; non rappresentano un mapping per database con dati preesistenti. Le statistiche mantengono i valori del seed. Gli effetti dei cinque equipaggiamenti riproducono le sette associazioni di V8. Le creature attuali hanno `effects: []`; il formato e il motore supportano abilità delle creature senza inventarne per il set CR01. La verifica della composizione delle fixture non esegue la validazione applicativa F05 né ne dimostra il possesso.
 
 ## Campagna
 
@@ -25,101 +36,15 @@ Questi comportamenti descrivono il codice attuale, non un contratto di gioco app
 | Percorso | Contenuto |
 | --- | --- |
 | `stages/` | Configurazioni di esempio per lo stage 1 e lo stage 3 |
-| `decks/` | Mazzi nemici degli stage dimostrativi |
+| `../mocks/mirror.json`, `../mocks/demo.json` | Mazzi condivisi tra CLI e stage; nessuna copia separata nella campagna |
 
 Lo stage 3 richiede l'evento `BLOOD_MOON`. L'applicazione usa H2 in memoria e crea lo schema JPA all'avvio; non è presente un seed per tale evento, quindi lo stage 3 non supera il controllo nella configurazione predefinita.
 
 ## API dimostrativa PvE
 
-L'applicazione espone l'API interna `POST /api/battle/pve/{id}` per simulare una partita della campagna/tutorial. Nella rete Docker Compose è raggiungibile esclusivamente dal backend applicativo (`springboot_app/app`) all'indirizzo `http://game-engine:8083/api/battle/pve/{id}`. Nel flusso previsto `frontend -> springboot_app/app -> game-engine`, il frontend dovrà rivolgersi al backend applicativo; l'orchestrazione PvE in `springboot_app/app` non è ancora implementata e non è definita né disponibile una rotta pubblica dell'applicazione per questa funzione. Compose pubblica `127.0.0.1:8083` sulla macchina host; `ENGINE_PORT` modifica solo la porta host. Questo binding è riservato al debug e alle prove locali da terminale o `curl`, non all'accesso dal browser. CORS non è configurato e le richieste preflight sono rifiutate con `403`.
+L'API interna del motore ? implementata dalla PR #36, integrata in `dev` con `786707a`. Payload, validazione dimostrativa, risposta ed errori sono descritti esclusivamente nella [specifica BackEnd del motore](../../docs/BackEnd/app-battaglie.md#api-interna-del-motore-implementata).
 
-Gli identificativi accettati sono:
-
-| Stage | Identificativi | Disponibilità |
-| --- | --- | --- |
-| Stage 1 | `1`, `stage_01`, `stage_01_fazioni` | Attivo per impostazione predefinita |
-| Stage 3 | `3`, `stage_03`, `stage_03_evento_speciale` | Bloccato finché `BLOOD_MOON` non è attivo su H2 |
-
-Il mazzo sfidante contiene da 1 a 5 creature per ciascuna destinazione `ROUND1`..`ROUND5` e esattamente 5 carte in `EQUIPMENT`, per un massimo di 30 voci totali. Ogni `cardId` deve esistere nei pool JSON `src/main/resources/mocks/pool_*.json`; per esempio, il pool Sapiens contiene `SAP_R1_1`..`SAP_R5_5` e il pool equipaggiamenti contiene `EQ_1`..`EQ_5`. L'endpoint non implementa autenticazione, persistenza del risultato o progressione.
-
-Esempio completo di richiesta valida per lo stage 1:
-
-```json
-{
-  "challenger": {
-    "userId": "user-test-01",
-    "username": "test_challenger",
-    "displayName": "Commander Test"
-  },
-  "deck": {
-    "entries": [
-      { "cardId": "SAP_R1_1", "destination": "ROUND1" },
-      { "cardId": "SAP_R1_2", "destination": "ROUND1" },
-      { "cardId": "SAP_R1_3", "destination": "ROUND1" },
-      { "cardId": "SAP_R1_4", "destination": "ROUND1" },
-      { "cardId": "SAP_R1_5", "destination": "ROUND1" },
-      { "cardId": "SAP_R2_1", "destination": "ROUND2" },
-      { "cardId": "SAP_R2_2", "destination": "ROUND2" },
-      { "cardId": "SAP_R2_3", "destination": "ROUND2" },
-      { "cardId": "SAP_R2_4", "destination": "ROUND2" },
-      { "cardId": "SAP_R2_5", "destination": "ROUND2" },
-      { "cardId": "SAP_R3_1", "destination": "ROUND3" },
-      { "cardId": "SAP_R3_2", "destination": "ROUND3" },
-      { "cardId": "SAP_R3_3", "destination": "ROUND3" },
-      { "cardId": "SAP_R3_4", "destination": "ROUND3" },
-      { "cardId": "SAP_R3_5", "destination": "ROUND3" },
-      { "cardId": "SAP_R4_1", "destination": "ROUND4" },
-      { "cardId": "SAP_R4_2", "destination": "ROUND4" },
-      { "cardId": "SAP_R4_3", "destination": "ROUND4" },
-      { "cardId": "SAP_R4_4", "destination": "ROUND4" },
-      { "cardId": "SAP_R4_5", "destination": "ROUND4" },
-      { "cardId": "SAP_R5_1", "destination": "ROUND5" },
-      { "cardId": "SAP_R5_2", "destination": "ROUND5" },
-      { "cardId": "SAP_R5_3", "destination": "ROUND5" },
-      { "cardId": "SAP_R5_4", "destination": "ROUND5" },
-      { "cardId": "SAP_R5_5", "destination": "ROUND5" },
-      { "cardId": "EQ_1", "destination": "EQUIPMENT" },
-      { "cardId": "EQ_2", "destination": "EQUIPMENT" },
-      { "cardId": "EQ_3", "destination": "EQUIPMENT" },
-      { "cardId": "EQ_4", "destination": "EQUIPMENT" },
-      { "cardId": "EQ_5", "destination": "EQUIPMENT" }
-    ]
-  }
-}
-```
-
-In caso di successo la risposta è `PveBattleResponse`; gli elementi di `battleLog` dipendono dall'esecuzione. Esempio abbreviato (il log effettivo contiene l'intero resoconto):
-
-```json
-{
-  "stageId": "stage_01",
-  "stageNumber": 1,
-  "stageTitle": "Tutorial: Il Vantaggio di Fazione",
-  "challenger": {
-    "userId": "user-test-01",
-    "username": "test_challenger",
-    "displayName": "Commander Test"
-  },
-  "enemyName": "Recluta Cultista",
-  "outcome": "VICTORY",
-  "winner": "Commander Test",
-  "tutorialHints": [
-    "[TUTORIAL] Benvenuto comandante! In Cinder Rift ogni fazione possiede un vantaggio strategico su due fazioni rivali.",
-    "[TUTORIAL] Quando una creatura attacca una fazione su cui ha vantaggio, riceve un bonus di +2 ATK per tutto lo scontro!",
-    "[TUTORIAL] Ricorda: i SAPIENS hanno vantaggio sui CULTISTI (+2 ATK) e sugli ALIENI. Approfittane per vincere i round!"
-  ],
-  "battleLog": [
-    "[TUTORIAL] Benvenuto comandante! In Cinder Rift ogni fazione possiede un vantaggio strategico su due fazioni rivali.",
-    "[TUTORIAL] Quando una creatura attacca una fazione su cui ha vantaggio, riceve un bonus di +2 ATK per tutto lo scontro!",
-    "[TUTORIAL] Ricorda: i SAPIENS hanno vantaggio sui CULTISTI (+2 ATK) e sugli ALIENI. Approfittane per vincere i round!",
-    "=========================================="
-  ]
-}
-```
-
-Gli esiti HTTP sono `200` per la simulazione completata, `400` per richiesta malformata o argomenti non validi, `404` per stage inesistente, `409` se l'evento richiesto non è attivo e `422` per un mazzo non valido. Gli errori usano RFC 7807 `ProblemDetail`; le estensioni includono `violations` per `422`, `stageId` per `404` ed `eventCode` per `409`.
-
-Il limite è intenzionale: questo endpoint dimostrativo copre la simulazione campagna/tutorial per il SAL, non sostituisce il contratto completo F07 ancora da consolidare né l'implementazione di sfide PvP, autenticazione JWT e persistenza su PostgreSQL. Il [contratto BackEnd F07](../../docs/BackEnd/sfide-simulazione.md#endpoint-dimostrativo-pve-per-il-sal) raccoglie i dettagli tecnici.
+La funzionalit? applicativa e il suo [contratto pubblico](../../docs/BackEnd/app-battaglie-api.md) sono documentati; orchestrazione in `springboot_app/app` e integrazione React non sono implementate. Il frontend si integra con l'applicazione, non direttamente con il motore. Le chiamate interne usano `http://game-engine:8083`; il binding host resta disponibile per debug come indicato nella configurazione Compose.
 
 ## Avvio e verifiche
 
@@ -132,12 +57,16 @@ Dalla directory `springboot_app/game_engine/`:
 
 All'avvio il `CommandLineRunner` presenta un menu:
 
-1. **Campagna** — avvia il primo stage tutorial (`stage_01_fazioni.json`).
+1. **Campagna** — avvia il primo stage tutorial (`stage_01_mirror.json`).
 2. **Scontro online** — simula uno scontro usando i due mazzi dimostrativi JSON.
 
 Il menu è un flusso CLI dimostrativo, non un matchmaking online né un'interfaccia web. La scelta del giocatore determina quale flusso invocare; un input terminato prima della scelta produce un errore esplicito. Per disabilitare il prompt in un ambiente senza input interattivo, avviare con `--game-engine.cli.enabled=false`. I test verificano il caricamento del contesto, entrambe le scelte, l'input non valido e il caricamento e l'esecuzione degli stage.
 
 Verifica del **2026-11-19**: `./mvnw test` completato con **25 test JUnit eseguiti, 0 fallimenti e 0 errori**, inclusi i 6 test aggiornati di `BattleControllerTest`. Sono verificati anche la POST senza header `Origin` e il rifiuto dei preflight, senza configurare CORS. La verifica usa H2; non attesta l'integrazione con PostgreSQL, l'orchestrazione in `springboot_app/app` né le funzionalità applicative complete.
+
+Verifica corrente del **2026-11-20**, dopo l'introduzione degli effetti: `mvnw.cmd clean test -q`, JDK 21.0.11 su Windows, **45 test JUnit superati**, nessun fallimento, errore o caso saltato. Verificati ordine delle fonti, abilità delle creature, attivazione unica, scadenza, indipendenza di copie e round, danni simultanei, fine round e payload HTTP invalidi. Confrontate le 60 occorrenze delle fixture con i dati V8 su PostgreSQL 18.6 isolato; la suite applicativa ha superato separatamente 139 test, inclusi installazione e aggiornamento delle migrazioni. L'orchestrazione PvE dell'applicazione e l'integrazione browser restano da implementare/verificare.
+
+Verifica precedente del **2026-11-20**, prima del modello di effetti: `mvnw.cmd clean test -q` con JDK 21.0.11 su Windows, **35 test JUnit, 0 fallimenti, 0 errori e 0 saltati**. La suite comprende ID numerici, statistiche ricevute senza lookup, copie indipendenti, struttura degli snapshot, composizione dei due mazzi e modificatori degli equipaggiamenti. Controllati separatamente i valori delle creature rispetto a V5, i vincoli di composizione, i percorsi degli stage e gli esempi JSON del contratto. La verifica resta locale con H2; non esegue l'orchestrazione applicativa o PostgreSQL.
 
 La verifica Docker del **2026-11-16** ha superato **19 test** nello stage Java del build, costruito l'immagine e rilevato il servizio sano su `8083` nello stack Compose isolato, con menu disabilitato e filesystem in sola lettura. [Evidenze e limiti](../../docs/report/2026-11-16-verifica-docker-compose.md). Questa evidenza resta distinta dalla suite eseguita il 2026-11-19.
 

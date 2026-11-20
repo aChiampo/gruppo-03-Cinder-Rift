@@ -1,6 +1,8 @@
 package com.benedetto.game_engine.battle;
 
 import com.benedetto.game_engine.battle.dto.ChallengerDeckEntryRequest;
+import com.benedetto.game_engine.SeedDeckFixtures;
+import com.benedetto.game_engine.effect.CardEffect;
 import com.benedetto.game_engine.battle.dto.ChallengerDeckRequest;
 import com.benedetto.game_engine.battle.dto.ChallengerInfoRequest;
 import com.benedetto.game_engine.battle.dto.PveBattleRequest;
@@ -14,8 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -45,22 +47,7 @@ class BattleControllerTest {
     }
 
     private List<ChallengerDeckEntryRequest> buildValidEntries() {
-        List<ChallengerDeckEntryRequest> entries = new ArrayList<>();
-
-        // 5 creatures for each of ROUND1..ROUND5 from mocks/pool_sapiens.json
-        for (int round = 1; round <= 5; round++) {
-            for (int cardIdx = 1; cardIdx <= 5; cardIdx++) {
-                String cardId = "SAP_R" + round + "_" + cardIdx;
-                entries.add(new ChallengerDeckEntryRequest(cardId, 1, "ROUND" + round));
-            }
-        }
-
-        // 5 equipment cards from mocks/pool_equipments.json
-        for (int eqIdx = 1; eqIdx <= 5; eqIdx++) {
-            entries.add(new ChallengerDeckEntryRequest("EQ_" + eqIdx, 1, "EQUIPMENT"));
-        }
-
-        return entries;
+        return SeedDeckFixtures.entries();
     }
 
     private PveBattleRequest buildValidRequest() {
@@ -74,6 +61,32 @@ class BattleControllerTest {
                         .entries(buildValidEntries())
                         .build())
                 .build();
+    }
+
+    @Test
+    void executeBattle_appliesCreatureEffectsFromTheBackendSnapshot() throws Exception {
+        PveBattleRequest request = buildValidRequest();
+        request.getDeck().getEntries().getFirst().setEffects(List.of(
+                new CardEffect(9001, "ATTACK_BONUS", Map.of("amount", 1))));
+        mockMvc.perform(post("/api/battle/pve/1").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.battleLog", hasItem(containsString("ATTACK_BONUS attack +1"))));
+    }
+
+    @Test
+    void executeBattle_rejectsUnsupportedCodesAndInvalidEffectParameters() throws Exception {
+        for (CardEffect effect : List.of(
+                new CardEffect(1, "UNKNOWN", Map.of()),
+                new CardEffect(1, "ATTACK_BONUS", Map.of("amount", "2")),
+                new CardEffect(1, "ATTACK_BONUS", Map.of("amount", 1.5)))) {
+            PveBattleRequest request = buildValidRequest();
+            request.getDeck().getEntries().getFirst().setEffects(List.of(effect));
+            mockMvc.perform(post("/api/battle/pve/1").contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().is(422))
+                    .andExpect(jsonPath("$.violations", not(empty())));
+        }
     }
 
     @Test
@@ -117,12 +130,12 @@ class BattleControllerTest {
     }
 
     @Test
-    void executeBattle_withIncompleteDeckOrNonExistentCard_returnsUnprocessableEntityWithViolations() throws Exception {
+    void executeBattle_withIncompleteSnapshot_returnsUnprocessableEntityWithViolations() throws Exception {
         PveBattleRequest request = PveBattleRequest.builder()
                 .challenger(ChallengerInfoRequest.builder().userId("user-err").build())
                 .deck(ChallengerDeckRequest.builder()
                         .entries(List.of(
-                                new ChallengerDeckEntryRequest("NON_EXISTENT_CARD_999", 1, "ROUND1")
+                                ChallengerDeckEntryRequest.builder().cardId(999).destination("ROUND1").build()
                         ))
                         .build())
                 .build();

@@ -16,7 +16,7 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 - [F05 — Composizione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi privati e marketplace](scambi-mercato.md)
 - [F07 — Sfide tra utenti](sfide-simulazione.md)
-- [F07 — Endpoint e payload PvE](../BackEnd/app-battaglie-api.md) — riferimento per l'implementazione FrontEnd; contratto del 2026-11-20, endpoint applicativo non ancora implementato.
+- [F07 — Endpoint e payload PvE](../BackEnd/app-battaglie-api.md) — contratto pubblico documentato per l'implementazione FrontEnd; endpoint applicativo non ancora implementato. Comportamento server descritto esclusivamente nell'area BackEnd.
 - [F08 — Consultazione dello storico](storico-partite.md)
 - [F09 — Pagine informative](pagine-informative.md) — DA DEFINIRE
 - [F10 — Interfaccia di backoffice](gestione-amministrativa.md)

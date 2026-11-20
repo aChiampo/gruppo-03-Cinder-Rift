@@ -1,6 +1,6 @@
 # Avviare Cinder Rift sul proprio computer
 
-Guida aggiornata il **2026-11-17**, su richiesta dell’utente: preparazione iniziale (`set-up`) separata dall’avvio quotidiano (`start-up`), con clone sul Desktop dell’utente. La copia corrente contiene Dockerfile per backend F01/F05, prototipo React in `cinder-rift/` e motore dimostrativo in `springboot_app/game_engine/`. L’avvio dei container non attesta l’integrazione delle funzionalità: il login React richiede ancora l’allineamento a F01 e il motore non espone API di gioco. Gli script usano `dev`: prima di distribuirli, le modifiche devono essere integrate su quel branch.
+Guida aggiornata il **2026-11-20**, su richiesta dell'utente, per allineare lo stato PvE dopo l'integrazione della PR #36. Dal **2026-11-17** la preparazione iniziale (`set-up`) è separata dall'avvio quotidiano (`start-up`), con clone sul Desktop dell'utente. La copia corrente contiene Dockerfile per backend F01/F05, prototipo React in `cinder-rift/` e motore dimostrativo in `springboot_app/game_engine/`. Il motore espone l'API interna PvE; l'[API applicativa](docs/BackEnd/app-battaglie-api.md) è documentata, ma orchestrazione e integrazione React non sono implementate. L'avvio dei container non attesta l'integrazione delle funzionalità; il login React richiede ancora l'allineamento a F01. Gli script usano `dev`: prima di distribuirli, le modifiche devono essere integrate su quel branch.
 
 
 

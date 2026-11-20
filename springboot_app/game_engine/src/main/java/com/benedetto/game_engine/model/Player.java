@@ -37,7 +37,7 @@ public class Player {
 
         if (!currentRoundCreatures.isEmpty()) {
             this.activeCreature = currentRoundCreatures.remove(0);
-            this.activeCreature.setEquipment(this.activeEquipment);
+            equipActiveCreature();
         } else {
             this.activeCreature = null;
         }
@@ -47,6 +47,10 @@ public class Player {
         return activeCreature != null && !activeCreature.isDead();
     }
 
+    public boolean hasCreaturesRemaining() {
+        return hasActiveCreature() || (currentRoundCreatures != null && !currentRoundCreatures.isEmpty());
+    }
+
     public void takeHpDamage(int damage) {
         this.hp -= damage;
     }
@@ -54,9 +58,9 @@ public class Player {
     public void handleCreatureDeath(List<String> log) {
         if (!currentRoundCreatures.isEmpty()) {
             this.activeCreature = currentRoundCreatures.remove(0);
-            this.activeCreature.setEquipment(this.activeEquipment);
+            equipActiveCreature();
             log.add(String.format("-> [%s] entra in campo per %s ed eredita l'equipaggiamento [%s]!",
-                    activeCreature.getName(), name, activeEquipment.getName()));
+                    activeCreature.getName(), name, activeEquipment != null ? activeEquipment.getName() : "None"));
         } else {
             this.activeCreature = null;
             log.add(String.format("-> %s non ha più creature nel mazzetto per questo round!", name));
@@ -65,5 +69,10 @@ public class Player {
 
     public void addRoundWin() {
         this.roundsWon++;
+    }
+
+    private void equipActiveCreature() {
+        activeCreature.setEquipment(activeEquipment);
+        activeCreature.initCombatStats();
     }
 }

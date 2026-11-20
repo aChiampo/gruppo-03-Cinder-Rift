@@ -1,10 +1,10 @@
 # Specifica della base di dati — v1.1
 
-**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-18. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
+**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-20. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
 
 Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
-**Identificativi.** Tutti gli identificativi di entità e tutti i relativi riferimenti sono `int`. Le colonne autonome `id` e l'identificativo univoco `CARDS_ARTS.id_art` sono generati dal database con auto-incremento, rappresentato da `increment` nel DBML. Le FK, gli identificativi ereditati e le componenti delle PK associative ricevono invece gli ID dei record già esistenti, senza una sequenza propria. Questo vale anche per `CARDS_KEYWORDS.id_card` e per l'identificativo storico `TRADES_COMPLETED.announce_id`. Le PK associative restano semplici o composte secondo i diagrammi. Un ID generato non esprime un ordine temporale affidabile e la numerazione non è necessariamente consecutiva. L'applicazione usa interi positivi nel dominio di `int`; gli ID non sostituiscono i controlli di autorizzazione.
+**Identificativi.** Tutti gli identificativi di entità e tutti i relativi riferimenti sono `int`. Le colonne autonome `id` e l'identificativo univoco `CARDS_ARTS.id_art` sono generati dal database con auto-incremento, rappresentato da `increment` nel DBML. Le FK, gli identificativi ereditati e le componenti delle PK associative ricevono invece gli ID dei record già esistenti, senza una sequenza propria. Questo vale anche per `CARD_EFFECTS.card_id`/`effect_id` e per l’identificativo storico `TRADES_COMPLETED.announce_id`. Le PK associative restano semplici o composte secondo i diagrammi. Un ID generato non esprime un ordine temporale affidabile e la numerazione non è necessariamente consecutiva. L'applicazione usa interi positivi nel dominio di `int`; gli ID non sostituiscono i controlli di autorizzazione.
 
 **Nomi e date.** Tabelle in `UPPER_SNAKE_CASE`, colonne in `lower_snake_case`. Gli istanti sono `timestamptz`; connessioni e serializzazione usano UTC e la visualizzazione applica il fuso desiderato. Le date senza orario, come `EXPANSIONS.released_at`, usano `date`.
 
@@ -13,6 +13,8 @@ Questo documento è la fonte canonica e autonoma della struttura della base di d
 **Confine delle garanzie.** PK, FK, unicità e `CHECK` sono vincoli del modello; note e protocolli descrivono il comportamento richiesto. L’implementazione corrente è parziale e va distinta dal modello completo.
 
 ### Perimetro SQL implementato
+
+Aggiornamento del **2026-11-20**: V7 crea `effects` e `card_effects`; V8 inizializza tre comportamenti e sette associazioni agli equipaggiamenti CR01. Le nuove migrazioni aggiornano normalmente un database a V6 senza modificare V1–V6 o richiedere un reset. Allineati nei diagrammi anche i campi editoriali introdotti da V5 in `cards` e `cards_arts`. Verifica locale corrente: 139 test applicativi e 45 del motore superati con JDK 21.0.11, PostgreSQL 18.6 isolato per le migrazioni e H2 per la campagna; installazione, aggiornamento, vincoli ed effetti verificati, orchestrazione applicativa PvE e browser non verificati.
 
 Aggiornamento del **2026-11-18** con `max_card_energy` e `max_round_power` nelle configurazioni dei round. V4 configura energia uguale al numero del round, potenza 14 per i cinque gruppi creature e 10 per `EQUIPMENT`, con energia 6. La [procedura scelta dall’utente](../../../springboot_app/app/README.md#aggiornamento-dei-limiti-f05-del-2026-11-18) ricrea il database tramite il reset dei volumi Docker Compose e applica V1–V6 su uno schema vuoto. V5/V6 inizializzano il set CR01 e l’utente dimostrativo.
 
@@ -70,6 +72,10 @@ erDiagram
     CARDS {
         int id PK "NOT NULL; auto-incremento"
         varchar name "NULL ammesso"
+        varchar code UK "NULL ammesso; V5"
+        varchar transfer_and_discard "NULL ammesso; V5"
+        varchar duration "NULL ammesso; V5"
+        varchar flavor_text "NULL ammesso; V5"
         varchar description "NULL ammesso"
         int id_type FK "NULL ammesso"
         int energy_cost "NULL ammesso"
@@ -103,13 +109,10 @@ erDiagram
         boolean is_deleted "NOT NULL; default false"
         varchar code UK "NOT NULL"
     }
-    KEYWORDS {
+    EFFECTS {
         int id PK "NOT NULL; auto-incremento"
-        varchar code UK "NOT NULL"
-        int max_value "NULL ammesso"
-        int min_value "NULL ammesso"
-        varchar description "NULL ammesso"
-        boolean is_deleted "NOT NULL; default false"
+        varchar code UK "NOT NULL; formato A-Z e cifre/underscore"
+        varchar description "NOT NULL; non vuota"
     }
     NOTIFICATIONS {
         int id PK "NOT NULL; auto-incremento"
@@ -119,9 +122,12 @@ erDiagram
         varchar status "NOT NULL; default 'new'"
         timestamptz created_at "NOT NULL; default now()"
     }
-    CARDS_KEYWORDS {
-        int id_card PK,FK "NOT NULL"
-        jsonb keyword_list "NOT NULL"
+    CARD_EFFECTS {
+        int id PK "NOT NULL; auto-incremento"
+        int card_id FK "NOT NULL; ON DELETE CASCADE"
+        int effect_id FK "NOT NULL"
+        jsonb parameters "NOT NULL; oggetto; default {}"
+        int execution_order "NOT NULL; positivo; univoco con card_id"
     }
     DECKS_CARDS {
         int id PK "NOT NULL; auto-incremento"
@@ -275,6 +281,7 @@ erDiagram
         varchar art_code PK "NOT NULL"
         int id_art UK "NOT NULL; auto-incremento"
         varchar url_card_art UK "NULL ammesso"
+        varchar source_image "NULL ammesso; V5"
     }
     TRADE_TOKEN_RESERVATIONS {
         int negotiation_id PK,FK "NOT NULL"
@@ -300,7 +307,8 @@ erDiagram
     RARITIES |o..o{ CARDS : "id_rarity -> id"
     CARD_TYPES |o..o{ CARDS : "id_type -> id"
     EXPANSIONS |o..o{ CARDS : "id_expansion -> id"
-    CARDS ||--o| CARDS_KEYWORDS : "id_card -> id"
+    CARDS ||--o{ CARD_EFFECTS : "card_id -> id; ON DELETE CASCADE"
+    EFFECTS ||--o{ CARD_EFFECTS : "effect_id -> id"
     DECKS ||..o{ DECKS_CARDS : "id_deck -> id"
     CARDS ||..o{ DECKS_CARDS : "id_card -> id"
     CARDS_ARTS ||..o{ DECKS_CARDS : "id_card, id_card_art -> id_card, id_art"
@@ -351,6 +359,10 @@ erDiagram
     CARDS {
         int id PK "NOT NULL; auto-incremento"
         varchar name "NULL ammesso"
+        varchar code UK "NULL ammesso; V5"
+        varchar transfer_and_discard "NULL ammesso; V5"
+        varchar duration "NULL ammesso; V5"
+        varchar flavor_text "NULL ammesso; V5"
         varchar description "NULL ammesso"
         int id_type FK "NULL ammesso"
         int energy_cost "NULL ammesso"
@@ -367,6 +379,7 @@ erDiagram
         varchar art_code PK "NOT NULL"
         int id_art UK "NOT NULL; auto-incremento"
         varchar url_card_art UK "NULL ammesso"
+        varchar source_image "NULL ammesso; V5"
     }
     FACTIONS {
         int id PK "NOT NULL; auto-incremento"
@@ -397,17 +410,17 @@ erDiagram
         boolean is_deleted "NOT NULL; default false"
         varchar code UK "NOT NULL"
     }
-    KEYWORDS {
+    EFFECTS {
         int id PK "NOT NULL; auto-incremento"
-        varchar code UK "NOT NULL"
-        int max_value "NULL ammesso"
-        int min_value "NULL ammesso"
-        varchar description "NULL ammesso"
-        boolean is_deleted "NOT NULL; default false"
+        varchar code UK "NOT NULL; formato A-Z e cifre/underscore"
+        varchar description "NOT NULL; non vuota"
     }
-    CARDS_KEYWORDS {
-        int id_card PK,FK "NOT NULL"
-        jsonb keyword_list "NOT NULL"
+    CARD_EFFECTS {
+        int id PK "NOT NULL; auto-incremento"
+        int card_id FK "NOT NULL; ON DELETE CASCADE"
+        int effect_id FK "NOT NULL"
+        jsonb parameters "NOT NULL; oggetto; default {}"
+        int execution_order "NOT NULL; positivo; univoco con card_id"
     }
     FACTION_ADVANTAGES {
         int id_advantaged_faction PK,FK "NOT NULL"
@@ -445,7 +458,8 @@ erDiagram
     RARITIES |o..o{ CARDS : "id_rarity -> id"
     CARD_TYPES |o..o{ CARDS : "id_type -> id"
     EXPANSIONS |o..o{ CARDS : "id_expansion -> id"
-    CARDS ||--o| CARDS_KEYWORDS : "id_card -> id"
+    CARDS ||--o{ CARD_EFFECTS : "card_id -> id; ON DELETE CASCADE"
+    EFFECTS ||--o{ CARD_EFFECTS : "effect_id -> id"
     DECKS ||..o{ DECKS_CARDS : "id_deck -> id"
     CARDS ||..o{ DECKS_CARDS : "id_card -> id"
     CARDS_ARTS ||..o{ DECKS_CARDS : "id_card, id_card_art -> id_card, id_art"
@@ -461,7 +475,9 @@ erDiagram
 
 **Varianti grafiche.** `CARDS_ARTS` ha PK `(id_card, art_code)`, per esempio con codici `STANDARD` o `LV2`. `id_art` è un intero auto-incrementale, obbligatorio e univoco; `url_card_art` è univoco ma nullable. L'unicità composta `(id_card, id_art)` sostiene le FK composte di collezione, mazzi e prenotazioni e impedisce di associare un'arte alla carta sbagliata.
 
-**Parole chiave.** `KEYWORDS` conserva codice obbligatorio univoco, limiti facoltativi `min_value`/`max_value`, descrizione e cancellazione logica. `CARDS_KEYWORDS.id_card` è l'unica PK ed è FK verso `CARDS.id`: ogni carta ha al massimo una riga. `keyword_list` è un JSONB obbligatorio, esterno alla PK, che rappresenta un array di oggetti `{keywordId, keywordValue}`. `keywordId` è un intero riferito logicamente a `KEYWORDS.id`, senza FK annidata. Il backend verifica forma, esistenza, identificativi non ripetuti e valori nel range applicabile; anche la coerenza fra i due limiti nullable è applicativa. La PK non impedisce duplicati interni al JSON.
+**Effetti delle carte.** `EFFECTS` ha ID intero generato, `code` obbligatorio univoco nel formato `^[A-Z][A-Z0-9_]*$` e descrizione obbligatoria non vuota dopo `trim`. `CARD_EFFECTS` ha PK autonoma generata e FK obbligatorie `card_id → CARDS.id` con cancellazione a cascata ed `effect_id → EFFECTS.id` senza cascata. `parameters` è JSONB obbligatorio con default `{}` e `CHECK` che richiede un oggetto. `execution_order` è positivo e univoco insieme a `card_id`; l'indice su `effect_id` supporta la ricerca delle associazioni. Lo stesso effetto può comparire più volte sulla stessa carta in posizioni diverse. I parametri specifici sono verificati dall'applicazione e dalla classe Java eseguibile, non da vincoli SQL che interpretano la descrizione. Questa struttura sostituisce la precedente proposta di parole chiave, mai migrata nell'applicazione.
+
+**Seed e comportamento.** V8 risolve gli ID tramite `cards.code` ed `effects.code`, senza presupporre ID fissi. Sono inizializzati `ATTACK_BONUS` (`amount` intero), `STARTING_DEFENSE_MODIFIER` (`amount` intero, `minimum` intero positivo facoltativo con default 1) e `FIRST_EXCHANGE_ATTACK_BONUS` (`amount` intero). Le sette associazioni appartengono a Pulse Blade, Recovery Armor, Breach Capacitor, Overdrive Harness e Bastion Rig; le creature CR01 mantengono zero effetti. Gli array nello snapshot seguono `execution_order`. All'ingresso in battaglia si attivano prima gli equipaggiamenti di entrambi i giocatori e poi le creature, nell'ordine dei giocatori del motore; bersaglio e durata sono responsabilità delle classi dedicate. L'ID effetto è metadato e il codice seleziona il comportamento registrato. Il motore non carica cataloghi o pool e rifiuta configurazioni non eseguibili. I modificatori e le scadenze sono stato locale della singola istanza in battaglia, non aggiornamenti del catalogo.
 
 **Vantaggi di fazione.** `FACTION_ADVANTAGES` usa la PK `(id_advantaged_faction, id_disadvantaged_faction)`, due FK verso `FACTIONS.id` e `bonus_value` obbligatorio. Il `CHECK` vieta la stessa fazione sui due lati. È ammesso un solo bonus per coppia ordinata, senza imporre simmetria.
 

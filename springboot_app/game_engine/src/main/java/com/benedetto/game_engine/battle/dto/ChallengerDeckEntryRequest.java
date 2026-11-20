@@ -2,6 +2,9 @@ package com.benedetto.game_engine.battle.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.benedetto.game_engine.model.Faction;
+import com.benedetto.game_engine.effect.CardEffect;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class ChallengerDeckEntryRequest {
 
     @JsonProperty("cardId")
-    private String cardId;
+    private Integer cardId;
 
     @JsonProperty("artworkId")
     @JsonAlias({"cardArtId", "artwork_id", "card_art_id"})
@@ -23,9 +26,12 @@ public class ChallengerDeckEntryRequest {
     @JsonProperty("destination")
     private String destination;
 
-    public ChallengerDeckEntryRequest(Integer cardId, Integer artworkId, String destination) {
-        this.cardId = cardId != null ? String.valueOf(cardId) : null;
-        this.artworkId = artworkId;
-        this.destination = destination;
-    }
+    private String name;
+    private Faction faction;
+    private Integer energyCost;
+    private Integer powerPoints;
+    private Integer baseAtk;
+    private Integer initialDef;
+    @Builder.Default
+    private List<CardEffect> effects = List.of();
 }

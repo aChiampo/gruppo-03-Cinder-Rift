@@ -80,13 +80,13 @@
         "y": 1170
       },
       {
-        "name": "KEYWORDS",
+        "name": "EFFECTS",
         "schemaName": "public",
         "x": 12,
         "y": 12
       },
       {
-        "name": "CARDS_KEYWORDS",
+        "name": "CARD_EFFECTS",
         "schemaName": "public",
         "x": 1593.37548828125,
         "y": 2089
@@ -301,15 +301,30 @@
       },
       {
         "firstFieldNames": [
-          "id_card"
+          "card_id"
         ],
-        "firstTableName": "CARDS_KEYWORDS",
+        "firstTableName": "CARD_EFFECTS",
         "firstSchemaName": "public",
         "firstRelation": "*",
         "secondFieldNames": [
           "id"
         ],
         "secondTableName": "CARDS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "effect_id"
+        ],
+        "firstTableName": "CARD_EFFECTS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "EFFECTS",
         "secondSchemaName": "public",
         "secondRelation": "1",
         "checkPoints": []

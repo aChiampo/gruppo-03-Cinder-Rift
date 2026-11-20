@@ -107,8 +107,8 @@ public class CampaignStageLoaderService {
 
         if (result.isEmpty()) {
             List<String> defaultStagePaths = List.of(
-                    "campaign/stages/stage_01_fazioni.json",
-                    "campaign/stages/stage_03_evento_speciale.json"
+                    "campaign/stages/stage_01_mirror.json",
+                    "campaign/stages/stage_03_demo_event.json"
             );
             for (String path : defaultStagePaths) {
                 Resource res = resourceLoader.getResource("classpath:" + path);

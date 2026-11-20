@@ -30,20 +30,20 @@ class GameModeRunnerTest {
 
     @Test
     void choiceOneStartsTheFirstCampaignStage() {
-        when(cardLoaderService.loadDeck("mocks/deck_player_a.json")).thenReturn(mock(PlayerDeck.class));
+        when(cardLoaderService.loadDeck("mocks/mirror.json")).thenReturn(mock(PlayerDeck.class));
         when(campaignService.executeStage(any(Player.class), any(String.class))).thenReturn(List.of("tutorial"));
 
         runner.run(reader("1"), output());
 
         verify(campaignService).executeStage(any(Player.class), org.mockito.ArgumentMatchers.eq(
-                "campaign/stages/stage_01_fazioni.json"));
+                "campaign/stages/stage_01_mirror.json"));
         verify(matchEngine, never()).runMatch(any(Player.class), any(Player.class));
     }
 
     @Test
     void choiceTwoStartsAnOnlineMatchWithTheTwoMockDecks() {
-        when(cardLoaderService.loadDeck("mocks/deck_player_a.json")).thenReturn(mock(PlayerDeck.class));
-        when(cardLoaderService.loadDeck("mocks/deck_player_b.json")).thenReturn(mock(PlayerDeck.class));
+        when(cardLoaderService.loadDeck("mocks/mirror.json")).thenReturn(mock(PlayerDeck.class));
+        when(cardLoaderService.loadDeck("mocks/demo.json")).thenReturn(mock(PlayerDeck.class));
         when(matchEngine.runMatch(any(Player.class), any(Player.class))).thenReturn(List.of("match"));
 
         runner.run(reader("2"), output());
@@ -54,8 +54,8 @@ class GameModeRunnerTest {
 
     @Test
     void invalidChoiceIsRetriedAndEndOfInputFailsExplicitly() {
-        when(cardLoaderService.loadDeck("mocks/deck_player_a.json")).thenReturn(mock(PlayerDeck.class));
-        when(cardLoaderService.loadDeck("mocks/deck_player_b.json")).thenReturn(mock(PlayerDeck.class));
+        when(cardLoaderService.loadDeck("mocks/mirror.json")).thenReturn(mock(PlayerDeck.class));
+        when(cardLoaderService.loadDeck("mocks/demo.json")).thenReturn(mock(PlayerDeck.class));
         when(matchEngine.runMatch(any(Player.class), any(Player.class))).thenReturn(List.of("match"));
 
         runner.run(reader("invalid\n2"), output());

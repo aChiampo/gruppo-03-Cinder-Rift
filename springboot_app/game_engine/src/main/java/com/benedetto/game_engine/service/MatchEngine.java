@@ -34,8 +34,8 @@ public class MatchEngine {
             p2.prepareForRound(round, equipP2);
 
             matchLog.add(String.format("\n--- INIZIO ROUND %d ---", round));
-            matchLog.add(String.format("Equip %s: %s (+%d ATK, +%d DEF)", p1.getName(), equipP1.getName(), equipP1.getAtkBonus(), equipP1.getDefBonus()));
-            matchLog.add(String.format("Equip %s: %s (+%d ATK, +%d DEF)", p2.getName(), equipP2.getName(), equipP2.getAtkBonus(), equipP2.getDefBonus()));
+            matchLog.add(String.format("Equip %s: %s", p1.getName(), equipP1.getName()));
+            matchLog.add(String.format("Equip %s: %s", p2.getName(), equipP2.getName()));
 
             RoundResult result = combatEngine.runRound(p1, p2);
             matchLog.addAll(result.getLog());
