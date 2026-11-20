@@ -1,6 +1,6 @@
 # Riepilogo degli endpoint
 
-Ultimo aggiornamento significativo: **2026-11-20**, su richiesta dell'utente di elencare gli endpoint documentati con percorso, funzione e stato. Fonte: contratti canonici collegati sotto e codice presente nel branch `docs/pve-battle-contract`.
+Ultimo aggiornamento significativo: **2026-11-20**, su richiesta dell'utente di elencare gli endpoint documentati con percorso, funzione e stato, e con definizione del contratto F13 su decisioni e delega dell'utente. Fonte: contratti canonici collegati sotto, codice presente nel branch `docs/pve-battle-contract` e client React.
 
 Il primo campo include metodo HTTP e percorso, per distinguere operazioni diverse sulla stessa risorsa. I filtri di query già documentati restano espliciti. L'elenco comprende le rotte applicative documentate, incluse le proposte; non comprende pagine web, esempi generici di naming o rotte tecniche di salute/OpenAPI. L'API interna del motore, implementata dalla PR #36 ora integrata, non è una seconda rotta pubblica: il suo contratto è in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
 
@@ -10,49 +10,51 @@ Gli stati usano esattamente queste etichette; BE significa Backend e FE signific
 - **BE Implemented**: rotta presente nel backend, senza corrispondente chiamata nel frontend.
 - **FE Implemented**: chiamata presente nel frontend. Per le quattro rotte qui indicate esiste anche il backend; lo stato non attesta una verifica integrata o il completamento di tutti i flussi della funzionalità.
 
-Riepilogo: **39 voci**, di cui **23 Planned**, **12 BE Implemented** e **4 FE Implemented**. I dettagli di autenticazione, permessi, payload e codici HTTP restano nei contratti canonici.
+Riepilogo: **39 voci**, di cui **23 Planned**, **12 BE Implemented** e **4 FE Implemented**. La tabella riepiloga autenticazione, ruoli e codici HTTP; payload, regole complete e dettagli restano nei contratti canonici.
 
-| Endpoint path | Function | State |
-| --- | --- | --- |
-| `GET /api/auth/csrf-tokens` | Fornisce il token CSRF per le scritture F01 | FE Implemented |
-| `POST /api/auth/signin` | Registra un account con ruolo `USER` e apre una sessione | BE Implemented |
-| `POST /api/auth/login` | Esegue il login con email e password | FE Implemented |
-| `POST /api/auth/password-reset-requests` | Accetta una richiesta di recupero password; invio email da implementare | BE Implemented |
-| `POST /api/auth/password-resets` | Cambia la password e revoca le sessioni | BE Implemented |
-| `GET /api/auth/user/me` | Restituisce il profilo privato corrente | FE Implemented |
-| `POST /api/auth/session-renewals` | Ruota la sessione e restituisce un nuovo access token | BE Implemented |
-| `POST /api/auth/logout` | Revoca la sessione corrente e scade il cookie refresh | FE Implemented |
-| `DELETE /api/auth/users/{userId}` | Cancella logicamente un account e invalida i suoi token | BE Implemented |
-| `GET /api/users/{userId}` | Legge il profilo pubblico di un utente attivo | BE Implemented |
-| `PATCH /api/users/me` | Modifica parzialmente il proprio profilo | BE Implemented |
-| `GET /api/users/me/decks` | Elenca i propri mazzi con validazione corrente | BE Implemented |
-| `POST /api/users/me/decks` | Crea una propria bozza con copie iniziali facoltative | BE Implemented |
-| `GET /api/decks/{deckId}` | Legge dettagli e validazione di un proprio mazzo | BE Implemented |
-| `PUT /api/decks/{deckId}` | Sostituisce copie e stato sfidabile del proprio mazzo | BE Implemented |
-| `DELETE /api/decks/{deckId}` | Elimina un proprio mazzo | BE Implemented |
-| `POST /api/battle/pve/{stageId}` | Richiede una simulazione PvE con un proprio mazzo | Planned |
-| `POST /api/announcements` | Propone un annuncio pubblico o uno scambio privato con un amico | Planned |
-| `GET /api/announcements?scope=marketplace` | Elenca gli annunci pubblici pubblicati e non scaduti | Planned |
-| `GET /api/announcements?scope=mine` | Elenca gli annunci del chiamante | Planned |
-| `GET /api/announcements/{announceId}` | Legge proposta e stato secondo la visibilità; annuncio in trattativa riservato ai partecipanti | Planned |
-| `POST /api/announcements/{announceId}/negotiations` | Avvia una trattativa, accetta l’originale o invia una prima controproposta ammessa | Planned |
-| `GET /api/negotiations?scope=mine` | Elenca le trattative attive cui partecipa il chiamante | Planned |
-| `GET /api/negotiations/{negotiationId}` | Mostra proposta, versione, consensi e scadenza ai partecipanti | Planned |
-| `PUT /api/negotiations/{negotiationId}/offers/current` | Sostituisce la proposta negoziabile e rilascia le prenotazioni | Planned |
-| `POST /api/negotiations/{negotiationId}/acceptances` | Accetta la versione attesa e prenota il proprio lato; il secondo consenso completa lo scambio | Planned |
-| `POST /api/negotiations/{negotiationId}/rejections` | Rifiuta la trattativa e rilascia le prenotazioni | Planned |
-| `POST /api/announcements/{announceId}/cancellations` | Consente al pubblicatore di annullare l’annuncio | Planned |
-| `GET /api/trades?scope=mine` | Elenca gli scambi conclusi cui partecipa il chiamante | Planned |
-| `GET /api/trades/{tradeId}` | Mostra uno scambio concluso ai soli partecipanti | Planned |
-| `GET /api/users/{userId}/tradable-cards` | Mostra varianti scambiabili e disponibilità al netto delle prenotazioni | Planned |
-| `POST /api/friend-requests` | Invia una richiesta di amicizia per il chiamante | Planned |
-| `GET /api/me/friend-requests?direction=incoming` | Elenca le richieste pendenti ricevute dal chiamante | Planned |
-| `GET /api/me/friend-requests?direction=outgoing` | Elenca le richieste pendenti inviate dal chiamante | Planned |
-| `PATCH /api/friend-requests/{otherUserId}` | Consente al destinatario di accettare una richiesta pendente | Planned |
-| `DELETE /api/friend-requests/{otherUserId}` | Consente al destinatario di rifiutare o al mittente di annullare una richiesta pendente | Planned |
-| `GET /api/me/friends` | Elenca le amicizie accettate del chiamante | Planned |
-| `DELETE /api/me/friends/{otherUserId}` | Rimuove un’amicizia accettata cui partecipa il chiamante | Planned |
-| `GET /api/users/{otherUserId}/friendship` | Mostra la relazione del chiamante con l’altro utente | Planned |
+Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; `USER` e `ADMIN` operano soltanto sulle proprie richieste e amicizie. Gli elenchi completi senza paginazione includono nickname, icona e timestamp e sono ordinati dalle richieste o accettazioni più recenti. Percorsi, payload, codici HTTP e formato degli errori sono definiti nel [contratto canonico F13](amicizie.md#contratto-tecnico-condiviso); lo stato `Planned` indica qui solo che nessuna rotta F13 è implementata. Il riepilogo non estende questi codici a F01/F06. La futura [pulizia F13/F06 al soft delete](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) non è compresa nell'implementazione corrente della cancellazione account F01.
+
+| Endpoint path | Function | State | Autenticazione | Codici HTTP | Ruoli autorizzati | Riferimenti |
+| --- | --- | --- | --- | --- | --- | --- |
+| `GET /api/auth/csrf-tokens` | Fornisce il token CSRF per le scritture F01 | FE Implemented | Nessuna | `200` | Accesso pubblico | [F01 — Autenticazione](accesso-utenti.md#guida-autenticazione-header-e-openapi) · [Client React](../../cinder-rift/src/services/authService.js) |
+| `POST /api/auth/signin` | Registra un account con ruolo `USER` e apre una sessione | BE Implemented | Cookie CSRF + header `X-XSRF-TOKEN` | `201`, `400`, `403`, `409`, `415` | Accesso pubblico | [F01 — Contratto](accesso-utenti.md#contratto-tecnico-condiviso) |
+| `POST /api/auth/login` | Esegue il login con email e password | FE Implemented | Cookie CSRF + header `X-XSRF-TOKEN` | `200`, `400`, `401`, `403`, `415` | Accesso pubblico; account `USER` o `ADMIN` | [F01 — Contratto](accesso-utenti.md#contratto-tecnico-condiviso) · [Client React](../../cinder-rift/src/services/authService.js) |
+| `POST /api/auth/password-reset-requests` | Accetta una richiesta di recupero password; invio email da implementare | BE Implemented | Cookie CSRF + header `X-XSRF-TOKEN` | `202`, `400`, `403`, `415` | Accesso pubblico | [F01 — Recupero password](accesso-utenti.md#recupero-password-base-backend) |
+| `POST /api/auth/password-resets` | Cambia la password e revoca le sessioni | BE Implemented | Cookie CSRF + header `X-XSRF-TOKEN`; token di recupero nel body | `204`, `400`, `403`, `415` | Accesso pubblico con token di recupero valido | [F01 — Recupero password](accesso-utenti.md#recupero-password-base-backend) |
+| `GET /api/auth/user/me` | Restituisce il profilo privato corrente | FE Implemented | Bearer JWT | `200`, `401` | `USER`, `ADMIN`; proprio profilo | [F01 — Contratto](accesso-utenti.md#contratto-tecnico-condiviso) · [Client React](../../cinder-rift/src/services/authService.js) |
+| `POST /api/auth/session-renewals` | Ruota la sessione e restituisce un nuovo access token | BE Implemented | Cookie refresh + cookie CSRF + header `X-XSRF-TOKEN` | `200`, `401`, `403` | Accesso tramite sessione refresh di un account `USER` o `ADMIN` | [F01 — Contratto](accesso-utenti.md#contratto-tecnico-condiviso) |
+| `POST /api/auth/logout` | Revoca la sessione corrente e scade il cookie refresh | FE Implemented | Cookie CSRF + header `X-XSRF-TOKEN`; cookie refresh facoltativo | `204`, `403` | Accesso pubblico | [F01 — Contratto](accesso-utenti.md#contratto-tecnico-condiviso) · [Client React](../../cinder-rift/src/services/authService.js) |
+| `DELETE /api/auth/users/{userId}` | Cancella logicamente un account e invalida i suoi token | BE Implemented | Bearer JWT + cookie CSRF + header `X-XSRF-TOKEN` | `204`, `400`, `401`, `403`, `404` | `USER` solo il proprio account; `ADMIN` qualsiasi account, inclusi altri amministratori | [F01 — Cancellazione account](accesso-utenti.md#cancellazione-account) |
+| `GET /api/users/{userId}` | Legge il profilo pubblico di un utente attivo | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404` | `USER`, `ADMIN` | [F01 — Profili](accesso-utenti.md#profili-utente) |
+| `PATCH /api/users/me` | Modifica parzialmente il proprio profilo | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404`, `409` | `USER`, `ADMIN`; proprio profilo | [F01 — Profili](accesso-utenti.md#profili-utente) |
+| `GET /api/users/me/decks` | Elenca i propri mazzi con validazione corrente | BE Implemented | Bearer JWT | `200`, `401` | `USER`, `ADMIN`; propri mazzi | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
+| `POST /api/users/me/decks` | Crea una propria bozza con copie iniziali facoltative | BE Implemented | Bearer JWT | `201`, `400`, `401`, `404` | `USER`, `ADMIN`; proprio account | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
+| `GET /api/decks/{deckId}` | Legge dettagli e validazione di un proprio mazzo | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404` | `USER`, `ADMIN`; proprietario del mazzo | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
+| `PUT /api/decks/{deckId}` | Sostituisce copie e stato sfidabile del proprio mazzo | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404` | `USER`, `ADMIN`; proprietario del mazzo | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
+| `DELETE /api/decks/{deckId}` | Elimina un proprio mazzo | BE Implemented | Bearer JWT | `204`, `400`, `401`, `404` | `USER`, `ADMIN`; proprietario del mazzo | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
+| `POST /api/battle/pve/{stageId}` | Richiede una simulazione PvE con un proprio mazzo | Planned | Bearer JWT F01 | `200`, `400`, `401`, `404`, `409`, `415`, `422`, `500`, `502`, `503`, `504` | `USER`, `ADMIN`; proprio mazzo | [F07 — API PvE](app-battaglie-api.md) · [Regole server](app-battaglie.md#decisioni-consolidate) |
+| `POST /api/announcements` | Propone un annuncio pubblico o uno scambio privato con un amico | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/announcements?scope=marketplace` | Elenca gli annunci pubblici pubblicati e non scaduti | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/announcements?scope=mine` | Elenca gli annunci del chiamante | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/announcements/{announceId}` | Legge proposta e stato secondo la visibilità; annuncio in trattativa riservato ai partecipanti | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `POST /api/announcements/{announceId}/negotiations` | Avvia una trattativa, accetta l’originale o invia una prima controproposta ammessa | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/negotiations?scope=mine` | Elenca le trattative attive cui partecipa il chiamante | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/negotiations/{negotiationId}` | Mostra proposta, versione, consensi e scadenza ai partecipanti | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `PUT /api/negotiations/{negotiationId}/offers/current` | Sostituisce la proposta negoziabile e rilascia le prenotazioni | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `POST /api/negotiations/{negotiationId}/acceptances` | Accetta la versione attesa e prenota il proprio lato; il secondo consenso completa lo scambio | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `POST /api/negotiations/{negotiationId}/rejections` | Rifiuta la trattativa e rilascia le prenotazioni | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `POST /api/announcements/{announceId}/cancellations` | Consente al pubblicatore di annullare l’annuncio | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/trades?scope=mine` | Elenca gli scambi conclusi cui partecipa il chiamante | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/trades/{tradeId}` | Mostra uno scambio concluso ai soli partecipanti | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `GET /api/users/{userId}/tradable-cards` | Mostra varianti scambiabili e disponibilità al netto delle prenotazioni | Planned | Autenticazione richiesta; meccanismo DA DEFINIRE | DA DEFINIRE | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
+| `POST /api/friend-requests` | Invia una richiesta per sé; nessuna accettazione implicita in caso di invio incrociato | Planned | Bearer JWT | `201`, `400`, `401`, `403`, `404`, `409`, `415`, `422` | `USER`, `ADMIN`; proprio account | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `GET /api/me/friend-requests?direction=incoming` | Elenca tutte le richieste pendenti ricevute, senza paginazione | Planned | Bearer JWT | `200`, `400`, `401`, `403`, `422` | `USER`, `ADMIN`; solo proprie | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `GET /api/me/friend-requests?direction=outgoing` | Elenca tutte le richieste pendenti inviate, senza paginazione | Planned | Bearer JWT | `200`, `400`, `401`, `403`, `422` | `USER`, `ADMIN`; solo proprie | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `PATCH /api/friend-requests/{otherUserId}` | Accetta una richiesta pendente ricevuta; la ripetizione produce un errore con messaggio | Planned | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409`, `415`, `422` | `USER`, `ADMIN`; solo destinatario | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `DELETE /api/friend-requests/{otherUserId}` | Rifiuta una richiesta ricevuta o annulla una inviata; non elimina amicizie già accettate | Planned | Bearer JWT | `204`, `400`, `401`, `403`, `404`, `409`, `422` | `USER`, `ADMIN`; destinatario rifiuta, mittente annulla | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `GET /api/me/friends` | Elenca tutte le proprie amicizie accettate, senza paginazione | Planned | Bearer JWT | `200`, `401`, `403` | `USER`, `ADMIN`; solo proprie | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `DELETE /api/me/friends/{otherUserId}` | Rimuove una propria amicizia; risorsa assente o stato errato producono un errore con messaggio | Planned | Bearer JWT | `204`, `400`, `401`, `403`, `404`, `409`, `422` | `USER`, `ADMIN`; uno dei partecipanti | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
+| `GET /api/users/{otherUserId}/friendship` | Mostra soltanto la relazione del chiamante con l'altro utente | Planned | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `422` | `USER`, `ADMIN`; solo propria | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso) |
 
 ## Contratti e codice di riferimento
 
@@ -65,7 +67,7 @@ Riepilogo: **39 voci**, di cui **23 Planned**, **12 BE Implemented** e **4 FE Im
 - [F05 — API mazzi](gestione-mazzi.md#api-http-implementate)
 - [F07 — Endpoint e payload](app-battaglie-api.md)
 - [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari)
-- [F13 — Contratto proposto](amicizie.md#contratto-tecnico-condiviso-proposto)
+- [F13 — Contratto definito](amicizie.md#contratto-tecnico-condiviso)
 - [Controller F01](../../springboot_app/app/src/main/java/webapp/auth/AuthController.java), [profili](../../springboot_app/app/src/main/java/webapp/user/UserController.java) e [mazzi F05](../../springboot_app/app/src/main/java/webapp/deck/DeckController.java).
 - [Specifica applicativa PvE e decisioni aperte](app-battaglie.md) · [Stato delle funzionalità](../README.md#stato-delle-funzionalità) · [Indice BackEnd](README.md).
 

@@ -2,6 +2,8 @@
 
 Le caselle si completano solo con evidenze pertinenti; il superamento della suite backend non completa la consegna integrata. Collegare le evidenze nelle relative issue o pull request.
 
+Aggiornamento documentale F13/F01/F06 del **2026-11-18**, su richiesta dell'utente: aggiunti i requisiti concordati per amicizie e cleanup account. Le caselle sotto restano aperte; la propagazione dei contratti non implementa né verifica la funzionalità.
+
 Revisione corrente del **2026-11-13**: **118 test** superati su PostgreSQL **18.6**, migrazioni V1–V4 e JAR verificati. [Report con riferimento e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le note del 2026-11-12 sotto sono storiche.
 
 Revisione documentale F01 del **2026-11-12**, su richiesta dell’utente: backend, test e report locali esistono; stato ed evidenze sono nel [contratto di autenticazione](BackEnd/accesso-utenti.md#verifiche-ed-evidenze). Le caselle di consegna restano distinte dai test già presenti: integrazione React e verifica su PostgreSQL 18 tramite Compose non sono completate da questa revisione.
@@ -24,6 +26,9 @@ La base backend del recupero password è stata aggiunta nello stesso giorno; com
 - [ ] Verificare offerte di pacchetti, apertura, collezione e backoffice.
 - [ ] Verificare mazzi e vincoli lato server.
 - [ ] Verificare scambi privati/pubblici, carte/crediti, consenso, durata e coerenza dei trasferimenti.
+- [ ] Implementare e verificare [F13](BackEnd/amicizie.md): permessi identici di `USER`/`ADMIN` sulle sole proprie relazioni, elenchi completi senza paginazione, validazione `400`/`422` ed errori `409`/`404` per duplicati, ripetizioni e stati incompatibili, con messaggio nel payload.
+- [ ] Verificare i dettagli del contratto API F13 definiti il **2026-11-20**: JWT su ogni rotta, nickname/icona/timestamp sempre presenti secondo la nullabilità concordata, ordinamento decrescente per creazione delle richieste o accettazione delle amicizie, parità risolta per ID e formato comune degli errori.
+- [ ] Integrare e verificare il [cleanup F01/F06/F13](BackEnd/accesso-utenti.md#integrazione-prevista-con-f13-e-f06) al soft delete: richieste/amicizie e scambi aperti ripuliti, hold rilasciati, scambi completati conservati e annuncio pubblico valido della controparte ripubblicato come da rifiuto; verificare anche TTL e rimozione della sola amicizia.
 - [ ] Verificare sfide, storico e dettaglio dei turni.
 - [ ] Verificare isolamento del motore Java e test JUnit, compresi i casi limite.
 - [ ] Verificare responsive, accessibilità, SEO e prestazioni secondo criteri concordati.

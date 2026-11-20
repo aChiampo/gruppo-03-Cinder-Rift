@@ -3,7 +3,7 @@
 ID: **F06**. Perimetro: confermato, scambi pubblici e privati di carte e token.
 Specifica: **in approfondimento**. Implementazione: **non iniziata**.
 Responsabile: **DA DEFINIRE (Software Developer)**.
-Ultimo aggiornamento significativo: **2026-11-09**, allineamento ai saldi distinti dell'inventario e rilevazione della corrispondenza monetaria ancora aperta. Verifiche applicative: **non eseguite**.
+Ultimo aggiornamento significativo: **2026-11-18**, propagazione delle decisioni dell'utente su amicizie, cancellazione account, conservazione degli scambi completati e ripubblicazione dell'annuncio pubblico della controparte. L'allineamento ai saldi distinti dell'inventario risale al 2026-11-09; la corrispondenza monetaria resta aperta. Verifiche applicative: **non eseguite**.
 Fonte dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-scambi-e-negoziazioni).
 
 ## Obiettivo, perimetro e dipendenze
@@ -16,7 +16,7 @@ A è il pubblicatore e B il rispondente o destinatario privato. Gli identificati
 
 La pubblicazione pubblica non prenota risorse. Gli hold appartengono sempre a una `CURRENT_NEGOTIATIONS` esistente e a un'offerta accettata. Una modifica rilascia tutti gli hold, incrementa la versione e azzera entrambi i consensi: non mantiene prenotazioni di lati non accettanti. Non sono necessari hold di annuncio senza trattativa né uno stato persistito separato di “lato già prenotato”.
 
-Dipendenze: F01 per identità, F03/F04 per disponibilità, F05/F07 per mazzi e gioco, F10 per catalogo e conversioni. Nessuna integrazione è già implementata.
+Dipendenze: F01 per identità e cancellazione account, F13 per richieste e amicizie reciproche, F03/F04 per disponibilità, F05/F07 per mazzi e gioco, F10 per catalogo e conversioni. Nessuna integrazione è già implementata.
 
 ## Flussi
 
@@ -51,6 +51,30 @@ L'acquisizione cambia `PUBLISHED → PENDING` solo se pubblico e non scaduto al 
 2. Crea annuncio `PENDING` e trattativa privata versione `1`, prenota A e soltanto dopo pone `p_acceptance = true`; B resta falso. Tutto nello stesso commit o rollback.
 3. B può accettare o rifiutare. Se negoziabile, una modifica rilascia tutti gli hold, incrementa versione e azzera i flag; ciascun nuovo consenso prenota il lato corrispondente.
 4. Il doppio consenso completa; un rifiuto valido chiude con `CANCELLED`, altrimenti con `EXPIRED`. La richiesta non diventa pubblica e il destinatario non cambia.
+
+## Amicizie e cancellazione degli account
+
+Decisioni confermate dall'utente il **2026-11-18**, ancora da implementare e verificare. Il [contratto F13](amicizie.md) definisce richieste e amicizie; il [contratto F01](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) distingue la cancellazione account già disponibile dalla futura pulizia coordinata.
+
+### Rimozione dell'amicizia
+
+Un'amicizia `accepted` è necessaria per avviare un nuovo scambio privato. Rimuovere l'amicizia non invalida gli scambi pubblici o privati già esistenti: proseguono con offerte, consensi, hold e `expires_at` correnti, soggetti alle normali transizioni F06. La rimozione non rinnova il TTL e non impedisce da sola di accettare, modificare o completare una trattativa già avviata. Nuovi scambi privati richiedono nuovamente un'amicizia `accepted`. Il ruolo `ADMIN` non attribuisce privilegi aggiuntivi sulle relazioni F13.
+
+### Cancellazione logica dell'account
+
+Il cleanup riguarda le operazioni ancora aperte (`PUBLISHED` o `PENDING`); gli scambi completati, il relativo storico e i trasferimenti già conclusi si conservano. Si applicano i seguenti esiti:
+
+| Posizione dell'account eliminato | Comportamento richiesto |
+| --- | --- |
+| Pubblicatore di un annuncio pubblico aperto | Chiudere l'eventuale trattativa, rilasciare tutti gli hold di entrambi i lati ed eliminare l'annuncio aperto del destinatario della cancellazione. |
+| Partecipante a uno scambio privato aperto | Chiudere la trattativa, rilasciare tutti gli hold di entrambi i lati ed eliminare l'annuncio privato coinvolto, senza trasformarlo in pubblico. |
+| Rispondente a un annuncio pubblico altrui ancora valido | Trattare la chiusura come rifiuto: eliminare trattativa e hold, ripubblicare l'annuncio originale senza prenotazioni, con offerte originali e `expires_at` invariato. Le controproposte non diventano l'offerta ripubblicata. |
+| Rispondente a un annuncio pubblico altrui già scaduto | Chiudere la trattativa e rilasciare gli hold; annuncio `EXPIRED`, senza ripubblicazione o rinnovo. |
+| Partecipante a uno scambio completato | Conservare lo scambio e lo storico; non invertire i trasferimenti e non cancellarli per effetto del soft delete. |
+
+La pulizia deve riconoscere il destinatario della cancellazione anche quando è soltanto rispondente o destinatario privato; non basta cercare gli annunci di cui è pubblicatore. `USERS` resta presente con `is_deleted = true`, mantenendo i riferimenti dello storico. Visibilità dello storico alla controparte e rappresentazione dell'account eliminato restano **DA DEFINIRE**, senza esporre dati riservati.
+
+Il protocollo transazionale comune richiede il coordinamento dei partecipanti e il rilascio degli hold prima della rimozione delle risorse. Il cutoff per decidere la ripubblicazione si legge dopo i lock e richiede `expires_at > cutoff`. Confine atomico con F01, individuazione e lock di tutti i partecipanti, ripetizione del cleanup, completamento concorrente e recupero da guasti restano **DA DEFINIRE**. Questi requisiti non sono trigger o nuove cascate del database e non sono implementati dalla revisione documentale.
 
 ## Attori, autorizzazioni e offerte
 
@@ -300,16 +324,23 @@ Scenari previsti, **non eseguiti**. Gli ID locali restano stabili; gli esiti son
 | F06-22 | Modifica di carte/arti/quantità/token | Tutti gli hold rilasciati al commit, versione incrementata e flag falsi |
 | F06-23 | Nuova offerta valida ma risorse non disponibili | Modifica senza prenotazione; la successiva accettazione insufficiente fallisce senza effetti parziali |
 | F06-24 | Lato accettato con offerta vuota, poi modifica non vuota | Flag azzerato; nessun hold fino al nuovo consenso |
+| F06-25 | Rimozione dell'amicizia durante uno scambio pubblico o privato | Trattativa conservata con TTL invariato e normali transizioni; nuovi scambi privati rifiutati finché manca un'amicizia `accepted` |
+| F06-26 | Soft delete del pubblicatore o di un partecipante privato | Pulizia delle operazioni aperte coinvolte e rilascio degli hold di entrambi i lati; scambi completati preservati |
+| F06-27 | Soft delete del rispondente pubblico prima della scadenza | Originale ripubblicato senza hold, con offerte originali e scadenza invariata |
+| F06-28 | Soft delete del rispondente pubblico a TTL esaurito | Nessuna ripubblicazione; annuncio `EXPIRED`, trattativa chiusa e hold rilasciati |
+| F06-29 | Soft delete con scambi completati e operazioni concorrenti | Storico e trasferimenti conclusi conservati; atomicità e recupero del cleanup da concordare prima della verifica |
 
 ## Verifiche, decisioni aperte e impatto
 
 Allineamento documentale alla v1.1; nessuna API, migrazione, pulizia o prenotazione è implementata. Le prove transazionali devono essere eseguite dopo l'implementazione.
 
-Restano da definire risorsa dei campi monetari generici, trasferibilità e rappresentazione di eventuali offerte multirisorsa; inoltre rotte e payload definitivi, errori, serializzazione a 64 bit, paginazione, deduplicazione delle creazioni, guard catalogo, timeout/retry, lotti, statistiche, conservazione, frammenti, giocabilità e consegna affidabile. Non sono più lacune della v1.1 la prenotazione di pubblicazione o lo stato separato di lato già prenotato: questi comportamenti non fanno parte del modello corrente.
+Restano da definire risorsa dei campi monetari generici, trasferibilità e rappresentazione di eventuali offerte multirisorsa; inoltre rotte e payload definitivi, errori, serializzazione a 64 bit, paginazione F06, deduplicazione delle creazioni, guard catalogo, timeout/retry, lotti, statistiche, altre politiche di conservazione, frammenti, giocabilità e consegna affidabile. Sono confermati la permanenza degli scambi dopo rimozione dell'amicizia, il cleanup dei soli scambi aperti al soft delete, la conservazione dello storico completato e il rifiuto/ripubblicazione per l'annuncio pubblico valido della controparte. Il coordinamento transazionale F01/F13 e la visibilità dello storico dopo cancellazione account restano aperti. L'assenza di paginazione è una decisione F13 e non definisce la paginazione degli elenchi F06. Non sono più lacune della v1.1 la prenotazione di pubblicazione o lo stato separato di lato già prenotato: questi comportamenti non fanno parte del modello corrente.
 
 ## Collegamenti
 
 - [Interfaccia scambi](../FrontEnd/scambi-mercato.md)
+- [Amicizie F13](amicizie.md)
+- [Cancellazione account F01](accesso-utenti.md#integrazione-prevista-con-f13-e-f06)
 - [Collezione](collezione-carte.md)
 - [Pacchetti](acquisto-pacchetti.md)
 - [Mazzi](gestione-mazzi.md)

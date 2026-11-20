@@ -2,7 +2,7 @@
 
 ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita, cancellazione account e base del recupero password.
 Implementazione: backend disponibile nel branch `feature/f01-accesso-utenti`; integrazione FrontEnd da avviare. Responsabile: DA DEFINIRE.
-Ultimo aggiornamento significativo il **2026-11-13**: allineamento al codice corrente di profili pubblici, modifica del proprio profilo, percorsi rinominati e cancellazione account; corretto il limite di 50 caratteri del nickname anche in registrazione, dopo la normalizzazione. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
+Ultimo aggiornamento significativo il **2026-11-18**, su richiesta dell'utente di propagare le decisioni F13: aggiunti i requisiti di pulizia di amicizie e scambi aperti alla cancellazione logica, ancora da implementare. L'allineamento al codice di profili, percorsi rinominati e cancellazione account risale al **2026-11-13**. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-autenticazione-e-autorizzazione).
 
 ## Riepilogo API
@@ -313,6 +313,8 @@ Gli errori MVC usano `application/problem+json` con i campi standard `type`, `ti
 
 ## Cancellazione account
 
+Le operazioni seguenti descrivono il comportamento F01 già implementato. L'estensione confermata per amicizie e scambi è separata nella sezione [integrazione prevista con F13 e F06](#integrazione-prevista-con-f13-e-f06) e non è ancora disponibile.
+
 `DELETE /api/auth/users/{userId}` non ha body e richiede `Authorization: Bearer <accessToken>`, cookie `__Host-cinder-csrf` e header `X-XSRF-TOKEN`. L’ID deve essere un intero positivo nel dominio Java `int`.
 
 - `USER` può cancellare soltanto il proprio account. Un altro ID restituisce `403` prima della ricerca del destinatario, anche se inesistente.
@@ -323,6 +325,16 @@ Gli errori MVC usano `application/problem+json` con i campi standard `type`, `ti
 - ID malformato o non positivo: `400`; Bearer assente o non valido, con CSRF valido: `401`; CSRF mancante/non valido o permesso insufficiente: `403`. Il filtro CSRF precede l’autorizzazione e può quindi restituire `403` anche senza Bearer.
 
 [Controller](../../springboot_app/app/src/main/java/webapp/auth/AuthController.java) · [Servizio](../../springboot_app/app/src/main/java/webapp/auth/AuthenticationService.java) · [Test PostgreSQL](../../springboot_app/app/src/test/java/webapp/auth/AccountDeletionDatabaseTests.java).
+
+### Integrazione prevista con F13 e F06
+
+Decisioni dell'utente del **2026-11-18**, propagate nella documentazione senza implementazione:
+
+- La cancellazione logica deve eliminare tutte le richieste `pending` e le amicizie `accepted` che coinvolgono il destinatario, da entrambi i lati della coppia, secondo [F13](amicizie.md#cancellazione-degli-account-e-notifiche). Impostare `is_deleted` non attiva le cascate delle FK.
+- Gli scambi aperti pubblici e privati devono essere ripuliti, con rilascio degli hold di entrambi i partecipanti; gli scambi completati e il loro storico si conservano. Se il destinatario è il rispondente a un annuncio pubblico altrui ancora valido, il cleanup segue il rifiuto: originale ripubblicato con offerte e scadenza iniziali, senza hold. Se è già scaduto, nessuna ripubblicazione. Casi e responsabilità sono definiti in [F06](scambi-mercato.md#amicizie-e-cancellazione-degli-account).
+- La matrice F01 di cancellazione account resta quella sopra: il permesso di `ADMIN` di cancellare un account non attribuisce il permesso F13 di intervenire direttamente sulle amicizie altrui. In F13 `USER` e `ADMIN` operano soltanto sulle proprie relazioni.
+
+Questa estensione non è coperta dal servizio, dalle migrazioni o dai test F01 correnti. Confine atomico con la cancellazione account, ordine dei lock di tutti i partecipanti, trattamento delle richieste concorrenti, ripetizione del cleanup e recupero da errori sono **DA DEFINIRE** con F06/F13 prima dell'implementazione. La risposta `204` attuale della cancellazione account e le evidenze F01 esistenti non attestano questa pulizia futura. Restano invariati i codici e l'idempotenza della cancellazione account: gli errori `400`/`422` e `409`/`404` concordati per F13 non vengono applicati retroattivamente a F01.
 
 ## Ciclo di vita, dati e concorrenza
 
@@ -448,11 +460,14 @@ Nella verifica del perimetro dei ruoli del **2026-11-11**, `mvnw.cmd verify` ha 
 ## Da definire
 
 - Invio delle email di recupero e notifica con template Thymeleaf: [dipendenza rinviata](invio-mail.md). Interfaccia e verifica integrata del recupero restano fuori dall’attività corrente.
-- Matrice dei permessi per le altre funzionalità.
+- Integrare e verificare la pulizia F13/F06 alla cancellazione account, definendo transazione, lock, concorrenza e recupero secondo la sezione dedicata.
+- Matrice dei permessi per le funzionalità ancora aperte; F13 conferma permessi identici di `USER` e `ADMIN` sulle sole proprie relazioni.
 
 ## Collegamenti
 
 - [Interfaccia di accesso](../FrontEnd/accesso-utenti.md)
 - [Invio mail e template Thymeleaf](invio-mail.md)
 - [Backoffice](gestione-amministrativa.md)
+- [Amicizie F13](amicizie.md)
+- [Scambi F06](scambi-mercato.md#amicizie-e-cancellazione-degli-account)
 - [Indice BackEnd](README.md)

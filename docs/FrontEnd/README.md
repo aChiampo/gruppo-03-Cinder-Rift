@@ -22,6 +22,7 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 - [F10 — Interfaccia di backoffice](gestione-amministrativa.md)
 - [F11 — Accessibilità e interfacce responsive](accessibilita-responsive.md)
 - [F12 — SEO e prestazioni](seo-prestazioni.md)
+- [F13 — Richieste e amicizie reciproche](amicizie.md) — contratto API definito il **2026-11-20**: azioni personali per entrambi i ruoli, Bearer JWT ed elenchi completi dal più recente con nickname, icona e timestamp. UI in approfondimento; implementazione e verifiche non iniziate.
 
 ## Collegamenti
 
