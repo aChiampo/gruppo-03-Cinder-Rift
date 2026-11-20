@@ -19,7 +19,7 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 
 ## Funzionalità
 
-- [Riepilogo degli endpoint](GUIDA-API-FRONTEND.md) — tabella di autenticazione, profili, mazzi e rotte proposte per scambi e amicizie, con stato, ruoli e riferimenti ai contratti canonici.
+- [Riepilogo degli endpoint](GUIDA-API-FRONTEND.md) — tabella di autenticazione, profili, mazzi, rotte proposte per scambi e contratto definito per amicizie, con stato implementativo, ruoli e riferimenti canonici.
 - [F01 — Accesso utenti](accesso-utenti.md)
 - [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
 - [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md)
@@ -29,7 +29,9 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 - [F07 — Sfide e simulazione](sfide-simulazione.md)
 - [F08 — Storico delle partite](storico-partite.md)
 - [F10 — Gestione amministrativa](gestione-amministrativa.md)
-- [F13 — Amicizie; dipendenza di F06](amicizie.md)
+- [F13 — Amicizie; dipendenza di F06](amicizie.md) — contratto API definito il **2026-11-20** su decisioni e delega dell'utente: Bearer JWT, sole relazioni proprie per `USER`/`ADMIN`, elenchi completi dal più recente con nickname, icona e timestamp. Implementazione non iniziata; UI e coordinamento F01/F06 da completare.
+
+Allineamento documentale F13/F01/F06 del **2026-11-18**: la [cancellazione account](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) richiede una futura pulizia delle amicizie e degli scambi aperti, con storico completato conservato. La [rimozione dell'amicizia e il cleanup degli scambi](scambi-mercato.md#amicizie-e-cancellazione-degli-account) hanno effetti distinti sul TTL e sulla ripubblicazione. La propagazione dei requisiti non modifica il codice F01 corrente né implementa F13/F06.
 
 ## Collegamenti
 

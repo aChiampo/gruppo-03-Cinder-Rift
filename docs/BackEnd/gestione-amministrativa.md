@@ -4,12 +4,13 @@ ID: F10 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo il **2026-11-13**, con i permessi amministrativi di cancellazione account F01 approvati dall’utente. La correzione della protezione del namespace amministrativo risale al 2026-11-12. L’allineamento alle risorse in inventario, alla configurazione mercy dei pacchetti e al regolamento Versione 2.1 risale al 2026-11-09. Verifiche delle funzionalità di backoffice da eseguire.
+Ultimo aggiornamento significativo il **2026-11-18**, propagazione delle decisioni dell'utente sui confini dei permessi F13 e sul futuro cleanup F01/F06. I permessi amministrativi di cancellazione account F01 risalgono al 2026-11-13; la protezione del namespace amministrativo al 2026-11-12. L'allineamento a inventario, mercy e regolamento Versione 2.1 risale al 2026-11-09. Verifiche delle funzionalità di backoffice da eseguire.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
 
 ## Obiettivo e decisioni note
 
 - Dal **2026-11-13**, su approvazione dell’utente, `ADMIN` può cancellare qualsiasi account, incluso se stesso e altri amministratori, attraverso il servizio F01. API, transazione e revoca dei token sono descritte nel [contratto di cancellazione account](accesso-utenti.md#cancellazione-account).
+- In [F13](amicizie.md#attori-autorizzazioni-e-precondizioni), `ADMIN` gestisce soltanto le proprie richieste e amicizie, con gli stessi permessi di `USER`; nessuna rotta di eliminazione amministrativa delle relazioni altrui è prevista. Il potere distinto di cancellare account F01 resta invariato. La [pulizia F13/F06 al soft delete](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) è un requisito futuro del servizio account, non un privilegio diretto sulle amicizie: non è implementata dalla presente revisione.
 - Backoffice per il catalogo delle carte e dei pacchetti.
 - Prezzo e configurazione del singolo pacchetto sono gestibili dal backoffice; ogni offerta contiene una sola unità, secondo il contratto canonico F03.
 - L’accesso al namespace amministrativo è riservato ad `ADMIN`; `USER` non può accedervi. La matrice dei permessi per le singole operazioni di backoffice resta **DA DEFINIRE**. [Ruoli F01](accesso-utenti.md#attori-autorizzazioni-e-precondizioni).
