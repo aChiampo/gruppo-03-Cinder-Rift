@@ -19,7 +19,7 @@ Ultimo aggiornamento significativo: 2026-11-20, separazione richiesta dall'utent
 
 ## Integrazione PvE pianificata
 
-Per endpoint, header, payload, codici di errore e vincoli temporali usare esclusivamente [API delle battaglie per il FrontEnd](../BackEnd/app-battaglie-api.md). Il contratto pubblico è documentato; l'integrazione applicativa non è ancora disponibile. Questa pagina descrive soltanto il comportamento del client; orchestrazione, validazione, pulizia del resoconto, lock e recupero sono definiti in [App battaglie](../BackEnd/app-battaglie.md).
+Per endpoint, header, payload, codici di errore e vincoli temporali usare esclusivamente [API delle battaglie per il FrontEnd](../BackEnd/app-battaglie-api.md). L'endpoint applicativo è implementato nella copia di lavoro del branch backend `feature/app_battle_pve_flow`; l'integrazione React resta da realizzare. Questa pagina descrive soltanto il comportamento del client; orchestrazione, validazione, pulizia del resoconto, lock e recupero sono definiti in [App battaglie](../BackEnd/app-battaglie.md).
 
 - Consentire la scelta del mazzo e costruire la chiamata secondo il contratto pubblico, usando il client di autenticazione F01.
 - Durante l'invio mostrare lo stato di attesa e disabilitare un nuovo avvio dalla stessa schermata.

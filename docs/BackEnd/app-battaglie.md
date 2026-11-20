@@ -1,11 +1,11 @@
 # Battaglie PvE nel backend applicativo
 
 ID funzionalità: F07; dipendenze F01, F05 e F08.
-Specifica: funzionalità applicativa documentata; decisioni consolidate e strategia di lock/recupero **DA DEFINIRE**.
-Implementazione applicativa: non iniziata. Responsabile: **DA DEFINIRE**.
-Ultimo aggiornamento significativo: **2026-11-20**, modello di effetti condiviso tra equipaggiamenti e creature, migrazioni V7/V8 e ordine di attivazione richiesti dall’utente.
+Specifica: flusso PvE, strategia **L2 + T2**, transazione di snapshot e budget 8/9/10 secondi confermati dall'utente.
+Implementazione applicativa: disponibile nella copia di lavoro del branch `feature/app_battle_pve_flow`; integrazione React non implementata. Responsabile: **DA DEFINIRE**.
+Ultimo aggiornamento significativo: **2026-11-20**, implementazione richiesta dall'utente: L2 + T2, snapshot `REPEATABLE READ`, budget 8/9/10 secondi, rilascio al termine HTTP, regole F05 condivise e riparazione mirata del seed tramite V9.
 Fonti: decisioni dell'utente nella conversazione del 2026-11-19/20; [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), revisione `7018b4f2a1f0e1bb33d5d0afc586e4170079451d`.
-Verifica applicativa: non eseguita; verifiche locali del motore descritte sotto.
+Verifica applicativa: test locali di orchestrazione con PostgreSQL e doppio HTTP del motore superati; verifiche finali della porzione corrente riportate sotto, distinte dalle evidenze precedenti.
 
 ## Scopo e riferimenti canonici
 
@@ -13,15 +13,15 @@ Descrivere l'orchestrazione di una battaglia PvE nel flusso `frontend → spring
 
 Questa pagina approfondisce la porzione applicativa di [F07 — Sfide e simulazione](sfide-simulazione.md). Il documento [API delle battaglie per il FrontEnd](app-battaglie-api.md) è l'unico riferimento canonico di endpoint, header, payload e risposte HTTP di questa porzione. Qui sono definiti flusso server, concorrenza, dipendenze e decisioni aperte, senza duplicare i payload.
 
-La PR #36 è integrata in `dev` con il commit `786707a` ed è presente in questo branch tramite il merge `ec6a5dc`. L'API interna dimostrativa del motore è implementata. La funzionalità applicativa e il suo contratto pubblico sono documentati, mentre orchestrazione in `springboot_app/app` e integrazione React non sono implementate. L’aggiornamento corrente modifica anche il motore e le fixture, mantenendo non implementata l’orchestrazione applicativa.
+La PR #36 è integrata in `dev` con il commit `786707a` ed è presente in questo branch tramite il merge `ec6a5dc`. Il branch corrente aggiunge l'orchestrazione in `springboot_app/app`, i controlli cooperativi di deadline nel motore, le regole mancanti del validatore condiviso F05 e la migrazione correttiva V9. L'integrazione React resta da implementare.
 
 ## API interna del motore implementata
 
-Il motore espone `POST /api/battle/pve/{id}` nella rete Compose su `http://game-engine:8083`. Il browser usa il [contratto applicativo documentato](app-battaglie-api.md), la cui implementazione resta da realizzare. Il corpo interno contiene metadati del partecipante e snapshot delle copie preparati dal backend applicativo.
+Il motore espone `POST /api/battle/pve/{id}` nella rete Compose su `http://game-engine:8083`. Il browser usa il [contratto applicativo implementato](app-battaglie-api.md). Il corpo interno contiene metadati del partecipante e snapshot delle copie preparati dal backend applicativo. L'header interno `X-Battle-Deadline` contiene il termine assoluto UTC in formato ISO-8601; non è un header del contratto browser. Una deadline scaduta produce `504` prima della preparazione del mazzo; una malformata produce `400`. Senza header il motore applica comunque un limite cooperativo locale di 8 secondi, e non accetta estensioni oltre tale limite.
 
-Aggiornamento del **2026-11-20**, su richiesta dell'utente: gli ID carta sono interi e il motore non carica né confronta pool di carte. Il backend applicativo deve verificare catalogo, tipo della carta, proprietà, possesso, energia, potenza, rarità e copie prima dell'invio, quindi fornire i dati necessari alla simulazione. Il motore usa direttamente le statistiche ricevute, anche per ID assenti dai propri esempi. Il precedente payload con soli ID e destinazioni non è più sufficiente: l'adattatore applicativo deve produrre gli snapshot descritti sotto. L'orchestrazione applicativa non è ancora implementata.
+Aggiornamento del **2026-11-20**, su richiesta dell'utente: gli ID carta sono interi e il motore non carica né confronta pool di carte. Il backend applicativo verifica catalogo, tipo della carta, proprietà, possesso, energia, potenza, rarità e copie prima dell'invio, quindi fornisce i dati necessari alla simulazione. Il motore usa direttamente le statistiche ricevute, anche per ID assenti dai propri esempi. Il precedente payload con soli ID e destinazioni non è più sufficiente: l'adattatore applicativo produce gli snapshot descritti sotto.
 
-L'API interna non autentica `challenger`: i suoi dati sono metadati, non una prova di identità. CORS non è configurato e il filtro rifiuta i preflight browser con `403`; questo non isola il servizio da altri client. Il binding host `127.0.0.1:8083`, o `ENGINE_PORT`, serve alle prove locali. La protezione server-to-server resta da definire.
+L'API interna non autentica `challenger`: i suoi dati sono metadati, non una prova di identità. Decisione dell'utente del **2026-11-20**: autenticazione e autorizzazione degli utenti spettano all'applicazione; per questa implementazione la rete Docker è il confine di accesso al motore, senza ulteriori credenziali applicazione-motore. CORS non è configurato e il filtro rifiuta i preflight browser con `403`; questo filtro non autentica i servizi. Il binding host `127.0.0.1:8083`, o `ENGINE_PORT`, resta disponibile per debug e consente accesso anche ai client locali dell'host.
 
 ### Campi della richiesta interna corrente
 
@@ -59,7 +59,7 @@ Decisioni confermate dall'utente il **2026-11-20**: gli effetti si attivano quan
 | `STARTING_DEFENSE_MODIFIER` | `amount`, intero; `minimum`, intero positivo facoltativo, default 1 | `StartingDefenseModifierEffect`: modifica una sola volta la difesa iniziale corrente; applica il minimo dopo il modificatore. Non rigenera difesa negli scambi. |
 | `FIRST_EXCHANGE_ATTACK_BONUS` | `amount`, intero | `FirstExchangeAttackBonusEffect`: installa il bonus all'ingresso e lo rimuove dopo il primo scambio della singola creatura. |
 
-Il registro contiene solo implementazioni note; il database conserva descrizioni e configurazioni, senza nomi di classi da caricare dinamicamente. Una carta può riutilizzare le stesse classi con parametri diversi. Il mapper rifiuta codici non supportati, ID effetto non positivi e parametri mancanti, extra o di tipo errato con `422`: è un controllo di eseguibilità dello snapshot, non un confronto con un pool di carte. Il backend applicativo rimane responsabile della validazione del catalogo e della giocabilità; la sua orchestrazione F07 resta da implementare.
+Il registro contiene solo implementazioni note; il database conserva descrizioni e configurazioni, senza nomi di classi da caricare dinamicamente. Una carta può riutilizzare le stesse classi con parametri diversi. Il mapper rifiuta codici non supportati, ID effetto non positivi e parametri mancanti, extra o di tipo errato con `422`: è un controllo di eseguibilità dello snapshot, non un confronto con un pool di carte. L'applicazione traduce questo errore interno in `502`, senza attribuire il difetto dello snapshot al mazzo inviato dal browser.
 
 I modificatori e il conteggio degli scambi appartengono all'istanza di battaglia della creatura: copie con lo stesso ID sono indipendenti, e lo snapshot originale non viene modificato. All'ingresso di una sostituta si riapplicano equipaggiamento e abilità proprie; i danni non passano alla sostituta. L'attacco effettivo include il bonus di fazione ed è almeno zero. Entrambi gli attacchi sono calcolati prima dell'applicazione simultanea dei danni; la scadenza del primo scambio è gestita successivamente dalla classe dell'effetto. Nessuna sostituta viene schierata se il round è già concluso.
 
@@ -127,23 +127,26 @@ L'endpoint resta dimostrativo: non implementa autenticazione, persistenza dei ri
 | Resoconto | Si mantiene la struttura della risposta della PR #36 e il suo log testuale ordinato. Non si introduce il modello annidato di round, incontri e scambi precedentemente proposto. |
 | Tutorial | I messaggi tutorial sono esclusi dalla risposta pubblica, sia dal campo dedicato sia dal prefisso del log. |
 | Concorrenza | Una richiesta di battaglia attiva per utente. Gli invii sovrapposti sono rifiutati, senza accodamento né seconda chiamata al motore. |
-| Timeout | Limite complessivo HTTP di **10 secondi**. |
+| Strategia di esecuzione | **L2 + T2**, selezionata dall'utente il 2026-11-20: advisory lock PostgreSQL e deadline cooperativa nel motore. Il guard termina con la richiesta HTTP anche in esito incerto. |
+| Snapshot | Transazione applicativa breve `REPEATABLE READ`, con lock utente e mazzo; validazione e snapshot condividono la stessa vista committata. La transazione termina prima della chiamata remota. |
+| Accesso interno al motore | Confine di rete Docker, senza credenziali aggiuntive tra applicazione e motore; autenticazione e autorizzazione degli utenti nell'applicazione. Il binding locale di debug resta disponibile. |
+| Timeout | Budget cumulativo dall'ingresso nell'applicazione: deadline del motore a **8 secondi**, obiettivo di risposta applicativa entro **9 secondi**, abort frontend a **10 secondi**. |
 | Persistenza PvE | **DA DEFINIRE**. |
 | Ricompense e progressione della campagna | **DA DEFINIRE**. |
 | Scoperta degli stage | **DA DEFINIRE**. |
 
 L'autenticazione e la proprietà sono obbligatorie per ogni chiamante. Non si introduce una delega all'uso dei mazzi altrui o una gerarchia implicita tra `ADMIN` e `USER`. Il flag `is_challengeable` riguarda la disponibilità al matchmaking: non certifica da solo la validità e non diventa un prerequisito PvE.
 
-## Flusso applicativo da implementare
+## Flusso applicativo implementato
 
 1. Validare autenticazione F01 e forma della richiesta pubblica. Ricavare ID e nickname dal principal; non accettare identità o statistiche inviate dal browser.
 2. Tentare l'acquisizione atomica del guard di battaglia associato all'ID utente. Se è già occupato, terminare secondo il contratto API senza attendere la battaglia precedente.
 3. Caricare il mazzo con una ricerca vincolata al proprietario autenticato. Un mazzo assente e uno appartenente ad altri rimangono indistinguibili al chiamante.
-4. Rivalidare le copie e preparare dati coerenti per il motore, seguendo [F05](gestione-mazzi.md) e il [protocollo transazionale del database](Database/database-schema-v1.1.md#protocollo-transazionale-comune). Un precedente controllo del frontend non sostituisce questa operazione. I soli ID non garantiscono statistiche immutabili se i cataloghi vengono modificati tra controllo ed esecuzione: coordinamento del catalogo tra i servizi **DA DEFINIRE**.
+4. Rivalidare le copie secondo [F05](gestione-mazzi.md) e costruire lo snapshot nella stessa transazione breve `REPEATABLE READ`. I dati rappresentano la vista committata all'inizio della preparazione, senza letture miste fra validazione e statistiche. Le modifiche successive non cambiano lo snapshot già preparato. Questo approccio F07, scelto dall'utente, non implementa il guard catalogo del [protocollo comune proposto](Database/database-schema-v1.1.md#protocollo-transazionale-comune). I lock utente e mazzo coordinano i flussi F05 esistenti; futuri scrittori F06/F10 devono essere integrati esplicitamente.
 5. Costruire i metadati del partecipante usando il profilo server; espandere le copie nel formato interno corrente, includendo ID numerici, statistiche e modificatori degli equipaggiamenti provenienti dai dati server.
-6. Chiamare l'API interna con un budget temporale compatibile con i 10 secondi complessivi. Non inoltrare il Bearer dell'utente come meccanismo di autenticazione del motore: l'eventuale protezione server-to-server resta **DA DEFINIRE**; l'API dimostrativa non autentica i metadati del partecipante.
+6. Chiamare l'API interna con una deadline cooperativa T2 e un budget temporale compatibile con i 10 secondi complessivi. Non inoltrare il Bearer dell'utente: il confine di accesso scelto è la rete Docker, senza credenziali aggiuntive tra i servizi; il motore non autentica i metadati del partecipante.
 7. Validare la risposta, eliminare i contenuti tutorial e costruire la risposta pubblica. Gli errori interni vanno tradotti nel contratto API; uno snapshot interno malformato non deve essere presentato come errore imputabile al mazzo dell’utente.
-8. Terminare la richiesta e rilasciare il guard di cui si è proprietari, secondo la politica di timeout/recupero che verrà selezionata. Il rilascio dopo errori di validazione, quando il motore non è stato avviato, non richiede riconciliazione.
+8. Terminare la richiesta e rilasciare il guard posseduto anche dopo timeout, errore o chiusura osservata del trasporto. Al timeout applicativo si interrompe l'attesa e si scarta il risultato tardivo. Non si ritenta automaticamente il POST; non si attende una riconciliazione del motore.
 
 La scelta di lock non autorizza a mantenere automaticamente aperta una transazione sui dati utente per l'intera chiamata remota. Validazione, preparazione dei dati e guard di esecuzione sono responsabilità distinte.
 
@@ -168,7 +171,7 @@ Occorre distinguere due garanzie:
 - **Una richiesta HTTP attiva per utente:** il guard può essere rilasciato alla conclusione HTTP, incluso il timeout. Una precedente simulazione potrebbe però continuare nel motore.
 - **Una simulazione attiva per utente anche dopo un guasto:** il guard resta finché completamento o arresto sono accertati. Può sopravvivere alla risposta di timeout; durante il recupero gli invii restano rifiutati.
 
-L'utente ha confermato il rifiuto delle richieste sovrapposte e il timeout HTTP. La scelta della garanzia dopo timeout/crash e della relativa strategia resta **DA DEFINIRE**: nessuna delle alternative seguenti è selezionata da questo documento.
+L'utente ha confermato il **2026-11-20** la combinazione **L2 + T2** e il rilascio del guard al termine HTTP anche quando l'arresto remoto non è confermato. Il prototipo garantisce una richiesta HTTP attiva per utente; dopo guasti può esserci sovrapposizione di calcoli remoti. La deadline cooperativa limita l'esecuzione ordinaria, senza costituire prova di arresto durante un guasto. Le altre combinazioni seguenti restano alternative non selezionate.
 
 ## Opzioni per lock, istanze multiple e recupero
 
@@ -200,10 +203,10 @@ Redis non è richiesto dall'architettura corrente e non viene aggiunto da questa
 | Opzione | Comportamento | Quando si libera l'utente | Lavoro richiesto al motore |
 | --- | --- | --- | --- |
 | **T1 — Interrompere l'attesa** | Il backend termina la richiesta e scarta l'eventuale risultato tardivo. | Alla conclusione HTTP. | Minimo; il calcolo può continuare e sovrapporsi al successivo. |
-| **T2 — Deadline cooperativa** | Il backend comunica un termine di esecuzione; il motore lo verifica prima dell'avvio e tra round/scambi. | Dopo l'arresto accertato; gli esiti incerti richiedono una politica di recupero. | Propagazione della deadline, controlli nel ciclo e uscita cooperativa. Non risolve da sola la perdita del backend. |
+| **T2 — Deadline cooperativa** | Il backend comunica un termine di esecuzione; il motore lo verifica prima dell'avvio e tra round/scambi. | Nel prototipo scelto, al termine HTTP anche in esito incerto; si accetta possibile sovrapposizione remota dopo guasti. | Propagazione della deadline, controlli nel ciclo e uscita cooperativa. Non risolve da sola la perdita del backend. |
 | **T3 — Tracciare, cancellare e riconciliare** | Operazione identificata; dopo timeout si richiede cancellazione o si consulta lo stato finché diventa certo. | Dopo completamento, fallimento o cancellazione effettivamente accertati; può essere oltre i 10 secondi. | Identificativi operativi, controllo degli avvii, stato durevole, consultazione/cancellazione e recupero. |
 
-Il timeout HTTP resta **10 secondi** in tutte le opzioni. Il termine del motore e quello del backend devono lasciare un margine per produrre la risposta prima dell'abort frontend; i margini esatti sono **DA DEFINIRE**. Il wrapper React corrente interrompe l'attesa dopo 10.000 ms: ciò non dimostra l'arresto della simulazione.
+Il timeout HTTP resta **10 secondi**. L'utente ha approvato deadline motore a **8 secondi**, obiettivo di risposta backend a **9 secondi** e abort frontend a **10 secondi**, misurati sullo stesso invio: preparazione e attese consumano il budget, senza aggiungere 8 secondi a ogni chiamata. Il timer applicativo copre preparazione e chiamata remota; i timeout SQL limitano le attese dei lock dati. L'autenticazione e la decodifica precedono l'avvio asincrono: il tempo già trascorso viene sottratto, ma un blocco in tali fasi o del runtime non è interrompibile dal timer dell'orchestratore. Il termine assoluto richiede orologi dei servizi sincronizzati. Il wrapper React interrompe l'attesa a 10.000 ms, senza provare l'arresto remoto.
 
 ### T1: garanzia limitata alla richiesta
 
@@ -213,7 +216,7 @@ La risposta tardiva viene ignorata e non si ritenta automaticamente la simulazio
 
 Il motore controlla il termine anche prima di iniziare un lavoro arrivato in ritardo. Il solo annullamento della chiamata HTTP non esegue questi controlli. `Future.cancel(true)` tenta un'interruzione, che il codice deve gestire; `CompletableFuture.cancel(true)` non interrompe il calcolo sottostante. La cancellazione di un future non è una prova sufficiente dell'uscita del worker.
 
-La cooperazione è adatta al ciclo di combattimento corrente, ma non garantisce un arresto istantaneo di thread sospesi o operazioni non interrompibili. Dopo un crash o una partizione resta da decidere come accertare che la vecchia esecuzione non continui.
+La cooperazione è applicata prima della preparazione, prima della simulazione, fra round e scambi e prima del risultato finale. Non garantisce un arresto istantaneo di thread sospesi o operazioni non interrompibili. Per decisione dell'utente, dopo un esito incerto si rilascia il guard alla conclusione HTTP e non si tenta di accertare l'arresto tramite un registro operativo.
 
 ### T3: ciclo operativo e riconciliazione
 
@@ -232,7 +235,7 @@ I futuri endpoint interni di stato/cancellazione, il protocollo contro gli avvii
 | **L3 + T3**, con controlli di deadline | Recupero esplicito e controllo delle esecuzioni durante esiti incerti. | Registro operativo, protocollo del motore e possibile blocco oltre la risposta HTTP. |
 | **L4 + T3** | Coordinamento Redis se si sceglie tale infrastruttura. | Nuovo servizio, semantica delle lease e registro delle operazioni. |
 
-L1 resta un'alternativa limitata a una sola istanza. L2 + T2 è stata suggerita nella discussione come compromesso per il prototipo; L3 + T3 come soluzione per la garanzia forte. Sono valutazioni tecniche, **non decisioni dell'utente**. Non implementare una combinazione finché non viene selezionata.
+**Decisione dell'utente del 2026-11-20: implementare L2 + T2**, budget 8/9/10 secondi e rilascio alla conclusione HTTP anche in esito incerto. L1 resta un'alternativa limitata a una sola istanza; L3 + T3 e L4 + T3 non sono selezionate. Non si introduce la garanzia forte di recupero T3.
 
 ## Persistenza, ricompense e campagna
 
@@ -257,19 +260,22 @@ Ricompense e progressione della campagna restano **DA DEFINIRE**, senza applicaz
 | F07-APP-09 | Crash, perdita della sessione DB, lease scaduta o risposta del motore persa. | Garanzie e recupero verificati secondo L/T selezionati; nessuna pulizia da parte di un vecchio proprietario. |
 | F07-APP-10 | Risposta inattesa del motore o cataloghi non allineati. | Errore di integrazione, senza attribuire il difetto al chiamante. |
 
-Gli scenari di crash e cancellazione diventano verificabili in modo definitivo dopo la scelta della strategia. Non costituiscono test eseguiti.
+Per gli scenari di crash e perdita di sessione DB valgono i limiti L2 + T2 accettati dall'utente. Non sono stati iniettati guasti del processo o della rete; le verifiche correnti distinguono questi limiti dal timeout HTTP effettivamente provato.
 
 ## Decisioni aperte e stato delle verifiche
 
-- **DA DEFINIRE:** combinazione L/T, garanzia dopo timeout e momento di rilascio del guard in esito incerto.
-- **DA DEFINIRE:** dettagli di recupero, coordinamento tra eventuali istanze del motore, margini temporali e cancellazione.
-- **DA DEFINIRE:** consistenza dei dati di catalogo durante la preparazione/esecuzione e protezione delle chiamate interne.
+- **IMPLEMENTATA:** combinazione L2 + T2, su decisione dell'utente del 2026-11-20; guard PostgreSQL, deadline cooperativa e budget cumulativo 8/9/10 secondi.
+- **CONFERMATO:** rilascio alla conclusione HTTP anche in esito incerto, senza registro operativo o recupero forte; possibile sovrapposizione remota dopo guasti accettata.
+- **IMPLEMENTATA:** consistenza di validazione e snapshot tramite transazione breve applicativa `REPEATABLE READ`; coordinamento del futuro protocollo condiviso F06/F10 ancora da integrare.
+- **CONFERMATO:** autenticazione e autorizzazione degli utenti nell'applicazione; confine di accesso applicazione-motore affidato alla rete Docker, senza ulteriori credenziali interne; binding locale di debug mantenuto.
 - **DA DEFINIRE:** persistenza PvE, ricompense, progressione della campagna e scoperta degli stage.
-- Dipendenze note: orchestrazione applicativa, costruzione degli snapshot dai dati server e adattatore frontend da implementare.
+- Dipendenze note: adattatore frontend da implementare; persistenza F08 e funzionalità complete PvP escluse dalla porzione corrente.
 
 La revisione della PR dichiara 25 test JUnit superati il 2026-11-19. È un'evidenza riportata dall'autore, non una nuova esecuzione di questa attività né una verifica dell'integrazione applicativa.
 
-Verifica corrente degli effetti, **2026-11-20**: `mvnw.cmd clean test -q` con JDK 21.0.11 su Windows ha superato **45 test del motore** e **139 test applicativi**, senza fallimenti, errori o casi saltati. Il motore usa H2 per la campagna; la suite applicativa usa PostgreSQL **18.6** in un container isolato. Le prove coprono ordine equipaggiamento/creatura, attivazione unica, scadenza al primo scambio, copie e round indipendenti, danni simultanei, nessuna nuova entrata dopo la fine del round, payload HTTP, installazione V1–V8, aggiornamento da V6 e vincoli SQL. Confrontate inoltre le 60 occorrenze di carte nelle fixture con gli effetti del database migrato. Orchestrazione applicativa PvE, browser e protezione server-to-server restano non verificati.
+Verifica corrente dell'orchestrazione, **2026-11-20**, copia di lavoro su base `83262dd`: **212 test applicativi** e **49 del motore** superati con JDK 21.0.11, PostgreSQL 18.6 isolato e H2 per la campagna. JAR prodotti; provato il flusso HTTP fra applicazione e motore reali con JWT F01 e mazzo CR01 migrato: `200`, 216 righe, esito `DRAW`; verificati anche evento inattivo `409`, stage sconosciuto `404` e presenza della rotta OpenAPI. [Report con comandi, ambiente, copertura e limiti](../report/2026-11-20-orchestrazione-pve.md). Integrazione React, deploy delle nuove immagini e recupero forte dopo guasti non verificati.
+
+Verifica precedente degli effetti, **2026-11-20**: `mvnw.cmd clean test -q` con JDK 21.0.11 su Windows ha superato **45 test del motore** e **139 test applicativi**, senza fallimenti, errori o casi saltati. Il motore usa H2 per la campagna; la suite applicativa usa PostgreSQL **18.6** in un container isolato. Le prove coprono ordine equipaggiamento/creatura, attivazione unica, scadenza al primo scambio, copie e round indipendenti, danni simultanei, nessuna nuova entrata dopo la fine del round, payload HTTP, installazione V1–V8, aggiornamento da V6 e vincoli SQL. Confrontate inoltre le 60 occorrenze di carte nelle fixture con gli effetti del database migrato. Quella verifica non eseguiva l'orchestrazione applicativa PvE o il browser.
 
 Verifica precedente del motore, **2026-11-20**, prima del modello di effetti: `mvnw.cmd clean test -q` con JDK 21.0.11 su Windows, 35 test JUnit superati, senza fallimenti, errori o test saltati. Verificati ID numerici, mapping degli snapshot senza pool, composizione delle fixture e modificatori degli equipaggiamenti. Confrontate separatamente le statistiche delle creature con V5 e controllati gli esempi JSON interni e pubblici. La suite usa H2; orchestrazione applicativa, autenticazione server-to-server e PostgreSQL non sono verificati da questa esecuzione.
 

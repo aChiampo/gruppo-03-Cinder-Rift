@@ -9,7 +9,7 @@ stati, payload, dati, errori, transazioni, concorrenza e verifiche secondo il
 da quelle FrontEnd, collegati allo stesso ID funzionalità e contratto.
 Stato corrente nell'[indice generale](../README.md#stato-delle-funzionalità).
 
-Dal **2026-11-16** il [motore dimostrativo](../../springboot_app/game_engine/README.md#avvio-con-docker-compose) dispone di build Docker e salute Actuator, con H2 in memoria e menu CLI disabilitato nel container. Allineamento del **2026-11-20**: la PR #36 è integrata e l'API interna PvE è implementata; comportamento server e limiti sono in [App battaglie](app-battaglie.md). La funzionalità applicativa e l'[API pubblica](app-battaglie-api.md) sono documentate, ma orchestrazione e integrazione React non sono implementate. [Avvio comune](../../guida-avvio.md) · [Verifica storica dello stack isolato](../report/2026-11-16-verifica-docker-compose.md).
+Dal **2026-11-16** il [motore dimostrativo](../../springboot_app/game_engine/README.md#avvio-con-docker-compose) dispone di build Docker e salute Actuator, con H2 in memoria e menu CLI disabilitato nel container. Aggiornamento del **2026-11-20**: l'[API pubblica PvE](app-battaglie-api.md) e l'orchestrazione sono implementate nella copia di lavoro di `feature/app_battle_pve_flow`, con L2 + T2, snapshot coerenti e validatore F05 completato; l'integrazione React resta da realizzare. Comportamento server ed evidenze sono in [App battaglie](app-battaglie.md). [Avvio comune](../../guida-avvio.md) · [Verifica storica dello stack isolato](../report/2026-11-16-verifica-docker-compose.md).
 
 ## Base di dati v1.1
 
@@ -17,7 +17,7 @@ Ultimo aggiornamento significativo: **2026-11-09**, per l'inventario aggiornato 
 
 Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano gli interi. Carte e arti sono distinte anche nei mazzi, le prenotazioni appartengono alle trattative e ai consensi correnti, le missioni usano flag di riscossione booleani. Le regole/API ancora proposte restano da concordare. Nessuna migrazione, implementazione o verifica applicativa è attestata da questo allineamento.
 
-Aggiornamento implementato del **2026-11-20**: le migrazioni V7/V8 aggiungono gli effetti condivisi tra creature ed equipaggiamenti e i relativi seed CR01. Il modello SQL, i diagrammi e il DBML sono allineati. Verificati 139 test applicativi su PostgreSQL 18.6 isolato e 45 test del motore; l'orchestrazione applicativa delle battaglie resta non implementata. [Schema e vincoli](Database/database-schema-v1.1.md#perimetro-sql-implementato) · [Effetti nel motore](app-battaglie.md#attivazione-e-responsabilità-degli-effetti).
+Aggiornamento implementato del **2026-11-20**: V7/V8 aggiungono gli effetti condivisi tra creature ed equipaggiamenti; V9 ripara soltanto fazioni mancanti delle creature CR01 note ed energia nulla dei cinque equipaggiamenti iniziali. Il modello SQL, i diagrammi e il DBML degli effetti restano invariati da V9. [Schema e vincoli](Database/database-schema-v1.1.md#perimetro-sql-implementato) · [Effetti nel motore](app-battaglie.md#attivazione-e-responsabilità-degli-effetti) · [Verifiche correnti](app-battaglie.md#decisioni-aperte-e-stato-delle-verifiche).
 
 ## Funzionalità
 
@@ -29,8 +29,8 @@ Aggiornamento implementato del **2026-11-20**: le migrazioni V7/V8 aggiungono gl
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi e marketplace](scambi-mercato.md)
 - [F07 — Sfide e simulazione](sfide-simulazione.md)
-- [F07 — Battaglie PvE nel backend applicativo](app-battaglie.md) — decisioni del 2026-11-20 e opzioni di lock/recupero ancora da scegliere; implementazione applicativa non iniziata.
-- [F07 — Endpoint e payload PvE per il FrontEnd](app-battaglie-api.md) — riferimento canonico del contratto pubblico documentato; implementazione applicativa non iniziata.
+- [F07 — Battaglie PvE nel backend applicativo](app-battaglie.md) — orchestrazione implementata con L2 + T2, budget 8/9/10 secondi e rilascio del guard al termine HTTP.
+- [F07 — Endpoint e payload PvE per il FrontEnd](app-battaglie-api.md) — riferimento canonico del contratto pubblico implementato; integrazione React da realizzare.
 - [F08 — Storico delle partite](storico-partite.md)
 - [F10 — Gestione amministrativa](gestione-amministrativa.md)
 - [F13 — Amicizie; dipendenza di F06](amicizie.md) — contratto API definito il **2026-11-20** su decisioni e delega dell'utente: Bearer JWT, sole relazioni proprie per `USER`/`ADMIN`, elenchi completi dal più recente con nickname, icona e timestamp. Implementazione non iniziata; UI e coordinamento F01/F06 da completare.

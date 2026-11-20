@@ -115,8 +115,8 @@ class SecurityConfiguration {
                 .logout(AbstractHttpConfigurer::disable)
                 // Authorization rules are evaluated in order; the first matching rule applies.
                 .authorizeHttpRequests(requests -> requests
-                        // Allows servlet error dispatches so handling an error does not require a new authentication.
-                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        // Initial requests authenticate normally; MVC error/async redispatches resume that request.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC).permitAll()
                         // These routes require no authenticated user; permitAll does not bypass the CSRF check.
                         .requestMatchers(authenticationWrites).permitAll()
                         .requestMatchers(accountDeletions).hasAnyRole("ADMIN", "USER")

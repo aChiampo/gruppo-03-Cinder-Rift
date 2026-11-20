@@ -42,9 +42,13 @@ Lo stage 3 richiede l'evento `BLOOD_MOON`. L'applicazione usa H2 in memoria e cr
 
 ## API dimostrativa PvE
 
+Verifica corrente del **2026-11-20**: **49 test del motore** superati con JDK 21.0.11 e H2, inclusi rifiuto di deadline scadute/malformate e interruzione tra scambi. La suite applicativa ha superato **212 test** su PostgreSQL 18.6 isolato. Verificato anche il flusso fra JAR reali, senza integrare il browser o distribuire nuove immagini sullo stack dell'utente. [Report corrente](../../docs/report/2026-11-20-orchestrazione-pve.md). Le verifiche degli effetti e della PR riportate sotto sono precedenti all'orchestrazione.
+
 L'API interna del motore ? implementata dalla PR #36, integrata in `dev` con `786707a`. Payload, validazione dimostrativa, risposta ed errori sono descritti esclusivamente nella [specifica BackEnd del motore](../../docs/BackEnd/app-battaglie.md#api-interna-del-motore-implementata).
 
-La funzionalit? applicativa e il suo [contratto pubblico](../../docs/BackEnd/app-battaglie-api.md) sono documentati; orchestrazione in `springboot_app/app` e integrazione React non sono implementate. Il frontend si integra con l'applicazione, non direttamente con il motore. Le chiamate interne usano `http://game-engine:8083`; il binding host resta disponibile per debug come indicato nella configurazione Compose.
+L'orchestrazione applicativa e il [contratto pubblico](../../docs/BackEnd/app-battaglie-api.md) sono implementati nella copia di lavoro di `feature/app_battle_pve_flow`; l'integrazione React resta da realizzare. Il frontend si integra con l'applicazione, non direttamente con il motore. Le chiamate interne usano `http://game-engine:8083`; il binding host resta disponibile per debug come indicato nella configurazione Compose.
+
+L'applicazione invia l'header interno `X-Battle-Deadline` con un termine UTC ISO-8601. Il motore lo controlla prima di preparare la battaglia, prima dell'avvio, tra round e scambi e prima del risultato finale; deadline scaduta o interruzione cooperativa producono `504`, header malformato `400`. Senza header si applica un limite cooperativo locale di 8 secondi, che non può essere esteso dal chiamante. I checkpoint appartengono alla singola esecuzione e non aggiungono stato globale al combattimento. Autenticazione degli utenti nell'applicazione e confine Docker senza credenziali interne aggiuntive sono scelte esplicite dell'utente. Il budget complessivo e i limiti dopo timeout sono nella [specifica applicativa](../../docs/BackEnd/app-battaglie.md#opzioni-dopo-timeout-http).
 
 ## Avvio e verifiche
 
@@ -87,7 +91,7 @@ Il [Dockerfile](Dockerfile) usa Java 21, Maven Wrapper e un’immagine runtime J
 
 L’immagine imposta `SERVER_PORT=8083` e `GAME_ENGINE_CLI_ENABLED=false`, anche per l’avvio diretto senza Compose. Lo starter Actuator fornisce `GET /actuator/health`, usato da Docker e Compose. Per debug locale da terminale o `curl`, il controllo è disponibile su `http://127.0.0.1:8083/actuator/health`; `ENGINE_PORT` modifica solo la porta host. Compose usa filesystem in sola lettura e `/tmp` scrivibile.
 
-La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. È disponibile soltanto l'endpoint HTTP dimostrativo PvE interno descritto sopra; il controllo di salute non attesta l'orchestrazione applicativa, che non è implementata. Il menu dimostrativo resta disponibile nell'avvio Maven interattivo descritto sopra.
+La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. Espone l'endpoint HTTP PvE interno descritto sopra; il controllo di salute non verifica il flusso applicativo completo. Il menu dimostrativo resta disponibile nell'avvio Maven interattivo descritto sopra.
 
 ## Struttura essenziale
 

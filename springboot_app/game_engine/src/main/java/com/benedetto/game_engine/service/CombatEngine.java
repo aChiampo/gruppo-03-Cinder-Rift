@@ -17,11 +17,18 @@ public class CombatEngine {
     }
 
     public RoundResult runRound(Player p1, Player p2) {
+        return runRound(p1, p2, () -> { });
+    }
+
+    public RoundResult runRound(Player p1, Player p2, Runnable checkpoint) {
+        checkpoint.run();
         List<String> log = new ArrayList<>();
         int exchanges = 0;
 
         while (p1.hasActiveCreature() && p2.hasActiveCreature() && p1.getHp() > 0 && p2.getHp() > 0 && exchanges < MAX_EXCHANGES) {
+            checkpoint.run();
             effectEngine.activateEntries(p1, p2, log);
+            checkpoint.run();
             exchanges++;
             Creature c1 = p1.getActiveCreature();
             Creature c2 = p2.getActiveCreature();
@@ -73,6 +80,7 @@ public class CombatEngine {
             log.add("ATTENZIONE: Raggiunto il limite massimo di 50 scambi! Possibile loop infinito interrotto.");
         }
 
+        checkpoint.run();
         Player roundWinner = determineRoundWinner(p1, p2);
         return new RoundResult(log, roundWinner);
     }

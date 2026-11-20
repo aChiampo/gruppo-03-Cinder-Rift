@@ -1,6 +1,7 @@
 package com.benedetto.game_engine.battle.service;
 
 import com.benedetto.game_engine.battle.ChallengerDeckMapperService;
+import com.benedetto.game_engine.battle.BattleDeadline;
 import com.benedetto.game_engine.battle.dto.ChallengerInfoRequest;
 import com.benedetto.game_engine.battle.dto.PveBattleRequest;
 import com.benedetto.game_engine.battle.dto.PveBattleResponse;
@@ -45,6 +46,11 @@ public class PveBattleService {
     }
 
     public PveBattleResponse executeBattle(PveBattleRequest request) {
+        return executeBattle(request, BattleDeadline.fromHeader(null));
+    }
+
+    public PveBattleResponse executeBattle(PveBattleRequest request, Runnable checkpoint) {
+        checkpoint.run();
         if (request == null) {
             throw new IllegalArgumentException("Battle request must not be null");
         }
@@ -92,7 +98,9 @@ public class PveBattleService {
                 : "Enemy Bot";
         Player enemyPlayer = new Player(enemyName, enemyDeck);
 
-        List<String> matchLog = matchEngine.runMatch(challengerPlayer, enemyPlayer);
+        checkpoint.run();
+        List<String> matchLog = matchEngine.runMatch(challengerPlayer, enemyPlayer, checkpoint);
+        checkpoint.run();
 
         List<String> completeLog = new ArrayList<>();
         if (stage.getTutorialHints() != null && !stage.getTutorialHints().isEmpty()) {

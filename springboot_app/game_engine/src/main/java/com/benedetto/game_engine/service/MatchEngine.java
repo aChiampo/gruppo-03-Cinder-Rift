@@ -15,6 +15,11 @@ public class MatchEngine {
     }
 
     public List<String> runMatch(Player p1, Player p2) {
+        return runMatch(p1, p2, () -> { });
+    }
+
+    public List<String> runMatch(Player p1, Player p2, Runnable checkpoint) {
+        checkpoint.run();
         List<String> matchLog = new ArrayList<>();
         matchLog.add("==========================================");
         matchLog.add("     INIZIO PARTITA AUTOMATICA TCG       ");
@@ -24,6 +29,7 @@ public class MatchEngine {
         p2.getDeck().shuffleEquipments();
 
         for (int round = 1; round <= 5; round++) { // Partita su 5 round[cite: 1]
+            checkpoint.run();
             p1.getDeck().shuffleRoundCreatures(round);
             p2.getDeck().shuffleRoundCreatures(round);
 
@@ -37,7 +43,7 @@ public class MatchEngine {
             matchLog.add(String.format("Equip %s: %s", p1.getName(), equipP1.getName()));
             matchLog.add(String.format("Equip %s: %s", p2.getName(), equipP2.getName()));
 
-            RoundResult result = combatEngine.runRound(p1, p2);
+            RoundResult result = combatEngine.runRound(p1, p2, checkpoint);
             matchLog.addAll(result.getLog());
 
             if (result.getWinner() == p1) {
@@ -70,6 +76,7 @@ public class MatchEngine {
         }
         matchLog.add("==========================================");
 
+        checkpoint.run();
         return matchLog;
     }
 }

@@ -57,7 +57,7 @@ class RoundConfigurationMigrationDatabaseTests {
 
     @Test
     void freshInstallationLoadsApprovedLimitsAndEnforcesConstraints() {
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
         assertApprovedLimits();
         assertThatThrownBy(() -> jdbc.sql(
                 "UPDATE round_configurations SET max_card_energy = 0 WHERE round_name = 'ROUND1'").update())

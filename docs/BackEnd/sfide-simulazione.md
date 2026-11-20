@@ -1,10 +1,10 @@
 # Sfide e simulazione
 
 ID: F07 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: endpoint HTTP dimostrativo PvE per campagna/tutorial disponibile per il SAL; implementazione completa F07 non iniziata. Responsabile: DA DEFINIRE (Software Developer).
+Implementazione: endpoint interno del motore e orchestrazione applicativa PvE disponibili nella copia di lavoro; integrazione React e funzionalità complete PvP da realizzare. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo il 2026-11-20, collegamento della specifica applicativa PvE e del riferimento API dedicato su richiesta dell'utente. Restano i limiti F05 approvati il 2026-11-18. Verifiche applicative F07 e di bilanciamento da eseguire.
+Ultimo aggiornamento significativo il 2026-11-20, implementazione applicativa PvE e completamento del validatore F05 su richiesta dell'utente. [Verifiche applicative e del motore](../report/2026-11-20-orchestrazione-pve.md); browser, distribuzione e bilanciamento definitivo restano da verificare.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-battaglie).
 
 ## Obiettivo e decisioni note
@@ -34,7 +34,7 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 
 La specifica del **2026-11-20**, richiesta dall'utente, è raccolta in [App battaglie](app-battaglie.md). Il riferimento canonico di endpoint, header e payload pubblici è [API delle battaglie per il FrontEnd](app-battaglie-api.md). L'integrazione usa il flusso `frontend → applicazione → motore`, identità dal Bearer, ID delle carte del database, log della PR #36 senza messaggi tutorial, rifiuto degli invii sovrapposti e timeout HTTP di 10 secondi.
 
-La [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36) è integrata in `dev` con `786707a` e introduce l'endpoint interno dimostrativo, ora implementato. La funzionalità applicativa è documentata; orchestrazione nell'applicazione e integrazione frontend non sono implementate. Il contratto interno e il comportamento server sono raccolti in App battaglie. Opzioni di lock/recupero e gestione del lavoro dopo timeout sono documentate senza selezionarne una; persistenza PvE, ricompense, progressione e scoperta degli stage restano **DA DEFINIRE**. Questa porzione non completa F07 né modifica le regole di gioco.
+La [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36) è integrata in `dev` con `786707a` e introduce l'endpoint interno dimostrativo. Il branch `feature/app_battle_pve_flow` aggiunge l'orchestrazione applicativa, il validatore F05 completo per il prototipo e deadline cooperative nel motore. L'utente ha scelto L2 + T2, transazione breve `REPEATABLE READ`, budget 8/9/10 secondi e rilascio del guard al termine HTTP anche in esito incerto. Contratto interno, comportamento server ed evidenze sono in App battaglie. Integrazione React, persistenza PvE, ricompense, progressione e scoperta degli stage restano da realizzare o **DA DEFINIRE**; questa porzione non completa F07.
 
 ## Da definire
 

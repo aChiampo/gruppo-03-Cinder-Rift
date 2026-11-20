@@ -17,6 +17,7 @@ class DeckValidatorTests {
             new OwnershipRule(),
             new DestinationLimitsRule(),
             new DeckCompletenessRule(),
+            new CompositionLimitsRule(),
             new DeckEntryStructureRule()));
 
     @Test
@@ -92,10 +93,12 @@ class DeckValidatorTests {
     @Test
     void acceptsTheCompleteThirtyCopyComposition() {
         List<DeckEntry> entries = new ArrayList<>();
+        int cardId = 1;
         for (String destination : List.of("ROUND1", "ROUND2", "ROUND3", "ROUND4", "ROUND5", "EQUIPMENT")) {
             for (int copy = 0; copy < 5; copy++) {
                 boolean equipment = "EQUIPMENT".equals(destination);
-                entries.add(new DeckEntry(equipment ? 2 : 1, equipment ? 12 : 11, destination));
+                entries.add(new DeckEntry(cardId, cardId + 100, destination));
+                cardId++;
             }
         }
         DeckValidationContext context = completeContext(entries);
@@ -132,10 +135,13 @@ class DeckValidatorTests {
             rounds.put(name, new RoundConfiguration(name, round, round, 14, 5));
         }
         rounds.put("EQUIPMENT", new RoundConfiguration("EQUIPMENT", 6, 6, 10, 5));
-        return new DeckValidationContext(7, entries,
-                Map.of(1, new CardDefinition(1, "CREATURE", 1, 1, "COMMON", false),
-                        2, new CardDefinition(2, "EQUIPMENT", 1, 1, "COMMON", false)),
-                Set.of(new CardArtworkKey(1, 11), new CardArtworkKey(2, 12)), rounds,
-                Map.of(new CardArtworkKey(1, 11), 25, new CardArtworkKey(2, 12), 5), true);
+        Map<Integer, CardDefinition> cards = new HashMap<>();
+        Map<CardArtworkKey, Integer> owned = new HashMap<>();
+        for (DeckEntry entry : entries) {
+            cards.put(entry.cardId(), new CardDefinition(entry.cardId(),
+                    "EQUIPMENT".equals(entry.destination()) ? "EQUIPMENT" : "CREATURE", 1, 1, "COMMON", false));
+            owned.merge(new CardArtworkKey(entry.cardId(), entry.cardArtId()), 1, Integer::sum);
+        }
+        return new DeckValidationContext(7, entries, cards, owned.keySet(), rounds, owned, true);
     }
 }

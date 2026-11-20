@@ -1,9 +1,9 @@
 # API delle battaglie PvE per il FrontEnd
 
 ID funzionalità: F07. Ultimo aggiornamento significativo: **2026-11-20**.
-Stato: funzionalità applicativa e contratto pubblico **documentati**, implementazione nell'applicazione **non iniziata**. L'API interna del motore è implementata dalla [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), integrata in `dev` con `786707a`; il contratto interno corrente include ID carta numerici e snapshot completi, come descritto in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
+Stato: endpoint applicativo **implementato nella copia di lavoro** del branch `feature/app_battle_pve_flow`; integrazione React non implementata. L'API interna del motore deriva dalla [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), integrata in `dev` con `786707a`; include ID carta numerici, snapshot completi e deadline cooperativa, come descritto in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
 
-Questo file è il riferimento canonico di endpoint, header e payload pubblici per l'implementazione FrontEnd. [App battaglie](app-battaglie.md) contiene il comportamento server, il contratto interno del motore e le opzioni infrastrutturali ancora da scegliere. Il frontend applicherà la presente specifica; l'endpoint pubblico non è ancora disponibile e l'integrazione non è verificata.
+Questo file è il riferimento canonico di endpoint, header e payload pubblici per l'implementazione FrontEnd. [App battaglie](app-battaglie.md) contiene il comportamento server, il contratto interno del motore e le decisioni infrastrutturali. Il frontend applicherà la presente specifica; l'integrazione browser non è verificata.
 
 ## Endpoint e header
 
@@ -170,9 +170,9 @@ I messaggi degli esempi sono illustrativi e non vanno confrontati come identific
 
 Il timeout HTTP concordato è 10 secondi. Un secondo invio mentre il guard dell'utente è attivo restituisce `409`, anche se arriva da un'altra scheda o sessione o usa un mazzo/stage differente; non viene accodato. A conclusione e rilascio del guard, un nuovo invio è una nuova battaglia.
 
-La scelta del rilascio dopo timeout/crash resta **DA DEFINIRE** nelle [opzioni applicative](app-battaglie.md#opzioni-dopo-timeout-http). Se si seleziona la riconciliazione, il blocco può continuare dopo una risposta `504`. Nessuna risposta di timeout promette che il calcolo remoto sia già fermo.
+L'utente ha selezionato **L2 + T2** il **2026-11-20**: advisory lock PostgreSQL e deadline cooperativa del motore, come descritto nelle [opzioni applicative](app-battaglie.md#opzioni-dopo-timeout-http). Il guard viene rilasciato al termine HTTP anche se l'arresto remoto non è confermato; dopo un guasto può quindi esserci sovrapposizione remota. Al crash applicativo il lock termina quando PostgreSQL rileva la chiusura della sessione. Nessuna risposta di timeout promette che il calcolo remoto sia già fermo.
 
-Il wrapper frontend corrente interrompe l'attesa a 10.000 ms e rappresenta gli errori di trasporto con stato interno `0`: non è un codice HTTP né una risposta del backend. I budget del motore/backend devono lasciare margine per rispondere entro quello frontend; i margini restano da stabilire. Non ripetere automaticamente il POST dopo un esito incerto. Il contratto non definisce polling, recupero del risultato, cancellazione pubblica o un header `Retry-After`.
+Il budget approvato è cumulativo: deadline motore a **8 secondi**, obiettivo di risposta backend entro **9 secondi**, abort frontend a **10 secondi**. Preparazione e attese consumano lo stesso budget; i limiti operativi sono descritti nella specifica applicativa. Il wrapper frontend rappresenta gli errori di trasporto con stato interno `0`: non è un codice HTTP né una risposta del backend. Non ripetere automaticamente il POST dopo un esito incerto. Il contratto non definisce polling, recupero del risultato, cancellazione pubblica o un header `Retry-After`.
 
 ## Collegamenti e stato
 
@@ -180,4 +180,4 @@ Il wrapper frontend corrente interrompe l'attesa a 10.000 ms e rappresenta gli e
 - [F07 — Sfide e simulazione](sfide-simulazione.md) · [Riepilogo API](GUIDA-API-FRONTEND.md) · [Indice BackEnd](README.md).
 - [F01 — Autenticazione](accesso-utenti.md) · [F05 — Mazzi](gestione-mazzi.md) · [Interfaccia F07](../FrontEnd/sfide-simulazione.md).
 
-Questo documento definisce il contratto HTTP da implementare; non include la scelta della strategia di lock. Persistenza PvE, ricompense, progressione della campagna e scoperta degli stage restano **DA DEFINIRE**. Nessuna verifica runtime o integrata è attestata dalla pubblicazione della specifica.
+Questo documento definisce il contratto HTTP implementato. Per strategia di lock ed evidenze di verifica consultare [App battaglie](app-battaglie.md). Persistenza PvE, ricompense, progressione della campagna e scoperta degli stage restano **DA DEFINIRE**.

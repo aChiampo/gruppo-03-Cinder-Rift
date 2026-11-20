@@ -29,6 +29,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "game-engine.cli.enabled=false")
 class BattleControllerTest {
 
+    @Test
+    void executeBattle_rejectsExpiredAndMalformedDeadlinesBeforeDeckMapping() throws Exception {
+        mockMvc.perform(post("/api/battle/pve/stage_01").contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Battle-Deadline", "2000-01-01T00:00:00Z").content("{}"))
+                .andExpect(status().isGatewayTimeout());
+        mockMvc.perform(post("/api/battle/pve/stage_01").contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Battle-Deadline", "not-a-deadline").content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
     @Autowired
     private WebApplicationContext webApplicationContext;
 

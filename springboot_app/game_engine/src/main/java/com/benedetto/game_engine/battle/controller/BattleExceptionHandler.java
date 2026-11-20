@@ -3,6 +3,7 @@ package com.benedetto.game_engine.battle.controller;
 import com.benedetto.game_engine.battle.exception.InactiveStageEventException;
 import com.benedetto.game_engine.battle.exception.InvalidDeckException;
 import com.benedetto.game_engine.battle.exception.StageNotFoundException;
+import com.benedetto.game_engine.battle.BattleDeadline;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -11,6 +12,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class BattleExceptionHandler {
+
+    @ExceptionHandler(BattleDeadline.Exceeded.class)
+    public ProblemDetail handleDeadline(BattleDeadline.Exceeded exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.GATEWAY_TIMEOUT, exception.getMessage());
+    }
 
     @ExceptionHandler(InvalidDeckException.class)
     public ProblemDetail handleInvalidDeckException(InvalidDeckException ex) {

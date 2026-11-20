@@ -79,6 +79,8 @@ services:
       APP_SECURITY_JWT_SECRET: ${APP_SECURITY_JWT_SECRET:-}
       # Credentialed browser requests require explicit frontend origins.
       APP_SECURITY_ALLOWED_ORIGINS: ${APP_SECURITY_ALLOWED_ORIGINS:-http://localhost:8082}
+      # The browser calls the application; only the application uses the engine network.
+      APP_BATTLE_ENGINE_URL: http://game-engine:8083
       # Delete expired or revoked sessions daily at 03:00 UTC; '-' disables the job.
       APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON: ${APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON:-0 0 3 * * *}
       APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE: ${APP_SECURITY_SESSION_TOKEN_CLEANUP_ZONE:-UTC}
