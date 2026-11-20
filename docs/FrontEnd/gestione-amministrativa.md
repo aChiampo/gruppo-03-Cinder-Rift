@@ -4,13 +4,14 @@ ID: F10 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente. La decisione F03 del 2026-11-04 conferma un solo pacchetto per offerta. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-18**, propagazione dei confini F13 e dei requisiti di cleanup account su richiesta dell'utente. L'allineamento al regolamento Versione 2.1 risale al 2026-11-09; la decisione F03 del 2026-11-04 conferma un solo pacchetto per offerta. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 
 - Interfacce di gestione delle carte e dei pacchetti.
 - Consentire agli utenti autorizzati di gestire prezzo e configurazione del singolo pacchetto, secondo i contratti canonici BackEnd di F03/F10; ogni offerta contiene un solo pacchetto.
 - Il backend riserva il namespace amministrativo ad `ADMIN`, come indicato nel [contratto F10](../BackEnd/gestione-amministrativa.md#obiettivo-e-decisioni-note). Il client deve gestire `401` e `403`; nascondere le funzioni nell’interfaccia non sostituisce il controllo server. Allineamento documentale: **2026-11-12**, su richiesta dell’utente.
+- Le [amicizie F13](amicizie.md) restano funzioni personali anche per `ADMIN`: non è prevista un'interfaccia per eliminare richieste o amicizie tra altri utenti. La cancellazione account F01 mantiene i propri permessi distinti; gli effetti futuri su amicizie e scambi seguono il [contratto F01](../BackEnd/accesso-utenti.md#integrazione-prevista-con-f13-e-f06), ancora da integrare e verificare.
 
 ## Implicazioni della proposta di regolamento
 
