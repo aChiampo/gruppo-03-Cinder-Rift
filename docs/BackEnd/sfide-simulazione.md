@@ -1,7 +1,7 @@
 # Sfide e simulazione
 
 ID: F07 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
+Implementazione: endpoint HTTP dimostrativo PvE per campagna/tutorial disponibile per il SAL; implementazione completa F07 non iniziata. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
 Ultimo aggiornamento significativo il 2026-11-20, collegamento della specifica applicativa PvE e del riferimento API dedicato su richiesta dell'utente. Restano i limiti F05 approvati il 2026-11-18. Verifiche applicative F07 e di bilanciamento da eseguire.
