@@ -27,6 +27,8 @@ Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano 
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi e marketplace](scambi-mercato.md)
 - [F07 — Sfide e simulazione](sfide-simulazione.md)
+- [F07 — Battaglie PvE nel backend applicativo](app-battaglie.md) — decisioni del 2026-11-20 e opzioni di lock/recupero ancora da scegliere; implementazione applicativa non iniziata.
+- [F07 — Endpoint e payload PvE per il FrontEnd](app-battaglie-api.md) — riferimento canonico del contratto pubblico pianificato.
 - [F08 — Storico delle partite](storico-partite.md)
 - [F10 — Gestione amministrativa](gestione-amministrativa.md)
 - [F13 — Amicizie; dipendenza di F06](amicizie.md)

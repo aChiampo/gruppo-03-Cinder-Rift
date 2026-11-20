@@ -2,6 +2,8 @@
 
 Aggiornamento del **2026-11-18**, su richiesta dell’utente. I riferimenti rimandano ai contratti canonici delle funzionalità e, per le chiamate frontend disponibili, al client React.
 
+Aggiornamento F07 del **2026-11-20**: aggiunto il riferimento al [contratto pubblico PvE](app-battaglie-api.md), con [specifica applicativa e opzioni aperte](app-battaglie.md). La rotta applicativa è pianificata; l'API interna della PR #36 non è una rotta da chiamare dal browser.
+
 `Stato` indica l’avanzamento della singola rotta nella copia di lavoro. `Pianificato` comprende le proposte ancora da concordare; `Implementata-BE` indica la disponibilità del backend; `Implementata-FE` indica anche la presenza della chiamata nel frontend. La verifica integrata delle chiamate React resta da eseguire. Per le rotte pianificate, autenticazione, ruoli e codici HTTP mantengono i punti aperti dei rispettivi contratti.
 
 | Metodo | Endpoint | Autenticazione | Cosa fa | Codici HTTP | Stato | Ruoli Autorizzati | Referimenti |
@@ -22,6 +24,7 @@ Aggiornamento del **2026-11-18**, su richiesta dell’utente. I riferimenti rima
 | `GET` | `/api/decks/{deckId}` | Bearer JWT | Legge dettagli e validazione di un proprio mazzo | `200`, `400`, `401`, `404` | Implementata-BE | `USER`, `ADMIN`; proprietario del mazzo | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
 | `PUT` | `/api/decks/{deckId}` | Bearer JWT | Sostituisce copie e stato sfidabile del proprio mazzo | `200`, `400`, `401`, `404` | Implementata-BE | `USER`, `ADMIN`; proprietario del mazzo | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
 | `DELETE` | `/api/decks/{deckId}` | Bearer JWT | Elimina un proprio mazzo | `204`, `400`, `401`, `404` | Implementata-BE | `USER`, `ADMIN`; proprietario del mazzo | [F05 — API mazzi](gestione-mazzi.md#api-http-implementate) |
+| `POST` | `/api/battle/pve/{stageId}` | Bearer JWT | Richiede una simulazione PvE con un proprio mazzo | `200`, `400`, `401`, `404`, `409`, `415`, `422`, `500`, `502`, `503`, `504` | Pianificato | Utente autenticato; proprio mazzo, nessuna delega | [F07 — Endpoint e payload](app-battaglie-api.md) |
 | `POST` | `/api/announcements` | Autenticazione richiesta; meccanismo DA DEFINIRE | Propone un annuncio pubblico o uno scambio privato con un amico | DA DEFINIRE | Pianificato | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
 | `GET` | `/api/announcements?scope=marketplace` | Autenticazione richiesta; meccanismo DA DEFINIRE | Elenca gli annunci pubblici pubblicati e non scaduti | DA DEFINIRE | Pianificato | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
 | `GET` | `/api/announcements?scope=mine` | Autenticazione richiesta; meccanismo DA DEFINIRE | Elenca gli annunci del chiamante | DA DEFINIRE | Pianificato | DA DEFINIRE | [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari) |
