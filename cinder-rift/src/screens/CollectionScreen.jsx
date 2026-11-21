@@ -13,7 +13,7 @@ import Pagination from "../components/collection/Pagination.jsx";
 import { useCardCollection } from "../hooks/useCardCollection.js";
 import { PAGE_SIZE, SORT_OPTIONS } from "../models/cards.js";
 
-export default function CollectionScreen({ go }) {
+export default function CollectionScreen({ go, catalog = false }) {
   const c = useCardCollection();
   const [chosenId, setChosenId] = useState(null);
 
@@ -54,10 +54,10 @@ export default function CollectionScreen({ go }) {
         <header className="cards-head">
           <div>
             <h1 id="collection-title">
-              <Layers size={30} /> COLLEZIONE CARTE
+              <Layers size={30} /> {catalog ? 'CATALOGO CARTE' : 'LA TUA COLLEZIONE'}
             </h1>
             <p>
-              Esplora la tua collezione di creature ed equipaggiamenti. Usa i
+              {catalog ? 'Esplora il catalogo di creature ed equipaggiamenti.' : 'Esplora le creature e gli equipaggiamenti che possiedi.'} Usa i
               filtri per trovare le carte che ti servono.
             </p>
           </div>
@@ -103,7 +103,7 @@ export default function CollectionScreen({ go }) {
         {failed && (
           <div className="collection-state error" role="alert">
             <WifiOff size={34} />
-            <p>{c.error?.message || "Impossibile caricare la collezione."}</p>
+            <p>{catalog && c.error?.status === 501 ? 'Il catalogo non è disponibile: il servizio carte non è ancora pubblicato.' : c.error?.message || "Impossibile caricare la collezione."}</p>
             <button className="btn-outline" onClick={c.retry}>
               RIPROVA
             </button>
@@ -170,7 +170,7 @@ export default function CollectionScreen({ go }) {
           <ChevronDown size={16} />
         </label>
         <div className="panel detail-panel">
-          {selected ? (
+          {selected && !failed ? (
             <CardDetail card={selected} />
           ) : (
             <p className="detail-empty">

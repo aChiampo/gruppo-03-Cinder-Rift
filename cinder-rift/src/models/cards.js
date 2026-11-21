@@ -1,4 +1,4 @@
-// Filtri e ordinamento li esegue il BACKEND (GET /cards): qui restano solo valori e opzioni dell'interfaccia.
+// Presentation options; the future F04 contract will define filtering and sorting.
 /**
  * Rarità. `power` = intervallo di punti potenza per carta (regolamento v2.0, par. 3).
  * `rank` serve solo all'ordinamento.

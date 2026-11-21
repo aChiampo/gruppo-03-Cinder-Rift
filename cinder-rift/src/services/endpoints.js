@@ -1,15 +1,11 @@
-// Tutti gli endpoint del backend in un unico posto (percorsi relativi a VITE_API_URL).
-// Quando il backend sarà pronto, se i percorsi sono diversi si cambia solo questo file.
+// Paths are relative to the API base, which already includes /api.
 export const ENDPOINTS = {
   auth: {
-  csrfTokens: "/auth/csrf-tokens",
-  login: "/auth/login",
-  me: "/auth/user/me",
-  logout: "/auth/logout",
-},
-  cards: {
-    // GET (Bearer token) ?type&faction&rarity&energyMin&energyMax&attackMin&attackMax&defenseMin&defenseMax&q&sort&page&pageSize
-    //   -> { items, page, pageSize, total, counts }   (solo le carte possedute dall'utente: docs/API-COLLEZIONE.md)
-    collection: "/api/cards",
+    csrfTokens: '/auth/csrf-tokens', signin: '/auth/signin', login: '/auth/login',
+    me: '/auth/user/me', renewal: '/auth/session-renewals', logout: '/auth/logout',
   },
-};
+  decks: '/users/me/decks',
+  deck: (id) => `/decks/${encodeURIComponent(id)}`,
+  pve: (stageId) => `/battle/pve/${encodeURIComponent(stageId)}`,
+  profile: '/users/me',
+}

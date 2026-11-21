@@ -8,8 +8,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useDebouncedValue } from "./useDebouncedValue.js";
 
 /**
- * Stato della Collezione. Filtri, ordinamento e pagina vengono mandati al backend (GET /cards):
- * qui si tiene lo stato dell'interfaccia e l'esito della richiesta.
+ * Collection UI state. The service reports an unavailable feature until F04 has an agreed HTTP contract.
  *   status: 'loading' | 'ready' | 'error'   (durante un nuovo caricamento `visible` mostra ancora i risultati precedenti)
  */
 export function useCardCollection() {
@@ -56,7 +55,7 @@ export function useCardCollection() {
     const controller = new AbortController();
     setResult((r) => ({ ...r, status: "loading", error: null }));
     getCollection(settled, { token, signal: controller.signal })
-      .then((data) => setResult({ status: "ready", data, error: null }))
+      .then((data) => { if (!controller.signal.aborted) setResult({ status: "ready", data, error: null }); })
       .catch((error) => {
         if (controller.signal.aborted) return; // richiesta superata da una più recente
         setResult((r) => ({ ...r, status: "error", error }));

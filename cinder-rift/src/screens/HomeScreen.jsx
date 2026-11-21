@@ -1,37 +1,24 @@
-import { useState } from 'react'
+import { Newspaper, Swords, Trophy } from 'lucide-react'
 import Campaign from '../components/home/Campaign.jsx'
-import PendingChallenges from '../components/home/PendingChallenges.jsx'
-import LastMatch from '../components/home/LastMatch.jsx'
 import NewChallengeBanner from '../components/home/NewChallengeBanner.jsx'
-import News from '../components/home/News.jsx'
 import Decks from '../components/home/Decks.jsx'
-import { initialChallenges, lastMatch } from '../data/challenges.js'
-import { decks } from '../data/decks.js'
-
-export default function HomeScreen({ go, toast }) {
-  const [challenges, setChallenges] = useState(initialChallenges)
-  const [activeDeck, setActiveDeck] = useState('principale')
-  const deckName = decks.find((d) => d.id === activeDeck).name
-
-  const accept = (c) => {
-    setChallenges((l) => l.filter((x) => x.id !== c.id))
-    toast(`Sfida di ${c.from} accettata con ${deckName}.`)
-  }
-
-  return (
-    <main className="grid">
-      <div className="col-main">
-        <Campaign onStart={() => toast('Campagna in arrivo: parte dal tutorial di SENTINEL.')} />
-        <div className="two">
-          <PendingChallenges items={challenges} onAccept={accept} onAll={() => go('gioca')} />
-          <LastMatch match={lastMatch} onDetails={() => go('gioca')} />
-        </div>
-        <NewChallengeBanner onClick={() => go('gioca')} />
+import Panel from '../components/ui/Panel.jsx'
+import Unavailable from '../components/ui/Unavailable.jsx'
+import { useDecks } from '../hooks/useDecks.js'
+export default function HomeScreen({ go }) {
+  const decks = useDecks()
+  return <main className="grid">
+    <div className="col-main">
+      <Campaign onStart={() => go('gioca')} />
+      <div className="two">
+        <Panel icon={Swords} title="SFIDE IN ATTESA"><Unavailable feature="Le sfide tra giocatori" /></Panel>
+        <Panel icon={Trophy} title="ULTIMA SFIDA"><Unavailable feature="Lo storico delle partite" /></Panel>
       </div>
-      <aside className="col-side">
-        <News onAll={() => toast('Pagina novità non ancora disponibile.')} />
-        <Decks activeId={activeDeck} setActive={setActiveDeck} onManage={() => go('deck')} />
-      </aside>
-    </main>
-  )
+      <NewChallengeBanner onClick={() => go('gioca')} />
+    </div>
+    <aside className="col-side">
+      <Panel icon={Newspaper} title="NOVITÀ"><Unavailable feature="Le novità" /></Panel>
+      <Decks items={decks.data ?? []} {...decks} onManage={() => go('deck')} />
+    </aside>
+  </main>
 }

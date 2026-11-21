@@ -1,30 +1,8 @@
-export default function DeckValidation({ validation }) {
-  const errors = validation?.errors ?? []
-  const warnings = validation?.warnings ?? []
-
-  return (
-    <div className="deck-validation">
-      <h4>Validazione mazzo</h4>
-
-      {errors.length === 0 && warnings.length === 0 ? (
-        <div className="deck-validation__status success">Mazzo conforme ai vincoli.</div>
-      ) : null}
-
-      {errors.length > 0 && (
-        <ul className="deck-validation__list deck-validation__list--error">
-          {errors.map((message, index) => (
-            <li key={`error-${index}`}>{message}</li>
-          ))}
-        </ul>
-      )}
-
-      {warnings.length > 0 && (
-        <ul className="deck-validation__list deck-validation__list--warning">
-          {warnings.map((message, index) => (
-            <li key={`warning-${index}`}>{message}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
+export default function DeckValidation({ validation, dirty }) {
+  if (!validation) return null
+  return <section className="deck-validation" aria-live="polite"><h3>ESITO DELLA VALIDAZIONE</h3>
+    {dirty && <p className="hint">Esito precedente alle modifiche correnti.</p>}
+    <p className={validation.valid && !validation.warnings?.length ? 'success-message' : 'hint'}>{validation.valid ? validation.warnings?.length ? 'Bozza salvabile, composizione da completare.' : 'Validazione superata.' : 'Il mazzo presenta errori.'}</p>
+    {['errors', 'warnings'].map((kind) => <ul key={kind} className={`deck-validation__list deck-validation__list--${kind === 'errors' ? 'error' : 'warning'}`}>{(validation[kind] ?? []).map((issue, index) => <li key={index}><strong>{issue.destination ? `${issue.destination}: ` : ''}{issue.message}</strong><small>{issue.code}</small></li>)}</ul>)}
+  </section>
 }

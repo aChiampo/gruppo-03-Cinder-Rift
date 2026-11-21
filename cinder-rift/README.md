@@ -1,85 +1,57 @@
-# Cinder-Rift — Frontend
+# Cinder-Rift — Frontend React
 
-Pagine: Login → Home · Collezione · Deck (deck builder) · Gioca · Negozio.
+Aggiornamento: **2026-11-21**, implementazione delle pagine React e rimozione della modalità dimostrativa su richiesta dell’utente.
 
-Ultimo aggiornamento significativo: **2026-11-16**, configurazione Docker richiesta dall’utente. Il frontend è un prototipo React 18/Vite 5; login e dati dimostrativi non attestano l’integrazione con il backend Spring. Il riferimento canonico per autenticazione, cookie e CSRF è il [contratto F01](../docs/BackEnd/accesso-utenti.md).
+## Avvio locale
 
-## Avvio con Docker Compose
-
-Dalla radice del repository, configura la chiave JWT seguendo la [guida di avvio](../guida-avvio.md), poi esegui:
+Prerequisiti: Node.js 22+ e backend Spring disponibile. Dalla cartella `cinder-rift/`:
 
 ```text
-docker compose up --build --wait
+npm ci
+npm run dev
 ```
 
-Apri `http://localhost:8082`. Il servizio `react` compila i sorgenti con Node.js 22 e `npm ci` dal lockfile; Nginx serve il risultato sulla porta interna `8082`, con utente non privilegiato, filesystem in sola lettura e file temporanei in `/tmp`. `dist/`, `node_modules/` e i `.env` locali sono esclusi dal contesto Docker. Il server Vite e il server Node di prova non vengono avviati nell’immagine.
+Aprire `http://localhost:5173`. Vite inoltra `/api` a `http://localhost:8081`. Per modificare la destinazione, copiare `.env.example` in `.env` e configurare `API_PROXY_TARGET`. `VITE_API_URL` è la base pubblica delle API, include `/api` e ha default `/api`. Non contiene segreti.
 
-Nel `.env` della **radice del repository**, le variabili `VITE_API_URL` (default `/api`) e `VITE_USE_MOCK` (default `false`) diventano argomenti di build. Nginx inoltra `/api/` a `spring_app:8081` senza rimuovere il prefisso e gestisce il fallback SPA su `index.html`. I nomi dei container non sono indirizzi raggiungibili dal browser. Il controllo di salute usa `/healthz` e verifica solo Nginx.
+Accesso e registrazione richiedono il backend. Cookie Secure/HttpOnly e origini consentite seguono il [contratto F01](../docs/BackEnd/accesso-utenti.md#comportamento-del-client): mantenere lo stesso hostname; in distribuzione usare HTTPS nello stesso sito. Non sono disponibili un server di prova o credenziali simulate.
 
-Il login reale non è ancora compatibile con F01: payload e risposta del login, percorso del profilo, cookie, CSRF e persistenza dei token devono essere allineati al contratto canonico. Per esplorare la grafica imposta `VITE_USE_MOCK=true` nella radice, quindi esegui `docker compose up --build --wait react`. Questo abilita il login simulato esistente senza avviare `mock-api`; non verifica autenticazione o dati server.
+## Pagine e integrazione
 
-Le variabili Vite sono pubbliche e incorporate nel bundle durante il build: non inserirvi segreti. Dopo ogni modifica a `VITE_*` ricostruisci `react`; il riavvio non basta. Il `.env` di questa cartella riguarda soltanto lo sviluppo locale seguente. [Configurazione Compose e porte](../guida-avvio.md#configurazione-dei-servizi-compose).
+| Pagina | Comportamento |
+| --- | --- |
+| Accesso e registrazione | Email/password; nickname e conferma password per la registrazione; CSRF e creazione sessione F01. |
+| Home | Campagna, navigazione e mazzi reali; indisponibilità per novità, sfide e storico. |
+| Catalogo e collezione | Componenti condivisi per filtri, carte, dettaglio e paginazione; indisponibilità finché manca il contratto HTTP F04. |
+| Mazzi | CRUD F05, copie per variante e destinazione, validazione del server. |
+| Campagna e risultato | Selezione di un mazzo del server e codice stage; simulazione PvE F07; esito e log restituiti dal server. |
+| Negozio e dettaglio pacchetto | Sezioni, risorse distinte e dettaglio modale; acquisto e apertura disabilitati finché F03 non definisce le API. |
+| Profilo e impostazioni | Dati reali e aggiornamento nickname/email/icona tramite F01; logout. |
 
-Verifica del **2026-11-16**: immagine costruita, servizio sano nello stack Compose isolato e risposte HTTP controllate per pagina, asset, fallback SPA e proxy API. Login Spring e interfaccia nel browser non verificati. [Evidenze e limiti](../docs/report/2026-11-16-verifica-docker-compose.md).
+Navigazione tramite hash URL, con cronologia e ricaricamento. JWT solo in memoria, rinnovo tramite cookie dopo ricaricamento, prima della scadenza e dopo rifiuto Bearer; rinnovo e uscita serializzati. Un rinnovo rifiutato con `401` riporta all’accesso. Nessun saldo economico viene dedotto dai punti classifica.
 
-## Avvio
-1. Installa Node.js 18+ (https://nodejs.org)
-2. `npm install`
-3. **Terminale 1** — backend di prova: `npm run mock-api` (http://localhost:3000/api)
-4. **Terminale 2** — frontend: `npm run dev` → http://localhost:5173
-5. Accedi con **mirko** (oppure mirko@cinder-rift.dev) e password **cinder123**
+Il catalogo non ha ancora una rotta canonica. Il selettore visuale del builder segnala questa dipendenza; è disponibile un editor alternativo di ID carta/variante per copie note. Il contratto F05 non fornisce nomi, immagini o statistiche delle carte nei dettagli dei mazzi. Composizione e possesso restano verificati dal server.
 
-Senza backend acceso il login mostra "Server non raggiungibile". Per lavorare sulla grafica senza backend metti
-`VITE_USE_MOCK=true` in `.env` (login finto, nessuna chiamata di rete).
+## Verifiche
 
-## Collegare il backend vero
-1. In `.env` imposta `VITE_API_URL` con l'indirizzo del backend e `VITE_USE_MOCK=false`.
-2. Il backend deve rispettare il contratto qui sotto. Se i percorsi sono diversi, si cambia solo `src/services/endpoints.js`;
-   se i campi dell'utente hanno altri nomi, solo `normalizeUser()` in `src/services/authService.js`.
-3. Se frontend e backend sono su origini diverse, il backend deve abilitare il CORS
-   (header `Content-Type` e `Authorization`) oppure si usa un proxy.
-4. Elimina la cartella `server/` e lo script `mock-api` da `package.json`.
-
-## Contratto API (autenticazione)
-Base: `VITE_API_URL` — il token si invia come `Authorization: Bearer <token>` e i cookie di sessione/refresh sono inclusi con `credentials: 'include'`.
-
-| Metodo | Endpoint                      | Body                             | Risposta                                                                 |
-|--------|-------------------------------|----------------------------------|--------------------------------------------------------------------------|
-| POST   | `/api/auth/login`             | `{ email, password }`            | `200 { accessToken, tokenType, expiresIn, user }` · `400 { message }` · `401 { message }` |
-| GET    | `/api/auth/user/me`           | —                                | `200 { id, nickname, email, role, rankingPoints, iconUrl }` · `401`      |
-| POST   | `/api/auth/logout`            | —                                | `204`                                                                    |
-
-`user` dal backend usa i campi `{ id, nickname, email, role, rankingPoints, iconUrl }`; il frontend li normalizza in `{ id, name, level, credits, avatar }` per la UI. Gli errori devono avere il campo `message` (viene mostrato nel login).
-
-Comportamento del frontend:
-- Il token è salvato in `sessionStorage` (si perde chiudendo la scheda).
-- Al ricaricamento la sessione viene verificata con `GET /api/auth/user/me`: se il token non è valido si torna al login.
-- Qualsiasi richiesta autenticata che riceve `401` riporta al login.
-- Il logout avvisa il backend (`POST /api/auth/logout`) e chiude comunque la sessione locale.
-- Timeout richieste: 10 secondi.
-
-## Pagine (id in `App.jsx` e `data/navigation.js`)
-| Navbar      | id           | Stato                                      |
-|-------------|--------------|--------------------------------------------|
-| HOME        | `home`       | completa                                   |
-| COLLEZIONE  | `collezione` | completa (`screens/CollectionScreen`)      |
-| DECK        | `deck`       | deck builder (`screens/DeckScreen`)        |
-| GIOCA       | `gioca`      | segnaposto                                 |
-| NEGOZIO     | `negozio`    | segnaposto                                 |
-
-Collezione, Deck e Home usano ancora dati di esempio (`data/`, `services/cardService.js`, `services/deckService.js`).
-
-## Struttura
+```text
+npm test
+npm run build
 ```
-server/                 backend di prova (mock-api.js) — da eliminare con il backend vero
-src/
-├── main.jsx, App.jsx   ingresso e navigazione
-├── context/            AuthContext (sessione)
-├── services/           api.js (fetch), endpoints.js, authService.js, cardService.js, deckService.js
-├── screens/            LoginScreen, HomeScreen, CollectionScreen, DeckScreen, PlaceholderScreen
-├── components/         layout/ ui/ home/ collection/ cards/ deck-builder/
-├── models/             regole di gioco (mazzo, carte, filtri)
-├── data/               dati di esempio
-├── hooks/              useToast, useCardCollection
-└── styles/             CSS per area
-```
+
+I test verificano servizi e rendering statico con fixture isolate nei test. Non sostituiscono una verifica browser contro Spring/PostgreSQL. Il build aggiorna `dist/`, già versionata. Per servire il build localmente: `npm run preview`.
+
+## Docker
+
+Usare la procedura Compose esistente dalla radice del repository. Il Dockerfile di questa cartella accetta solo `VITE_API_URL` e serve il build con Nginx sulla porta 8082; il proxy inoltra `/api/` a Spring mantenendo il prefisso.
+
+Compose e documentazione nella radice non sono stati modificati per rispettare il confine richiesto. Eventuali argomenti obsoleti nella configurazione esterna non attivano modalità alternative.
+
+## Fonti e limiti
+
+- [API frontend e stato degli endpoint](../docs/BackEnd/GUIDA-API-FRONTEND.md)
+- [Autenticazione e profili F01](../docs/BackEnd/accesso-utenti.md)
+- [Mazzi F05](../docs/BackEnd/gestione-mazzi.md)
+- [Battaglie PvE F07](../docs/BackEnd/app-battaglie-api.md)
+- [Collezione F04](../docs/BackEnd/collezione-carte.md)
+- [Pacchetti F03](../docs/BackEnd/acquisto-pacchetti.md)
+- [Problemi, scelte e verifiche](frontend-report.md)
