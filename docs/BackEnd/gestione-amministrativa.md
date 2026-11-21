@@ -1,11 +1,13 @@
 # Gestione amministrativa
 
 ID: F10 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: non iniziata. Responsabile: DA DEFINIRE (Software Developer).
+Implementazione: API CRUD del catalogo carte aggiunte; altre funzioni di backoffice non implementate.
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
 Ultimo aggiornamento significativo il **2026-11-18**, propagazione delle decisioni dell'utente sui confini dei permessi F13 e sul futuro cleanup F01/F06. I permessi amministrativi di cancellazione account F01 risalgono al 2026-11-13; la protezione del namespace amministrativo al 2026-11-12. L'allineamento a inventario, mercy e regolamento Versione 2.1 risale al 2026-11-09. Verifiche delle funzionalità di backoffice da eseguire.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
+
+Aggiornamento del **2026-11-21**: importate le API CRUD del catalogo da `feature/api-collezione-catalogo`; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
 
 ## Obiettivo e decisioni note
 
@@ -26,6 +28,24 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio
 - Cancellare logicamente carte o espansioni richiede il guard esclusivo del catalogo, invalidazione di annunci/trattative e rilascio di tutti gli hold prima della conversione e pulizia di collezione e mazzi. Applicare il [protocollo transazionale comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune); non è un trigger. Tassi, frammenti e recupero per lotti restano da definire.
 - `NOTIFICATIONS` usa FK intere per mittente e destinatario, messaggio obbligatorio e stato `new`, `read` o `archived`. Invii di massa e regali richiedono autorizzazione backend e aggiornamenti economici separati dalla notifica.
 
+## Separazione dei servizi
+
+F04 mantiene catalogo e collezione in package separati. `CardCatalogService` gestisce la consultazione; `CardManagementService` gestisce le scritture F10; `CollectionService` espone soltanto letture della collezione autenticata. Il controllo `ADMIN` è applicato dal namespace `/api/admin/**`.
+
+## API del catalogo implementate
+
+Le rotte richiedono Bearer JWT e ruolo `ADMIN`; senza autenticazione rispondono `401`, con ruolo `USER` rispondono `403`.
+
+| Metodo e percorso | Comportamento | Esito |
+| --- | --- | --- |
+| `POST /api/admin/cards` | Crea una carta con le varianti indicate | `201` con dettaglio F04 e header `Location` |
+| `PUT /api/admin/cards/{cardId}` | Sostituisce la definizione e le varianti di una carta attiva non utilizzata | `200` con dettaglio F04 |
+| `DELETE /api/admin/cards/{cardId}` | Cancella logicamente una carta attiva non utilizzata | `204` |
+
+POST e PUT ricevono `name`, `description`, `typeId`, `energyCost`, `power`, `rarityId`, `attack`, `defense`, `factionId`, `expansionId` e `artworks`. `name` è obbligatorio e non vuoto; `artworks` è obbligatorio e può essere vuoto. Ogni variante contiene `artCode` obbligatorio e `imageUrl` facoltativo. Gli ID di riferimento facoltativi devono essere positivi e riferirsi a voci esistenti non cancellate. Il payload non modifica gli effetti delle carte.
+
+Parametri non validi, riferimenti sconosciuti e codici arte duplicati producono `400`; carta assente o cancellata produce `404` su PUT/DELETE; URL immagine duplicati e carte già presenti in collezioni o mazzi producono `409`. PUT/DELETE acquisiscono il lock della carta nella transazione. La conversione delle copie e la pulizia dei futuri scambi non sono implementate da queste rotte. Le risposte di dettaglio seguono [F04](collezione-carte.md#risposta-catalogo).
+
 ## Riferimenti alla proposta di regolamento
 
 - Il catalogo delle carte dovrà considerare, dopo la conferma delle regole, i concetti descritti nelle sezioni su [energia e punti potenza](../Digital/regolamento-base.md#3-energia-e-punti-potenza), [caratteristiche delle creature](../Digital/regolamento-base.md#5-caratteristiche-delle-creature), [fazioni](../Digital/regolamento-base.md#6-fazioni) ed [equipaggiamenti](../Digital/regolamento-base.md#7-equipaggiamenti).
@@ -39,7 +59,8 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 
 - Matrice dei permessi e operazioni consentite su cataloghi già utilizzati.
 - Eventuali altre funzioni amministrative.
-- Contratto tecnico del catalogo e validazioni; compatibilità delle modifiche alle carte con mazzi e partite esistenti, in coordinamento con F05 e F07.
+- Compatibilità e versionamento delle modifiche con mazzi, partite e flussi futuri, in coordinamento con F03, F05, F06 e F07.
+- Altri endpoint amministrativi, compresa la gestione dei pacchetti.
 
 ## Collegamenti
 
@@ -47,7 +68,9 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 - [Accesso](accesso-utenti.md)
 - [Offerte di pacchetti](acquisto-pacchetti.md)
 - [Carte e identità](../Digital/lore-identita-carte.md)
-- [Regolamento Versione 2.1](../Digital/regolamento-base.md)
+- [Regolamento Versione 2.0](../Digital/regolamento-base.md)
+- [Catalogo e collezione F04](collezione-carte.md)
+- [Schema dati v1.1](Database/database-schema-v1.1.md)
 - [Mazzi](gestione-mazzi.md)
 - [Sfide](sfide-simulazione.md)
 - [Indice BackEnd](README.md)

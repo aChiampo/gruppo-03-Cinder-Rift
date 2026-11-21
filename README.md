@@ -2,6 +2,8 @@
 
 > Nome progetto e numero gruppo: **DA DEFINIRE**. Configurazione Docker aggiornata il **2026-11-16**, su richiesta dell’utente: backend F01/F05, prototipo React e motore dimostrativo dispongono di build Compose. Invio email e integrazione dell’autenticazione React con Spring restano da completare.
 
+Aggiornamento del **2026-11-21**: importate le API F04 di [catalogo e collezione](docs/BackEnd/collezione-carte.md) e le scritture amministrative F10 da `feature/api-collezione-catalogo`; integrazione React da completare. Verificati 212 test esistenti e 8 test API importati in esecuzioni distinte; JAR prodotto su PostgreSQL 18.6 isolato.
+
 ## Indice generale
 
 - [Gioco di carte collezionabili digitale](#gioco-di-carte-collezionabili-digitale)
