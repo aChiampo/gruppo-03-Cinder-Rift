@@ -1,5 +1,7 @@
 # Gioco di carte collezionabili digitale
 
+Aggiornamento F13 del **2026-11-22**: backend amicizie, migrazione V10 e cleanup nella transazione F01 disponibili sul branch `feature/f13-friendships-backend`. Frontend e F06 esclusi. [Report di implementazione e verifica](docs/report/2026-11-22-implementazione-amicizie.md).
+
 Importazione parziale del **2026-11-22** da `test-connessione`: API F04/F10, test e mescolamento ordinario del tutorial F07. Migrazioni ferme a V9; V10, modifica al relativo test di migrazione e modifiche frontend escluse. Le verifiche del branch sorgente riportate sotto sono evidenze storiche, non nuove esecuzioni.
 
 Verifiche locali dell'importazione parziale del **2026-11-22**: **220 test applicativi** superati con JDK 21.0.11/PostgreSQL 18.6 isolato e JAR prodotto; **51 test JUnit del motore** superati con H2. [Ambito e limiti](docs/BackEnd/collezione-carte.md#verifica-dellimportazione-parziale-del-2026-11-22).
@@ -31,9 +33,9 @@ Aggiornamento del **2026-11-21**: importate le API F04 di [catalogo e collezione
 3. Apertura dei pacchetti e consultazione della collezione; composizione e validazione dei mazzi.
 4. Scambi privati o pubblici nel marketplace, con carte e crediti, consenso di entrambe le parti e durata di due giorni dalla creazione dell’annuncio, secondo il [contratto F06](docs/BackEnd/scambi-mercato.md).
 5. Sfide con scelta dei mazzi, simulazione sul server e storico con risultati turno per turno.
-6. Richieste e amicizie reciproche F13: `USER` e `ADMIN` gestiscono soltanto le proprie relazioni tramite Bearer JWT; elenchi completi senza paginazione, con nickname, icona e timestamp, dal più recente. Il [contratto API F13](docs/BackEnd/amicizie.md) è definito il **2026-11-20** su decisioni e delega dell'utente. Implementazione non iniziata e verifiche applicative non eseguite; UI e coordinamento F01/F06 restano da completare.
+6. Richieste e amicizie reciproche F13: `USER` e `ADMIN` gestiscono soltanto le proprie relazioni tramite Bearer JWT; elenchi completi senza paginazione, con nickname, icona e timestamp, dal più recente. Il [contratto API F13](docs/BackEnd/amicizie.md) è definito il **2026-11-20**. Backend, V10 e cleanup amicizie F01 implementati il **2026-11-22** nella copia di lavoro; frontend e F06 esclusi. [Report e verifiche](docs/report/2026-11-22-implementazione-amicizie.md).
 
-Allineamento documentale F13 del **2026-11-18**, su richiesta dell'utente: rimuovere un'amicizia conserva gli scambi esistenti con la scadenza originaria; la cancellazione logica di un account richiede invece pulizia di amicizie e scambi aperti, conservazione dello storico completato e gestione dell'annuncio pubblico della controparte come rifiuto. La [futura integrazione F01/F06](docs/BackEnd/accesso-utenti.md#integrazione-prevista-con-f13-e-f06) è documentata e non implementata dalla cancellazione account corrente.
+Aggiornamento F13/F01 del **2026-11-22**: il soft delete elimina richieste e amicizie nella stessa transazione. Il [cleanup F06](docs/BackEnd/accesso-utenti.md#integrazione-prevista-con-f13-e-f06) resta da implementare. Rimuovere una sola amicizia non introduce operazioni sugli scambi.
 
 Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pagamenti reali sono esclusi dallo sviluppo previsto dalla traccia.
 

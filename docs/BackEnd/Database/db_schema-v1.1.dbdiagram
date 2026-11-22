@@ -1,5 +1,5 @@
 {
-  "version": "3.0.0",
+  "version": "4.0.0",
   "darkMode": true,
   "gridEnabling": false,
   "currentViewName": null,
@@ -950,7 +950,10 @@
         "secondRelation": "1",
         "checkPoints": []
       }
-    ]
+    ],
+    "elementPositions": [],
+    "groupCollapseStates": [],
+    "linkPaths": []
   },
   "views": {}
 }

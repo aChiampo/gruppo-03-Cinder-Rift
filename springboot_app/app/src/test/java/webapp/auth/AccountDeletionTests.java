@@ -74,6 +74,7 @@ class AccountDeletionTests {
         assertThat(cookie.getAttribute("SameSite")).isEqualTo("Strict");
         verify(accounts).revokeAllRefreshTokens(eq(1), any());
         verify(accounts).deletePasswordResetTokens(1);
+        verify(accounts).deleteFriendships(1);
         verify(accounts).markDeleted(1);
     }
 
@@ -88,6 +89,7 @@ class AccountDeletionTests {
                 .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
         verify(accounts).revokeAllRefreshTokens(eq(2), any());
         verify(accounts).deletePasswordResetTokens(2);
+        verify(accounts).deleteFriendships(2);
         verify(accounts).markDeleted(2);
     }
 

@@ -1,11 +1,11 @@
 # Amicizie
 
 ID funzionalità: **F13**; dipendenze: **F01** e **F06**.
-Perimetro: amicizie reciproche e richieste; **contratto API definito**, integrazioni F01/F06 e dettagli dell'interfaccia da completare.
-Implementazione: **non iniziata**. Responsabile: **DA DEFINIRE**.
-Ultimo aggiornamento significativo: **2026-11-20**. L'utente conferma Bearer JWT, timestamp, nickname e icona, con richieste e amicizie più recenti per prime; delega le altre scelte API alle proposte esistenti o a una soluzione semplice. Le decisioni su ruoli, errori, assenza di paginazione e cleanup F01/F06 risalgono al **2026-11-18**.
-Fonti dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md) e [rappresentazione DBML](Database/db_schema-v1.1.dbml). La specifica del database prevale per dati e invarianti; i flussi e il contratto API sotto sono definiti per la futura implementazione, senza modificare lo schema.
-Verifiche applicative: **non eseguite**.
+Perimetro: richieste e amicizie reciproche; contratto API definito e backend implementato, frontend e F06 da completare.
+Implementazione: **backend F13 e cleanup amicizie F01 disponibili nella copia di lavoro** del branch `feature/f13-friendships-backend`; frontend e F06 esclusi dall'attività su scelta dell'utente. Responsabile: **DA DEFINIRE**.
+Ultimo aggiornamento significativo: **2026-11-22**, implementazione richiesta e scelte confermate dall’utente. Il contratto API risale al **2026-11-20**; ruoli, errori, elenchi completi e requisiti F01/F06 al **2026-11-18**.
+Fonti dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md) e [DBML](Database/db_schema-v1.1.dbml). V10 realizza i vincoli F13 del modello esistente.
+Aggiornamento implementativo: **2026-11-22**, su richiesta dell'utente. Migrazione V10, API e cleanup atomico F01; verifiche e problemi dell'attività nel [report](../report/2026-11-22-implementazione-amicizie.md). Le evidenze precedenti restano storiche.
 
 ## Obiettivo, perimetro e dipendenze
 
@@ -13,7 +13,7 @@ L'amicizia esiste soltanto dopo l'accettazione della richiesta da parte del dest
 
 [F01](accesso-utenti.md) fornisce identità e autenticazione. [F06](scambi-mercato.md#richiesta-privata) richiede un'amicizia `accepted` per avviare uno scambio privato. Per decisione dell'utente, la rimozione dell'amicizia da parte di un partecipante `USER` o `ADMIN` non elimina gli scambi pubblici o privati già esistenti e non ne modifica il TTL: restano soggetti alle normali regole F06, con scadenza originaria di due giorni dalla creazione dell'annuncio e possibilità di chiusura anticipata secondo quel contratto. Non si possono avviare nuovi scambi privati senza una nuova amicizia `accepted`.
 
-Questa pagina è il riferimento BackEnd del contratto delle amicizie. Le scelte API sono definite su conferma e delega dell'utente del 2026-11-20; l'interfaccia resta da dettagliare e non è attestata alcuna integrazione. Le conseguenze sulla cancellazione account sono collegate nel [contratto F01](accesso-utenti.md#integrazione-prevista-con-f13-e-f06); il comportamento degli scambi è descritto nel [contratto F06](scambi-mercato.md#amicizie-e-cancellazione-degli-account). La propagazione documentale non implementa questi requisiti. La [pagina FrontEnd F13](../FrontEnd/amicizie.md) rimanda a questo contratto.
+Questa pagina contiene il contratto canonico F13 e descrive il backend disponibile. Cleanup amicizie: [F01](accesso-utenti.md#integrazione-prevista-con-f13-e-f06). Effetti futuri sugli scambi: [F06](scambi-mercato.md#amicizie-e-cancellazione-degli-account). La [pagina FrontEnd](../FrontEnd/amicizie.md) resta una specifica da implementare; nessun file frontend viene modificato in questa attività.
 
 ## Dati, vincoli e persistenza
 
@@ -106,7 +106,7 @@ Dopo l'eliminazione si può inviare una nuova richiesta, con una nuova `created_
 
 ## Contratto tecnico condiviso
 
-Le rotte seguenti sono **definite e non implementate**. Si mantengono gli otto percorsi già proposti, con invio tramite `recipientId`, accettazione tramite `status: "accepted"` e un'unica eliminazione delle richieste per rifiuto o annullamento. `USER` e `ADMIN` operano solo sulle proprie relazioni. Le rotte seguono il prefisso `/api`, sostantivi plurali e parametri camelCase delle [convenzioni](../../Linee-Guida-e-Regole.md#convenzioni-per-gli-endpoint). Gli ID sono numeri interi positivi `USERS.id` nel dominio Java `int`, anche nei percorsi. Il corpo delle richieste `POST` e `PATCH` è un oggetto JSON con `Content-Type: application/json`; le altre rotte non richiedono corpo.
+Le rotte seguenti sono **implementate nel backend**. Si mantengono gli otto percorsi del contratto, con invio tramite `recipientId`, accettazione tramite `status: "accepted"` e un'unica eliminazione delle richieste per rifiuto o annullamento. `USER` e `ADMIN` operano solo sulle proprie relazioni. Le rotte seguono il prefisso `/api`, sostantivi plurali e parametri camelCase delle [convenzioni](../../Linee-Guida-e-Regole.md#convenzioni-per-gli-endpoint). Gli ID sono numeri interi positivi `USERS.id` nel dominio Java `int`, anche nei percorsi. Il corpo delle richieste `POST` e `PATCH` è un oggetto JSON con `Content-Type: application/json`; le altre rotte non richiedono corpo.
 
 | Metodo | Endpoint | Autenticazione | Cosa Fa | Codici HTTP | Ruoli Autorizzati | Payload Richiesta | Payload Risposta |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -141,7 +141,7 @@ Nickname e icona si leggono dal profilo corrente: non sono nuove colonne di `FRI
 
 `ElencoRelazioni` è `{"items": [...]}`, con tutti gli elementi corrispondenti al filtro e senza metadati di paginazione. Un elenco vuoto restituisce `{"items": []}` con `200`. `GET /api/users/{otherUserId}/friendship` restituisce anche nickname e icona quando la relazione è `none`, purché l'altro utente esista e sia accessibile; entrambi i timestamp sono allora `null`.
 
-`Errore` usa i campi Problem Details `type` (stringa `about:blank`), `title` (stringa), `status` (numero HTTP), `detail` (messaggio stringa), `instance` (percorso della richiesta) e `code` (codice applicativo stringa). Questo formato è richiesto anche per i rifiuti dei filtri sulle future rotte F13; non viene attribuito retroattivamente a F01. Le risposte `401` includono `WWW-Authenticate: Bearer`. Il client usa `status` e `code` per la logica e `detail` per il messaggio; il testo può cambiare senza cambiare il codice.
+`Errore` usa i campi Problem Details `type` (stringa `about:blank`), `title` (stringa), `status` (numero HTTP), `detail` (messaggio stringa), `instance` (percorso della richiesta) e `code` (codice applicativo stringa). Il record esplicito `FriendshipError`, scelto dall'utente il **2026-11-22**, mantiene sempre i sei campi nelle risposte MVC e nei rifiuti dei filtri F13; non modifica il formato F01. Le risposte `401` includono `WWW-Authenticate: Bearer`. Il client usa `status` e `code` per la logica e `detail` per il messaggio; il testo può cambiare senza cambiare il codice.
 
 Esempio illustrativo di creazione; gli ID non identificano account reali:
 
@@ -225,7 +225,7 @@ La PK composta impedisce duplicati anche per invii simultanei. Il backend gestis
 
 Accettazione e cancellazione usano scritture condizionali sulla coppia, lo stato e, quando pertinente, il mittente; il numero di righe modificate determina l'esito. Il vincolo di partecipazione si applica anche ad `ADMIN`. In caso di accettazione concorrente con rifiuto o annullamento, il comando che non trova più lo stato richiesto rilegge la relazione e restituisce un errore con messaggio, secondo la mappatura concordata. Una ripetizione non può essere segnalata come successo soltanto perché l'effetto desiderato è già presente. Timeout o deadlock richiedono rollback; retry limitati soltanto per errori transitori e operazioni sicure. Dopo un esito di commit incerto il client rilegge lo stato: un comando ripetuto può restituire l'errore confermato senza avere prodotto una seconda modifica.
 
-Per coordinare controllo di `is_deleted`, modifiche delle amicizie e avvio di scambi privati, si propone di bloccare le righe stabili `USERS` in ordine numerico crescente e rileggere lo stato dopo i lock. L'integrazione deve rispettare l'ordine del [protocollo transazionale comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune) e concordare lo stesso coordinamento nel flusso di cancellazione dell'account. Lo schema non implementa automaticamente questi controlli.
+Per scelta dell'utente del **2026-11-22**, le scritture F13 bloccano entrambe le righe stabili `USERS` in ordine numerico crescente e ricontrollano gli account dopo i lock. Il cleanup delle amicizie usa il lock del destinatario già acquisito da F01 e la stessa transazione della cancellazione logica: un errore annulla anche la pulizia delle relazioni. Non sono previsti retry automatici; gli errori imprevisti restituiscono `500` generico dopo rollback. L'avvio degli scambi privati resta da integrare con F06 secondo il [protocollo comune](Database/database-schema-v1.1.md#protocollo-transazionale-comune).
 
 ## Cancellazione degli account e notifiche
 
@@ -238,15 +238,15 @@ Decisioni confermate dall'utente il **2026-11-18**:
 - Se l'account eliminato è il rispondente a un annuncio pubblico di un altro utente, la chiusura segue il rifiuto F06: si elimina la trattativa, si rilasciano tutti gli hold di entrambi i lati e si ripubblica l'annuncio originale senza hold, con le offerte originali e lo stesso `expires_at`. Nessuna controproposta sostituisce l'offerta originale ripubblicata. Se il TTL è già esaurito al controllo autorevole, l'annuncio passa a `EXPIRED` e non viene ripubblicato.
 - Alla sola rimozione di una propria amicizia da parte di un partecipante `USER` o `ADMIN`, gli scambi pubblici e privati esistenti persistono con il TTL originario F06. La rimozione non li annulla, non li rinnova e non ne modifica consensi o prenotazioni; restano possibili le normali transizioni F06.
 
-La pulizia alla cancellazione logica è responsabilità applicativa e deve essere coordinata con F01/F06, comprese le relazioni in cui l'account è destinatario o rispondente. Per gli annunci aperti appartenenti all'account eliminato e per gli scambi privati aperti che lo coinvolgono, si chiudono le trattative, si rilasciano gli hold di entrambi i lati e si eliminano gli annunci coinvolti nel cleanup. L'annuncio pubblico valido della controparte, quando l'account eliminato era soltanto il rispondente, segue invece la ripubblicazione confermata sopra. Lo storico completato mantiene i riferimenti all'account cancellato logicamente; il soft delete non rimuove la riga `USERS`. Confine transazionale e recupero da errori restano **DA DEFINIRE**. Gli utenti eliminati devono essere esclusi dagli elenchi F13 e dalle nuove operazioni; visibilità dello storico F06 e rappresentazione del partecipante eliminato restano da concordare nel relativo contratto.
+La pulizia delle amicizie al soft delete avviene nella transazione F01, con rollback comune. Il cleanup degli scambi, la conservazione dello storico F06 e la ripubblicazione degli annunci della controparte restano requisiti futuri F06; atomicità, recupero e rappresentazione dello storico F06 sono DA DEFINIRE.
 
-Queste sono specifiche da integrare, non comportamenti implementati o verificati. I contratti F01/F06 riportano le decisioni e le lacune transazionali ancora aperte; il codice non è modificato dalla revisione documentale.
+Il cleanup delle sole amicizie è implementato con F01 nella stessa transazione dal **2026-11-22**. Gli effetti sugli scambi e sul relativo storico restano specifiche F06 da implementare; questa attività non introduce tabelle o servizi di scambio.
 
 Per mantenere semplice la prima versione, F13 non introduce notifiche dedicate, blocchi tra utenti, scadenza delle richieste, attese o storico delle relazioni eliminate. Gli elenchi e la consultazione della relazione sono il riferimento per lo stato corrente; eventuali estensioni richiederanno un'attività separata.
 
 ## Criteri di accettazione e verifiche previste
 
-I seguenti scenari sono da verificare quando esisterà un'implementazione; non sono risultati di test.
+La tabella mantiene i criteri di accettazione del contratto, inclusi gli scenari F06 futuri. Gli esiti effettivi dell'implementazione backend sono separati nel [report dell'attività](../report/2026-11-22-implementazione-amicizie.md).
 
 | Scenario | Risultato atteso |
 | --- | --- |
@@ -274,14 +274,14 @@ I seguenti scenari sono da verificare quando esisterà un'implementazione; non s
 | Rimozione della propria amicizia, da `USER` o `ADMIN`, con scambi esistenti | Scambi pubblici e privati conservati, scadenza originaria invariata e normali transizioni F06 applicabili. |
 | Scambio privato verso non amico o relazione `pending` | Rifiuto senza creazione di trattativa o hold, secondo F06. |
 
-Questa specifica non attesta esecuzioni SQL, migrazioni o verifiche di prestazioni. F13 non è implementata e non sono disponibili comandi di test specifici della funzionalità; l'esistenza delle applicazioni F01/F05 non ne attesta l'integrazione.
+I test F13 sono `FriendshipControllerDatabaseTests`, `FriendshipConcurrencyDatabaseTests` e `FriendshipMigrationDatabaseTests`; richiedono PostgreSQL e le variabili documentate nel [README applicativo](../../springboot_app/app/README.md). Il report distingue verifiche eseguite, problemi e limiti; non sono attestate verifiche del frontend, di F06 o di prestazioni.
 
 ## Decisioni aperte e collegamenti
 
 - Concordare responsabili e attività delle aree, collegandole alla funzionalità F13.
 - Il contratto API è definito: percorsi, Bearer JWT, payload, codici HTTP, formato degli errori, ordine dei controlli ed elenchi completi ordinati dal più recente. Non restano approvazioni API pendenti; la definizione non attesta implementazione.
 - Dettagliare schermate, conferme e stati dell'interfaccia, accessibilità e integrazione con F01, mantenendo i campi e l'ordinamento fissati dal contratto.
-- Coordinare l'implementazione della cancellazione logica e delle operazioni concorrenti con F01/F06: i contratti collegati recepiscono la pulizia delle amicizie e dei soli scambi aperti al soft delete, la conservazione dello storico completato, la ripubblicazione dell'annuncio pubblico valido della controparte dopo il rifiuto e la permanenza degli scambi dopo la sola rimozione dell'amicizia. Definire atomicità, recupero e visibilità dello storico con un partecipante eliminato; nessuna di queste integrazioni è implementata o verificata dalla propagazione documentale.
+- Integrare in futuro F06 con il cleanup F01/F13 disponibile: scambi aperti, hold, storico completato e ripubblicazione richiedono ancora implementazione e verifiche. Nessuna integrazione F06 viene attestata dai test F13.
 - Valutare eventuali indici solo con evidenze pertinenti; le estensioni escluse dalla prima versione non bloccano l'API semplice descritta qui.
 
 [Indice BackEnd](README.md) · [Indice generale](../README.md) · [Accesso utenti F01](accesso-utenti.md) · [Scambi F06](scambi-mercato.md) · [Interfaccia amicizie](../FrontEnd/amicizie.md) · [Interfaccia scambi](../FrontEnd/scambi-mercato.md)

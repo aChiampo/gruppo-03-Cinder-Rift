@@ -2,6 +2,8 @@
 
 Le caselle si completano solo con evidenze pertinenti; il superamento della suite backend non completa la consegna integrata. Collegare le evidenze nelle relative issue o pull request.
 
+Aggiornamento implementativo del **2026-11-22**: completate le verifiche backend F13 e del cleanup amicizie F01 indicate sotto; frontend e cleanup scambi F06 restano esclusi. [Evidenze dell'attività](report/2026-11-22-implementazione-amicizie.md). Le note precedenti descrivono revisioni storiche.
+
 Aggiornamento documentale F13/F01/F06 del **2026-11-18**, su richiesta dell'utente: aggiunti i requisiti concordati per amicizie e cleanup account. Le caselle sotto restano aperte; la propagazione dei contratti non implementa né verifica la funzionalità.
 
 Revisione corrente del **2026-11-13**: **118 test** superati su PostgreSQL **18.6**, migrazioni V1–V4 e JAR verificati. [Report con riferimento e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le note del 2026-11-12 sotto sono storiche.
@@ -26,8 +28,9 @@ La base backend del recupero password è stata aggiunta nello stesso giorno; com
 - [ ] Verificare offerte di pacchetti, apertura, collezione e backoffice.
 - [ ] Verificare mazzi e vincoli lato server.
 - [ ] Verificare scambi privati/pubblici, carte/crediti, consenso, durata e coerenza dei trasferimenti.
-- [ ] Implementare e verificare [F13](BackEnd/amicizie.md): permessi identici di `USER`/`ADMIN` sulle sole proprie relazioni, elenchi completi senza paginazione, validazione `400`/`422` ed errori `409`/`404` per duplicati, ripetizioni e stati incompatibili, con messaggio nel payload.
-- [ ] Verificare i dettagli del contratto API F13 definiti il **2026-11-20**: JWT su ogni rotta, nickname/icona/timestamp sempre presenti secondo la nullabilità concordata, ordinamento decrescente per creazione delle richieste o accettazione delle amicizie, parità risolta per ID e formato comune degli errori.
+- [x] Implementare e verificare [F13](BackEnd/amicizie.md): permessi identici di `USER`/`ADMIN` sulle sole proprie relazioni, elenchi completi senza paginazione, validazione `400`/`422` ed errori `409`/`404` per duplicati, ripetizioni e stati incompatibili, con messaggio nel payload. [Evidenze backend del 2026-11-22](report/2026-11-22-implementazione-amicizie.md); frontend escluso.
+- [x] Verificare i dettagli del contratto API F13 definiti il **2026-11-20**: JWT su ogni rotta, nickname/icona/timestamp sempre presenti secondo la nullabilità concordata, ordinamento decrescente per creazione delle richieste o accettazione delle amicizie, parità risolta per ID e formato comune degli errori. [Test F13 del 2026-11-22](report/2026-11-22-implementazione-amicizie.md).
+- [x] Integrare il cleanup delle sole amicizie nella transazione F01 di soft delete e verificare rollback e concorrenza con le scritture F13. [Evidenze del 2026-11-22](report/2026-11-22-implementazione-amicizie.md); il cleanup F06 sotto resta aperto.
 - [ ] Integrare e verificare il [cleanup F01/F06/F13](BackEnd/accesso-utenti.md#integrazione-prevista-con-f13-e-f06) al soft delete: richieste/amicizie e scambi aperti ripuliti, hold rilasciati, scambi completati conservati e annuncio pubblico valido della controparte ripubblicato come da rifiuto; verificare anche TTL e rimozione della sola amicizia.
 - [ ] Verificare sfide, storico e dettaglio dei turni.
 - [ ] Verificare isolamento del motore Java e test JUnit, compresi i casi limite.

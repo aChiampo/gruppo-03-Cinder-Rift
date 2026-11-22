@@ -45,6 +45,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.DispatcherType;
+import webapp.friendship.FriendshipErrors;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 
 /**
  * Applies cookie and CSRF rules to browser sessions and uses bearer JWTs for protected routes.
@@ -66,6 +71,16 @@ class SecurityConfiguration {
             // Injects the origin list; the value after ':' is the fallback when the property is absent.
             @Value("${app.security.allowed-origins:http://localhost:8082}") List<String> allowedOrigins) {
         var paths = PathPatternRequestMatcher.withDefaults();
+        var bearerEntryPoint = new BearerTokenAuthenticationEntryPoint();
+        var bearerDenied = new BearerTokenAccessDeniedHandler();
+        AuthenticationEntryPoint entryPoint = (request, response, failure) -> {
+            if (FriendshipErrors.matches(request)) FriendshipErrors.write(request, response, 401);
+            else bearerEntryPoint.commence(request, response, failure);
+        };
+        AccessDeniedHandler denied = (request, response, failure) -> {
+            if (FriendshipErrors.matches(request)) FriendshipErrors.write(request, response, 403);
+            else bearerDenied.handle(request, response, failure);
+        };
         // Public browser authentication writes require CSRF, including password recovery.
         var authenticationWrites = new OrRequestMatcher(
                 // Registration creates an account and sets its first refresh cookie.
@@ -130,7 +145,9 @@ class SecurityConfiguration {
                         // Every request not matched above must have a valid authenticated principal.
                         .anyRequest().authenticated())
                 // Reads Authorization: Bearer <JWT> and validates it using the JwtDecoder bean below.
-                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(
+                .exceptionHandling(errors -> errors.authenticationEntryPoint(entryPoint).accessDeniedHandler(denied))
+                .oauth2ResourceServer(oauth -> oauth.authenticationEntryPoint(entryPoint).accessDeniedHandler(denied)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(
                         // After JWT validation, the lambda loads the current user/session and creates authentication.
                         token -> authenticate(token, accounts, clock))))
                 // Builds and returns the filter chain Spring will use to process requests.

@@ -109,7 +109,8 @@ class AccountDeletionDatabaseTests {
             }
         };
         new ResourceDatabasePopulator(new ClassPathResource("db/migration/V1__create_f01_schema.sql"),
-                new ClassPathResource("db/migration/V2__seed_f01_roles.sql")).execute(isolated);
+                new ClassPathResource("db/migration/V2__seed_f01_roles.sql"),
+                new ClassPathResource("db/migration/V10__create_friendships.sql")).execute(isolated);
         jdbc = JdbcClient.create(isolated);
         accounts = spy(new AccountRepository(jdbc));
         context = new AnnotationConfigWebApplicationContext();
@@ -273,10 +274,15 @@ class AccountDeletionDatabaseTests {
     @Test
     void failureAfterRevocationsAndRecoveryCleanupRollsBackAllChanges() throws Exception {
         seedRecoveryToken(player.user().id());
+        jdbc.sql("""
+                INSERT INTO friendships (user_a_id, user_b_id, requested_by, status)
+                VALUES (:a, :b, :a, 'pending')
+                """).param("a", player.user().id()).param("b", admin.user().id()).update();
         jdbc.sql("ALTER TABLE users ADD CONSTRAINT reject_account_deletion CHECK (NOT is_deleted)").update();
         assertThatThrownBy(() -> authentication.deleteAccount(player.user(), player.user().id()))
                 .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
         assertThat(isDeleted(player.user().id())).isFalse();
+        assertThat(jdbc.sql("SELECT count(*) FROM friendships").query(Integer.class).single()).isEqualTo(1);
         assertThat(jdbc.sql("SELECT count(*) FROM password_reset_tokens WHERE id_user = :id")
                 .param("id", player.user().id()).query(Integer.class).single()).isEqualTo(1);
         mvc.perform(get("/api/auth/user/me").header(HttpHeaders.AUTHORIZATION, bearer(player)))

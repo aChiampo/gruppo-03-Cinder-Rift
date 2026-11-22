@@ -2,7 +2,7 @@
 
 ID: F01 · Perimetro backend confermato per registrazione, accesso, profilo, rinnovo, uscita, cancellazione account e base del recupero password.
 Implementazione: backend disponibile nel branch `feature/f01-accesso-utenti`; integrazione FrontEnd da avviare. Responsabile: DA DEFINIRE.
-Ultimo aggiornamento significativo il **2026-11-18**, su richiesta dell'utente di propagare le decisioni F13: aggiunti i requisiti di pulizia di amicizie e scambi aperti alla cancellazione logica, ancora da implementare. L'allineamento al codice di profili, percorsi rinominati e cancellazione account risale al **2026-11-13**. Il backend del recupero password usa token di 10 minuti, preserva i token emessi nelle richieste precedenti e revoca le sessioni al completamento. Invio email e interfaccia sono rinviati. Restano il prefisso `/api/auth` e la pulizia giornaliera delle sessioni alle 03:00 UTC.
+Ultimo aggiornamento significativo: **2026-11-22**, cleanup amicizie F13 nella transazione F01 su richiesta dell’utente. Il cleanup degli scambi F06 resta da implementare. Contratto di autenticazione, recupero password e pulizie token invariati; invio email e interfaccia rinviati.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-autenticazione-e-autorizzazione).
 
 ## Riepilogo API
@@ -313,7 +313,7 @@ Gli errori MVC usano `application/problem+json` con i campi standard `type`, `ti
 
 ## Cancellazione account
 
-Le operazioni seguenti descrivono il comportamento F01 già implementato. L'estensione confermata per amicizie e scambi è separata nella sezione [integrazione prevista con F13 e F06](#integrazione-prevista-con-f13-e-f06) e non è ancora disponibile.
+Le operazioni seguenti descrivono il comportamento F01 implementato. Dal **2026-11-22** il servizio elimina anche tutte le amicizie del destinatario nella stessa transazione. Il cleanup degli scambi F06 resta da implementare: [integrazione F13/F06](#integrazione-prevista-con-f13-e-f06).
 
 `DELETE /api/auth/users/{userId}` non ha body e richiede `Authorization: Bearer <accessToken>`, cookie `__Host-cinder-csrf` e header `X-XSRF-TOKEN`. L’ID deve essere un intero positivo nel dominio Java `int`.
 
@@ -328,13 +328,13 @@ Le operazioni seguenti descrivono il comportamento F01 già implementato. L'este
 
 ### Integrazione prevista con F13 e F06
 
-Decisioni dell'utente del **2026-11-18**, propagate nella documentazione senza implementazione:
+Decisioni dell’utente del **2026-11-18**, integrate il **2026-11-22** per il solo cleanup amicizie F13; scambi F06 ancora da implementare.
 
 - La cancellazione logica deve eliminare tutte le richieste `pending` e le amicizie `accepted` che coinvolgono il destinatario, da entrambi i lati della coppia, secondo [F13](amicizie.md#cancellazione-degli-account-e-notifiche). Impostare `is_deleted` non attiva le cascate delle FK.
 - Gli scambi aperti pubblici e privati devono essere ripuliti, con rilascio degli hold di entrambi i partecipanti; gli scambi completati e il loro storico si conservano. Se il destinatario è il rispondente a un annuncio pubblico altrui ancora valido, il cleanup segue il rifiuto: originale ripubblicato con offerte e scadenza iniziali, senza hold. Se è già scaduto, nessuna ripubblicazione. Casi e responsabilità sono definiti in [F06](scambi-mercato.md#amicizie-e-cancellazione-degli-account).
 - La matrice F01 di cancellazione account resta quella sopra: il permesso di `ADMIN` di cancellare un account non attribuisce il permesso F13 di intervenire direttamente sulle amicizie altrui. In F13 `USER` e `ADMIN` operano soltanto sulle proprie relazioni.
 
-Questa estensione non è coperta dal servizio, dalle migrazioni o dai test F01 correnti. Confine atomico con la cancellazione account, ordine dei lock di tutti i partecipanti, trattamento delle richieste concorrenti, ripetizione del cleanup e recupero da errori sono **DA DEFINIRE** con F06/F13 prima dell'implementazione. La risposta `204` attuale della cancellazione account e le evidenze F01 esistenti non attestano questa pulizia futura. Restano invariati i codici e l'idempotenza della cancellazione account: gli errori `400`/`422` e `409`/`404` concordati per F13 non vengono applicati retroattivamente a F01.
+Dal **2026-11-22** il cleanup F13 usa il lock del destinatario acquisito da F01, nella stessa transazione di revoca sessioni, rimozione token di recupero e soft delete. Le scritture F13 bloccano entrambi gli utenti in ordine crescente e ricontrollano `is_deleted` dopo i lock. Un errore provoca rollback di tutte le modifiche; ripetere il cleanup non introduce effetti aggiuntivi. [Evidenze e limiti F01/F13](../report/2026-11-22-implementazione-amicizie.md). Coordinamento con tutti i partecipanti F06 e cleanup degli scambi restano **DA DEFINIRE**; `204` non ne attesta l'implementazione. Restano invariati i codici e l'idempotenza della cancellazione account: gli errori `400`/`422` e `409`/`404` concordati per F13 non vengono applicati retroattivamente a F01.
 
 ## Ciclo di vita, dati e concorrenza
 
