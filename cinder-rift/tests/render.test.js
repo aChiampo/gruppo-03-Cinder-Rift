@@ -5,6 +5,7 @@ import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import { defaultFilters } from '../src/models/cards.js'
 import { catalogCard, collectionCard } from './cardFixtures.js'
+import { battleResult } from './battleFixtures.js'
 
 // Render real page components with isolated session/resource state. No fixtures enter src or dist.
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -18,6 +19,7 @@ const result = await build({
     import CollectionScreen from './src/screens/CollectionScreen.jsx'
     import DeckScreen from './src/screens/DeckScreen.jsx'
     import BattleScreen from './src/screens/BattleScreen.jsx'
+    import BattleResultScreen from './src/screens/BattleResultScreen.jsx'
     import ShopScreen from './src/screens/ShopScreen.jsx'
     import ProfileScreen from './src/screens/ProfileScreen.jsx'
     import DeckValidation from './src/components/deck-builder/DeckValidation.jsx'
@@ -26,7 +28,7 @@ const result = await build({
     import DeckSlots from './src/components/deck-builder/DeckSlots.jsx'
     import RoundSelector from './src/components/deck-builder/RoundSelector.jsx'
     export { RoundSelector }
-    const components = { LoginScreen, HomeScreen, CollectionScreen, DeckScreen, BattleScreen, ShopScreen, ProfileScreen, DeckValidation, RequestState, CollectionPicker, DeckSlots, RoundSelector }
+    const components = { LoginScreen, HomeScreen, CollectionScreen, DeckScreen, BattleScreen, BattleResultScreen, ShopScreen, ProfileScreen, DeckValidation, RequestState, CollectionPicker, DeckSlots, RoundSelector }
     export const render = (name, props) => renderToStaticMarkup(React.createElement(components[name], props))
   ` },
   plugins: [{
@@ -218,11 +220,37 @@ test('shop and pack detail render missing resources and disabled transactions', 
 })
 test('battle result renders authoritative defeat despite identical player names', () => {
   const result = { outcome: 'DEFEAT', stageTitle: 'Test stage', challenger: { displayName: 'Same player' }, enemyName: 'Same player', winner: 'Same player', battleLog: ['  Line one\nLine two', '<script>unsafe</script>'] }
-  const html = render('BattleScreen', { result, onResult: go, go })
+  const html = render('BattleResultScreen', { result, go })
   assert.match(html, /SCONFITTA/)
   assert.match(html, /  Line one\nLine two/)
   assert.match(html, /&lt;script&gt;unsafe&lt;\/script&gt;/)
-  assert.doesNotMatch(html, /\+500|Replay|Vita residua/)
+  assert.match(html, /Dettaglio dei round non disponibile/)
+  assert.doesNotMatch(html, /\+500|Vita residua/)
+})
+
+test('battle result renders real report rounds, missing HP, pre-exchange stats, replay and full raw log', () => {
+  const html = render('BattleResultScreen', { result: battleResult, go })
+  assert.match(html, /VITTORIA!/)
+  assert.match(html, /aria-label="Round della battaglia"/)
+  assert.match(html, /aria-current="step"/)
+  assert.match(html, /aria-label="Scambio successivo"/)
+  assert.match(html, /aria-label="Seleziona scambio del round"/)
+  assert.match(html, /Prima dello scambio/)
+  assert.match(html, /Pulse Blade/)
+  assert.match(html, /Scambio 1/)
+  assert.match(html, /Resoconto completo/)
+  assert.match(html, /Non nel report/)
+  assert.doesNotMatch(html, /\+500|crediti|NaN|undefined/)
+})
+
+test('result without in-memory battle offers recovery and home/campaign can reopen the current result', () => {
+  assert.match(render('BattleResultScreen', { result: null, go }), /Nessun risultato disponibile/)
+  const home = render('HomeScreen', { go, battle: battleResult })
+  assert.match(home, /VEDI RISULTATO E ROUND/)
+  assert.match(home, /Risultato della sessione/)
+  const campaign = render('BattleScreen', { go, onResult: go, result: battleResult })
+  assert.match(campaign, /VEDI RISULTATO E ROUND/)
+  assert.doesNotMatch(campaign, /battle-banner/)
 })
 test('profile uses nickname and ranking points without inventing credit balances or levels', () => {
   const html = render('ProfileScreen', {})

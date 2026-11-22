@@ -5,13 +5,14 @@ import HomeScreen from './screens/HomeScreen.jsx'
 import CollectionScreen from './screens/CollectionScreen.jsx'
 import DeckScreen from './screens/DeckScreen.jsx'
 import BattleScreen from './screens/BattleScreen.jsx'
+import BattleResultScreen from './screens/BattleResultScreen.jsx'
 import ShopScreen from './screens/ShopScreen.jsx'
 import ProfileScreen from './screens/ProfileScreen.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 import RequestState from './components/ui/RequestState.jsx'
 
-const pages = new Set(['home', 'catalogo', 'collezione', 'deck', 'gioca', 'negozio', 'profilo', 'impostazioni'])
-const currentPage = () => { const page = window.location.hash.slice(1); return pages.has(page) ? page : 'home' }
+const pages = new Set(['home', 'catalogo', 'collezione', 'deck', 'gioca', 'risultato-battaglia', 'negozio', 'profilo', 'impostazioni'])
+const currentPage = () => { const page = window.location.hash.slice(1).split('?')[0]; return pages.has(page) ? page : 'home' }
 export default function App() {
   const { user, checking, sessionError, restore } = useAuth()
   const [page, setPage] = useState(currentPage)
@@ -28,12 +29,13 @@ export default function App() {
   if (checking) return <div className="session-check" role="status">Verifica sessione…</div>
   if (!user) return <LoginScreen key={authMode} mode={authMode} onMode={setAuthMode} />
   return <div className="app">
-    <Header page={page} setPage={go} />
+    <Header page={page === 'risultato-battaglia' ? 'gioca' : page} setPage={go} />
     {sessionError && <RequestState status="error" error={sessionError} retry={restore} />}
-    {page === 'home' && <HomeScreen go={go} />}
+    {page === 'home' && <HomeScreen go={go} battle={battle} />}
     {(page === 'catalogo' || page === 'collezione') && <CollectionScreen key={page} go={go} catalog={page === 'catalogo'} />}
     {page === 'deck' && <DeckScreen go={go} />}
-    {page === 'gioca' && <BattleScreen result={battle} onResult={setBattle} go={go} />}
+    {page === 'gioca' && <BattleScreen result={battle} onResult={(result) => { setBattle(result); go('risultato-battaglia') }} go={go} />}
+    {page === 'risultato-battaglia' && <BattleResultScreen result={battle} go={go} />}
     {page === 'negozio' && <ShopScreen go={go} />}
     {(page === 'profilo' || page === 'impostazioni') && <ProfileScreen key={page} settings={page === 'impostazioni'} />}
   </div>

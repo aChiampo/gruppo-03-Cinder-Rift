@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Swords, Trophy, ScrollText } from 'lucide-react'
+import { Swords, ScrollText } from 'lucide-react'
 import Panel from '../components/ui/Panel.jsx'
 import RequestState from '../components/ui/RequestState.jsx'
 import Unavailable from '../components/ui/Unavailable.jsx'
@@ -7,7 +7,6 @@ import { useDecks } from '../hooks/useDecks.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { playPve } from '../services/battleService.js'
 
-const outcomeLabels = { VICTORY: 'VITTORIA!', DEFEAT: 'SCONFITTA', DRAW: 'PAREGGIO' }
 export default function BattleScreen({ result, onResult, go }) {
   const decks = useDecks()
   const { token } = useAuth()
@@ -41,11 +40,7 @@ export default function BattleScreen({ result, onResult, go }) {
         {error && <p className="hint">Controlla lo stato e il mazzo prima di avviare una nuova battaglia. Le richieste non vengono ripetute automaticamente dopo errori di rete.</p>}
         <button className="btn-ghost" onClick={() => go('deck')}>GESTISCI I MAZZI</button>
       </Panel>
-      {result && <section className={`panel battle-result outcome-${result.outcome.toLowerCase()}`} aria-live="polite">
-        <div className="result-hero"><Trophy size={42} /><h1>{outcomeLabels[result.outcome]}</h1><p>{result.stageTitle}</p><div className="versus"><strong>{result.challenger.displayName}</strong><span>VS</span><strong>{result.enemyName}</strong></div><p>{result.outcome === 'DRAW' ? 'Nessun vincitore' : `Vincitore: ${result.winner}`}</p><button className="btn-outline" onClick={() => go('home')}>TORNA ALLA HOME</button></div>
-        <h2><ScrollText size={22} /> Resoconto della battaglia</h2>
-        <ol className="battle-log">{result.battleLog.map((line, i) => <li key={i}>{line}</li>)}</ol>
-      </section>}
+      {result && <section className="panel battle-latest"><h2><ScrollText size={22} /> Ultimo risultato della sessione</h2><p>{result.stageTitle}</p><button className="btn-ghost" onClick={() => go('risultato-battaglia')}>VEDI RISULTATO E ROUND</button></section>}
     </>}
   </main>
 }

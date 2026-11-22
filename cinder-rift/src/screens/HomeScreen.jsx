@@ -1,18 +1,18 @@
-import { Newspaper, Swords, Trophy } from 'lucide-react'
+import { Newspaper, ScrollText, Swords, Trophy } from 'lucide-react'
 import Campaign from '../components/home/Campaign.jsx'
 import NewChallengeBanner from '../components/home/NewChallengeBanner.jsx'
 import Decks from '../components/home/Decks.jsx'
 import Panel from '../components/ui/Panel.jsx'
 import Unavailable from '../components/ui/Unavailable.jsx'
 import { useDecks } from '../hooks/useDecks.js'
-export default function HomeScreen({ go }) {
+export default function HomeScreen({ go, battle }) {
   const decks = useDecks()
   return <main className="grid">
     <div className="col-main">
       <Campaign onStart={() => go('gioca')} />
       <div className="two">
         <Panel icon={Swords} title="SFIDE IN ATTESA"><Unavailable feature="Le sfide tra giocatori" /></Panel>
-        <Panel icon={Trophy} title="ULTIMA SFIDA"><Unavailable feature="Lo storico delle partite" /></Panel>
+        <Panel icon={Trophy} title="ULTIMA SFIDA">{battle ? <div className="battle-latest"><strong>{battle.challenger.displayName} vs {battle.enemyName}</strong><p>{battle.stageTitle} · Risultato della sessione</p><button className="btn-ghost" onClick={() => go('risultato-battaglia')}><ScrollText size={18} /> VEDI RISULTATO E ROUND</button></div> : <Unavailable feature="Lo storico delle partite" />}</Panel>
       </div>
       <NewChallengeBanner onClick={() => go('gioca')} />
     </div>
