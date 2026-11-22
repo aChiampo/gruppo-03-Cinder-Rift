@@ -10,6 +10,6 @@ export const ENDPOINTS = {
   cards: {
     // GET (Bearer token) ?type&faction&rarity&energyMin&energyMax&attackMin&attackMax&defenseMin&defenseMax&q&sort&page&pageSize
     //   -> { items, page, pageSize, total, counts }   (solo le carte possedute dall'utente: docs/API-COLLEZIONE.md)
-    collection: "/api/cards",
+    collection: "/cards",
   },
 };
