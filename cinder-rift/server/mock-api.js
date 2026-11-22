@@ -1,7 +1,7 @@
 // Backend di PROVA senza dipendenze: rispetta il contratto API descritto nel README.
 // Serve solo a sviluppare il frontend finché non c'è il backend vero. Da eliminare (cartella /server) quando arriva.
 // Avvio: npm run mock-api   ->   http://localhost:3000/api
-import { createServer } from "node:http";
+/*import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { collectionFor, queryCards } from "../src/mocks/cardsMock.js";
 
@@ -150,3 +150,4 @@ createServer(async (req, res) => {
     `Mock API su http://localhost:${PORT}/api  (utenti: mirko / cinder123 · nuovo / cinder123 = collezione vuota)`,
   ),
 );
+*/
