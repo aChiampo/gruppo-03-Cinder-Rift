@@ -16,7 +16,6 @@ public class CampaignStage {
     private String description;
     private String enemyName;
     private String enemyDeckPath;
-    private boolean deterministic;
     private List<String> tutorialHints;
     private String requiredEventCode;
 }

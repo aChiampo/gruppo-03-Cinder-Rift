@@ -76,8 +76,10 @@ class BattleControllerTest {
     @Test
     void executeBattle_appliesCreatureEffectsFromTheBackendSnapshot() throws Exception {
         PveBattleRequest request = buildValidRequest();
-        request.getDeck().getEntries().getFirst().setEffects(List.of(
-                new CardEffect(9001, "ATTACK_BONUS", Map.of("amount", 1))));
+        request.getDeck().getEntries().stream()
+                .filter(entry -> "ROUND1".equals(entry.getDestination()))
+                .forEach(entry -> entry.setEffects(List.of(
+                        new CardEffect(9001, "ATTACK_BONUS", Map.of("amount", 1)))));
         mockMvc.perform(post("/api/battle/pve/1").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

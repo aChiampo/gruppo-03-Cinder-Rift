@@ -31,6 +31,12 @@ Gli ID numerici 1–30 seguono l'inserimento ordinato per codice in un database 
 
 `CampaignService.executeStage` carica uno stage JSON, verifica l'eventuale codice evento richiesto, carica il mazzo nemico e avvia la partita tramite `MatchEngine`. Se l'evento richiesto è assente o inattivo, restituisce un messaggio nel resoconto senza iniziare la partita. I suggerimenti tutorial vengono anteposti al resoconto della partita.
 
+Decisione dell'utente del **2026-11-22**: anche il tutorial usa il mescolamento normale, sia nell'API PvE sia nella campagna CLI. Gli equipaggiamenti sono mescolati all'inizio della partita e le creature del relativo mazzetto all'inizio di ciascun round, per entrambi i giocatori. Gli stage non espongono più un'opzione per disabilitarlo; il flag interno dei mazzi rimane disponibile per simulazioni dirette controllate, ma i mazzi dimostrativi lo mantengono disattivato.
+
+Verifica storica di `test-connessione` del **2026-11-22**, copia di lavoro con base `d2e81e2`, JDK 21 e H2: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" test` supera **51 test JUnit**, inclusi due controlli di regressione sul mescolamento dei partecipanti nel tutorial PvE e CLI. Packaging riuscito; dieci chiamate HTTP al JAR locale sullo stage 1, alternate tra cinque mazzi mirror e cinque demo, restituiscono `200` con dieci log distinti. Controllati statistiche degli scambi, effetti, danni ai giocatori e vincitori senza incoerenze. La verifica è limitata al motore; browser, autenticazione applicativa e nuove immagini Compose non verificati.
+
+Verifica locale della presente importazione parziale del **2026-11-22**, branch `feature/backend-catalog-and-tutorial`, JDK 21.0.11 e H2: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" test` supera **51 test JUnit**, con zero fallimenti, errori o casi saltati. Eseguiti anche i due test di regressione sul mescolamento tutorial PvE e CLI; nessuna nuova prova HTTP o browser.
+
 `CampaignStageLoaderService` legge gli stage dal classpath; accetta `classpath:`, un percorso relativo a `campaign/stages/` oppure il nome del file. I dati sono in `src/main/resources/campaign/`:
 
 | Percorso | Contenuto |

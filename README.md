@@ -1,6 +1,12 @@
 # Gioco di carte collezionabili digitale
 
+Importazione parziale del **2026-11-22** da `test-connessione`: API F04/F10, test e mescolamento ordinario del tutorial F07. Migrazioni ferme a V9; V10, modifica al relativo test di migrazione e modifiche frontend escluse. Le verifiche del branch sorgente riportate sotto sono evidenze storiche, non nuove esecuzioni.
+
+Verifiche locali dell'importazione parziale del **2026-11-22**: **220 test applicativi** superati con JDK 21.0.11/PostgreSQL 18.6 isolato e JAR prodotto; **51 test JUnit del motore** superati con H2. [Ambito e limiti](docs/BackEnd/collezione-carte.md#verifica-dellimportazione-parziale-del-2026-11-22).
+
 > Nome progetto e numero gruppo: **DA DEFINIRE**. Configurazione Docker aggiornata il **2026-11-16**, su richiesta dell’utente: backend F01/F05, prototipo React e motore dimostrativo dispongono di build Compose. Invio email e integrazione dell’autenticazione React con Spring restano da completare.
+
+Aggiornamento del **2026-11-21**: importate le API F04 di [catalogo e collezione](docs/BackEnd/collezione-carte.md) e le scritture amministrative F10 da `feature/api-collezione-catalogo`; integrazione React da completare. Verificati 212 test esistenti e 8 test API importati in esecuzioni distinte; JAR prodotto su PostgreSQL 18.6 isolato.
 
 ## Indice generale
 

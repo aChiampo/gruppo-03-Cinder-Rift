@@ -1,10 +1,16 @@
 # Applicazione backend
 
+Importazione parziale del **2026-11-22** da `test-connessione`: API F04/F10, test e mescolamento ordinario del tutorial F07. Migrazioni ferme a V9; V10, modifica al relativo test di migrazione e modifiche frontend escluse. Le verifiche del branch sorgente riportate sotto sono evidenze storiche, non nuove esecuzioni.
+
+Verifica locale dell'importazione parziale del **2026-11-22**: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` supera **220 test**, con zero fallimenti, errori o casi saltati; JAR prodotto su JDK 21.0.11/PostgreSQL 18.6 isolato. Verificate V1-V9 senza modificare il test di migrazione. [Ambito e limiti](../../docs/BackEnd/collezione-carte.md#verifica-dellimportazione-parziale-del-2026-11-22).
+
 Ultimo aggiornamento significativo il **2026-11-18**, con i limiti F05 di energia per carta e potenza per destinazione approvati dall’utente nelle migrazioni V3/V4. La rinomina degli endpoint F01 e la cancellazione logica degli account risalgono al 2026-11-13. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
+
+Aggiornamento del **2026-11-21**: importate le API [F04 di catalogo e collezione](../../docs/BackEnd/collezione-carte.md) e [F10 di gestione carte](../../docs/BackEnd/gestione-amministrativa.md), inclusi fixture e test database; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
 
 Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [prototipo React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Autenticazione frontend e API di gioco restano da integrare. [Avvio e configurazione comune](../../guida-avvio.md).
 
-Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V6. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
+Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V9. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
 
 Questo documento descrive dipendenze, configurazione e stato del backend. F01 è implementato con JWT emessi localmente e verificati da Spring Security; il [contratto F01](../../docs/BackEnd/accesso-utenti.md) riporta comportamento ed evidenze. La sola presenza di una dipendenza non attesta l’implementazione delle altre funzionalità o il funzionamento delle integrazioni.
 

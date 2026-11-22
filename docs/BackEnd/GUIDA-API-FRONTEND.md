@@ -2,6 +2,8 @@
 
 Ultimo aggiornamento significativo: **2026-11-20**, su richiesta dell'utente di elencare gli endpoint documentati con percorso, funzione e stato, e con definizione del contratto F13 su decisioni e delega dell'utente. Fonte: contratti canonici collegati sotto, codice presente nel branch `docs/pve-battle-contract` e client React.
 
+Aggiornamento del **2026-11-22**: importate parzialmente da `test-connessione` le sette rotte F04/F10 aggiunte il 2026-11-21 da `feature/api-collezione-catalogo`; frontend non integrato.
+
 Il primo campo include metodo HTTP e percorso, per distinguere operazioni diverse sulla stessa risorsa. I filtri di query già documentati restano espliciti. L'elenco comprende le rotte applicative documentate, incluse le proposte; non comprende pagine web, esempi generici di naming o rotte tecniche di salute/OpenAPI. L'API interna del motore, implementata dalla PR #36 ora integrata, non è una seconda rotta pubblica: il suo contratto è in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
 
 Gli stati usano esattamente queste etichette; BE significa Backend e FE significa Frontend:
@@ -10,7 +12,7 @@ Gli stati usano esattamente queste etichette; BE significa Backend e FE signific
 - **BE Implemented**: rotta presente nel backend, senza corrispondente chiamata nel frontend.
 - **FE Implemented**: chiamata presente nel frontend. Per le quattro rotte qui indicate esiste anche il backend; lo stato non attesta una verifica integrata o il completamento di tutti i flussi della funzionalità.
 
-Riepilogo: **39 voci**, di cui **23 Planned**, **12 BE Implemented** e **4 FE Implemented**. La tabella riepiloga autenticazione, ruoli e codici HTTP; payload, regole complete e dettagli restano nei contratti canonici.
+Riepilogo: **46 voci**, di cui **22 Planned**, **20 BE Implemented** e **4 FE Implemented**. La tabella riepiloga autenticazione, ruoli e codici HTTP; payload, regole complete e dettagli restano nei contratti canonici.
 
 Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; `USER` e `ADMIN` operano soltanto sulle proprie richieste e amicizie. Gli elenchi completi senza paginazione includono nickname, icona e timestamp e sono ordinati dalle richieste o accettazioni più recenti. Percorsi, payload, codici HTTP e formato degli errori sono definiti nel [contratto canonico F13](amicizie.md#contratto-tecnico-condiviso); lo stato `Planned` indica qui solo che nessuna rotta F13 è implementata. Il riepilogo non estende questi codici a F01/F06. La futura [pulizia F13/F06 al soft delete](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) non è compresa nell'implementazione corrente della cancellazione account F01.
 
@@ -55,6 +57,13 @@ Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; 
 | `GET /api/me/friends`                                  | Elenca tutte le proprie amicizie accettate, senza paginazione                                      | Planned        | Bearer JWT                                                      | `200`, `401`, `403`                                                         | `USER`, `ADMIN`; solo proprie                                                           | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso)                                                                                      |
 | `DELETE /api/me/friends/{otherUserId}`                 | Rimuove una propria amicizia; risorsa assente o stato errato producono un errore con messaggio     | Planned        | Bearer JWT                                                      | `204`, `400`, `401`, `403`, `404`, `409`, `422`                             | `USER`, `ADMIN`; uno dei partecipanti                                                   | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso)                                                                                      |
 | `GET /api/users/{otherUserId}/friendship`              | Mostra soltanto la relazione del chiamante con l'altro utente                                      | Planned        | Bearer JWT                                                      | `200`, `400`, `401`, `403`, `404`, `422`                                    | `USER`, `ADMIN`; solo propria                                                           | [F13 — Contratto](amicizie.md#contratto-tecnico-condiviso)                                                                                      |
+| `GET /api/cards` | Consulta il catalogo con filtri, ordinamento e paginazione | BE Implemented | Bearer JWT | `200`, `400`, `401` | `USER`, `ADMIN` | [F04 - Catalogo](collezione-carte.md#contratto-http-condiviso) |
+| `GET /api/cards/{cardId}` | Legge una carta attiva e le sue varianti grafiche | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404` | `USER`, `ADMIN` | [F04 - Catalogo](collezione-carte.md#contratto-http-condiviso) |
+| `GET /api/users/me/collections` | Consulta la collezione privata con filtri e paginazione | BE Implemented | Bearer JWT | `200`, `400`, `401` | `USER`, `ADMIN`; propria collezione | [F04 - Collezione](collezione-carte.md#contratto-http-condiviso) |
+| `GET /api/users/me/collections/{cardId}/{cardArtId}` | Legge una variante posseduta dal chiamante | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404` | `USER`, `ADMIN`; propria collezione | [F04 - Collezione](collezione-carte.md#contratto-http-condiviso) |
+| `POST /api/admin/cards` | Crea una carta e le varianti grafiche | BE Implemented | Bearer JWT | `201`, `400`, `401`, `403`, `409` | `ADMIN` | [F10 - Catalogo](gestione-amministrativa.md) |
+| `PUT /api/admin/cards/{cardId}` | Sostituisce una carta non presente in collezioni o mazzi | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409` | `ADMIN` | [F10 - Catalogo](gestione-amministrativa.md) |
+| `DELETE /api/admin/cards/{cardId}` | Cancella logicamente una carta non utilizzata | BE Implemented | Bearer JWT | `204`, `400`, `401`, `403`, `404`, `409` | `ADMIN` | [F10 - Catalogo](gestione-amministrativa.md) |
 
 ## Contratti e codice di riferimento
 

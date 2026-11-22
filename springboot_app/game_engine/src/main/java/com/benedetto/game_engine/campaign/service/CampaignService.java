@@ -47,15 +47,6 @@ public class CampaignService {
 
         PlayerDeck enemyDeck = cardLoaderService.loadDeck(stage.getEnemyDeckPath());
 
-        if (stage.isDeterministic()) {
-            if (humanPlayer != null && humanPlayer.getDeck() != null) {
-                humanPlayer.getDeck().setDeterministic(true);
-            }
-            if (enemyDeck != null) {
-                enemyDeck.setDeterministic(true);
-            }
-        }
-
         Player enemyBot = new Player(stage.getEnemyName(), enemyDeck);
 
         List<String> matchLog = matchEngine.runMatch(humanPlayer, enemyBot);

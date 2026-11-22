@@ -49,6 +49,8 @@ Il mapper controlla la struttura necessaria alla simulazione: ID positivi, nomi,
 | Stage 1 | `1`, `stage_01`, `stage_01_mirror` | `mocks/mirror.json`, attivo per impostazione predefinita |
 | Stage 3 | `3`, `stage_03`, `stage_03_demo_event` | `mocks/demo.json`, richiede `BLOOD_MOON` attivo su H2 |
 
+Decisione dell'utente del **2026-11-22**: gli stage, incluso il tutorial, usano il mescolamento ordinario per entrambi i giocatori: equipaggiamenti all'inizio della partita e creature del relativo mazzetto all'inizio di ciascun round. Rimossa l'opzione di stage che imponeva l'ordine fisso; vale sia per l'API PvE sia per la campagna CLI.
+
 ### Attivazione e responsabilità degli effetti
 
 Decisioni confermate dall'utente il **2026-11-20**: gli effetti si attivano quando la creatura entra in battaglia; bersaglio e durata dipendono dalla classe Java dedicata. Entrambi i giocatori espongono la propria creatura prima dell'attivazione: prima gli effetti degli equipaggiamenti di entrambi, poi quelli delle creature. In ciascuna fase si procede nell'ordine dei giocatori del motore; gli effetti della singola fonte seguono l'ordine dell'array. Un futuro effetto rivolto all'avversario usa il contesto di battaglia, senza lookup del catalogo.
