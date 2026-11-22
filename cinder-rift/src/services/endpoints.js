@@ -8,4 +8,6 @@ export const ENDPOINTS = {
   deck: (id) => `/decks/${encodeURIComponent(id)}`,
   pve: (stageId) => `/battle/pve/${encodeURIComponent(stageId)}`,
   profile: '/users/me',
+  cards: '/cards',
+  collection: '/users/me/collections',
 }

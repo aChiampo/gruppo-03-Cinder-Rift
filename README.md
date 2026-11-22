@@ -1,8 +1,10 @@
 # Gioco di carte collezionabili digitale
 
-> Nome progetto e numero gruppo: **DA DEFINIRE**. Configurazione Docker aggiornata il **2026-11-16**, su richiesta dell’utente: backend F01/F05, prototipo React e motore dimostrativo dispongono di build Compose. Invio email e integrazione dell’autenticazione React con Spring restano da completare.
+> Nome progetto e numero gruppo: **DA DEFINIRE**. Configurazione Docker aggiornata il **2026-11-16**, su richiesta dell’utente: backend F01/F05, prototipo React e motore dimostrativo dispongono di build Compose. Nota storica: a quella data invio email e integrazione React erano da completare; vedere l'aggiornamento corrente sotto.
 
-Aggiornamento del **2026-11-21**: importate le API F04 di [catalogo e collezione](docs/BackEnd/collezione-carte.md) e le scritture amministrative F10 da `feature/api-collezione-catalogo`; integrazione React da completare. Verificati 212 test esistenti e 8 test API importati in esecuzioni distinte; JAR prodotto su PostgreSQL 18.6 isolato.
+Aggiornamento del **2026-11-21**: importate le API F04 di [catalogo e collezione](docs/BackEnd/collezione-carte.md) e le scritture amministrative F10 da `feature/api-collezione-catalogo`. Verificati 212 test esistenti e 8 test API importati in esecuzioni distinte; JAR prodotto su PostgreSQL 18.6 isolato.
+
+Aggiornamento del **2026-11-22**, su richiesta dell'utente: catalogo e collezione React collegati alle API F04 esistenti, con filtri, ordinamenti, paginazione e varianti; 33 test frontend superati, build riuscita e client sorgente verificato contro Spring locale. [Comportamento e limiti della verifica F04](docs/FrontEnd/collezione-carte.md). Le note precedenti descrivono lo stato alle rispettive date; il frontend corrente usa autenticazione F01 reale, senza modalità mock.
 
 ## Indice generale
 
@@ -45,7 +47,7 @@ Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti no
 
 ## Tecnologie
 
-Il backend usa Java 21, Spring Boot 4.1.2, Spring MVC, Spring Security e PostgreSQL tramite JDBC; sono implementati autenticazione e profili F01, CRUD e validazione dei mazzi F05 e orchestrazione applicativa PvE F07. Le migrazioni V1–V9 creano e inizializzano questa base e gli effetti configurabili delle carte, includendo il set CR01 di 30 carte e un utente dimostrativo con collezione; V9 ripara soltanto fazioni ed energia mancanti dei seed noti. Non realizzano tutto il modello v1.1. [Seed e credenziali dimostrative](springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05). Il POM e Compose definiscono rispettivamente dipendenze e PostgreSQL 18. L’autenticazione è gestita nell’applicazione: password BCrypt, access token JWT HS256 e token di rinnovo opachi persistiti come hash. Il prototipo frontend usa React 18 e Vite 5 in `cinder-rift/`; Docker compila con Node.js 22 e serve i file con Nginx. L’integrazione F01 resta da completare. [Stack e configurazione backend](springboot_app/app/README.md).
+Il backend usa Java 21, Spring Boot 4.1.2, Spring MVC, Spring Security e PostgreSQL tramite JDBC; sono implementati autenticazione e profili F01, CRUD e validazione dei mazzi F05 e orchestrazione applicativa PvE F07. Le migrazioni V1–V9 creano e inizializzano questa base e gli effetti configurabili delle carte, includendo il set CR01 di 30 carte e un utente dimostrativo con collezione; V9 ripara soltanto fazioni ed energia mancanti dei seed noti. Non realizzano tutto il modello v1.1. [Seed e credenziali dimostrative](springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05). Il POM e Compose definiscono rispettivamente dipendenze e PostgreSQL 18. L’autenticazione è gestita nell’applicazione: password BCrypt, access token JWT HS256 e token di rinnovo opachi persistiti come hash. Il prototipo frontend usa React 18 e Vite 5 in `cinder-rift/`; Docker compila con Node.js 22 e serve i file con Nginx. Le schermate di accesso, registrazione, rinnovo, uscita e aggiornamento profilo usano il backend F01 reale. [Stack e configurazione backend](springboot_app/app/README.md).
 
 La traccia prevede GitHub, GitHub Projects, Swagger, JSDoc per JS/TS e motore Java isolato con test JUnit.
 
@@ -146,7 +148,7 @@ Per l’avvio manuale, configura la chiave JWT e segui la procedura Flyway per u
 docker compose --file compose.yaml up --build --wait
 ```
 
-Il frontend è disponibile su `http://localhost:8082`; `/api/` viene inoltrato al backend. Il login del prototipo non è ancora compatibile con F01: per esplorare l’interfaccia imposta `VITE_USE_MOCK=true` nel `.env` della radice e ricostruisci `react`. Questa modalità non verifica autenticazione o integrazione. Aggiornamento F07 del **2026-11-20**: l'[API applicativa PvE](docs/BackEnd/app-battaglie-api.md) è implementata nella copia di lavoro di `feature/app_battle_pve_flow`, con guard PostgreSQL e deadline cooperativa del motore. Il motore usa H2 per la campagna e non salva i risultati; l'integrazione React resta da realizzare. [Verifiche correnti e limiti](docs/report/2026-11-20-orchestrazione-pve.md) · [Guida di avvio locale](guida-avvio.md).
+Il frontend è disponibile su `http://localhost:8082`; `/api/` viene inoltrato al backend. Login e registrazione usano F01 reale; catalogo e collezione usano F04 con Bearer, filtri e paginazione server. Non è disponibile una modalità mock. Mazzi F05 e simulazione PvE F07 dispongono di chiamate React; il selettore visivo delle carte nel builder resta da integrare. Il motore usa H2 per la campagna e non salva i risultati. [Verifiche F04 e limiti](docs/FrontEnd/collezione-carte.md#verifiche-e-limiti) · [Evidenze backend F05/F07 del 2026-11-20](docs/report/2026-11-20-orchestrazione-pve.md) · [Guida di avvio locale](guida-avvio.md).
 
 Build e comandi specifici: [backend](springboot_app/app/README.md#build-dellimmagine-docker), [frontend](cinder-rift/README.md#avvio-con-docker-compose), [motore](springboot_app/game_engine/README.md#avvio-con-docker-compose). [Migrazioni Flyway F01](springboot_app/app/README.md#migrazioni-flyway-f01).
 

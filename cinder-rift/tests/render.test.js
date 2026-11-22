@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import Module from 'node:module'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
+import { defaultFilters } from '../src/models/cards.js'
+import { catalogCard, collectionCard } from './cardFixtures.js'
 
 // Render real page components with isolated session/resource state. No fixtures enter src or dist.
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -28,7 +30,7 @@ const result = await build({
     setup(build) {
       build.onLoad({ filter: /[\\/]context[\\/]AuthContext\.jsx$/ }, () => ({ loader: 'js', contents: 'export const useAuth = () => globalThis.__renderAuth' }))
       build.onLoad({ filter: /[\\/]hooks[\\/]useDecks\.js$/ }, () => ({ loader: 'js', contents: 'export const useDecks = () => globalThis.__renderDecks' }))
-      build.onLoad({ filter: /[\\/]hooks[\\/]useCardCollection\.js$/ }, () => ({ loader: 'js', contents: 'export const useCardCollection = () => globalThis.__renderCollection' }))
+      build.onLoad({ filter: /[\\/]hooks[\\/]useCardCollection\.js$/ }, () => ({ loader: 'js', contents: 'export const useCardCollection = (options) => { globalThis.__renderCollectionOptions = options; return globalThis.__renderCollection }' }))
     },
   }],
 })
@@ -43,6 +45,11 @@ globalThis.__renderAuth = {
 }
 globalThis.__renderDecks = { status: 'ready', data: [], error: null, retry() {} }
 const go = () => {}
+const collectionState = (changes = {}) => ({
+  filters: defaultFilters, status: 'ready', error: null, visible: [], total: 0, loaded: true,
+  isFiltered: false, page: 1, pageCount: 1, sort: 'name', direction: 'asc',
+  patch: go, reset: go, retry: go, changeSort: go, changeDirection: go, setPage: go, ...changes,
+})
 
 test('login and registration render accessible fields and real submit actions', () => {
   const login = render('LoginScreen', { onMode: go })
@@ -61,19 +68,71 @@ test('home renders unavailable services without pretending that requests returne
   assert.match(html, /Non hai ancora creato un mazzo/)
 })
 test('catalog and user collection render distinct headings and accessible errors', () => {
-  globalThis.__renderCollection = {
-    filters: { query: '', type: 'all', factions: [], rarities: [], energy: [1, 5], attack: [0, 10], defense: [0, 10] },
-    status: 'error', error: { status: 501, message: 'La collezione non è disponibile' },
-    visible: [], counts: null, total: 0, loaded: false, isFiltered: false, page: 1, pageCount: 1,
-    sort: 'rarita', patch: go, toggle: go, reset: go, retry: go, changeSort: go, setPage: go,
-  }
+  globalThis.__renderCollection = collectionState({ status: 'error', error: { status: 500, message: 'Errore del server' }, loaded: false })
   const collection = render('CollectionScreen', { go })
+  assert.deepEqual(globalThis.__renderCollectionOptions, { catalog: false })
   assert.match(collection, /LA TUA COLLEZIONE/)
   assert.match(collection, /role="alert"/)
   assert.doesNotMatch(collection, /La tua collezione è vuota/)
   const catalog = render('CollectionScreen', { catalog: true, go })
+  assert.deepEqual(globalThis.__renderCollectionOptions, { catalog: true })
   assert.match(catalog, /CATALOGO CARTE/)
-  assert.match(catalog, /Il catalogo non è disponibile/)
+  assert.match(catalog, /Errore del server/)
+  assert.doesNotMatch(catalog, /Il catalogo non contiene ancora carte/)
+})
+
+test('catalog renders canonical cards, nullable stats, every artwork option and real pagination', () => {
+  globalThis.__renderCollection = collectionState({ visible: [catalogCard], total: 16, pageCount: 2 })
+  const html = render('CollectionScreen', { catalog: true, go })
+  assert.match(html, /Ash &amp; Fire/)
+  assert.match(html, /energia 0/)
+  assert.match(html, /Variante grafica/)
+  assert.match(html, /value="201"/)
+  assert.match(html, /value="202"/)
+  assert.match(html, /ALT/)
+  assert.match(html, /art-placeholder/)
+  assert.match(html, /Pagina successiva/)
+  assert.match(html, /Direzione ordinamento/)
+  assert.match(html, /PUNTI POTENZA/)
+  assert.doesNotMatch(html, /Copie possedute|DURATA|undefined|NaN/)
+})
+
+test('collection renders variant rows and persisted copy counts', () => {
+  const alternate = { ...collectionCard, cardArtId: 202, artCode: 'ALT', ownedReplica: 1, tradableReplica: 0 }
+  globalThis.__renderCollection = collectionState({ visible: [collectionCard, alternate], total: 2 })
+  const html = render('CollectionScreen', { go })
+  assert.match(html, /Variante STANDARD · Copie: 3/)
+  assert.match(html, /Variante ALT · Copie: 1/)
+  assert.match(html, /Copie possedute/)
+  assert.match(html, /Copie scambiabili registrate/)
+  assert.match(html, /non sottraggono le prenotazioni/)
+  assert.doesNotMatch(html, /Variante grafica/)
+})
+
+test('equipment and unfamiliar or missing references render without invented duration or statistics', () => {
+  const equipment = { ...catalogCard, type: { id: 2, code: 'EQUIPMENT', name: 'Equipment' }, faction: null, rarity: null, energyCost: null, artworks: [] }
+  globalThis.__renderCollection = collectionState({ visible: [equipment], total: 1 })
+  const html = render('CollectionScreen', { catalog: true, go })
+  assert.match(html, /Equipment/)
+  assert.match(html, /Non disponibile/)
+  assert.doesNotMatch(html, /DURATA|undefined|NaN/)
+  const unknown = { ...equipment, faction: { id: 99, code: 'FUTURE', name: 'Future faction' }, rarity: { id: 99, code: 'FUTURE', name: null } }
+  globalThis.__renderCollection = collectionState({ visible: [unknown], total: 1 })
+  assert.match(render('CollectionScreen', { catalog: true, go }), /Future faction/)
+})
+
+test('catalog and collection have distinct empty states and filtered results stay distinct', () => {
+  globalThis.__renderCollection = collectionState()
+  const catalog = render('CollectionScreen', { catalog: true, go })
+  assert.match(catalog, /Il catalogo non contiene ancora carte/)
+  assert.doesNotMatch(catalog, /VAI AL NEGOZIO|non possiedi/)
+  assert.match(render('CollectionScreen', { go }), /La tua collezione è vuota/)
+  globalThis.__renderCollection = collectionState({ isFiltered: true })
+  assert.match(render('CollectionScreen', { go }), /Nessuna carta corrisponde ai filtri/)
+  globalThis.__renderCollection = collectionState({ status: 'loading', loaded: false })
+  const loading = render('CollectionScreen', { go })
+  assert.match(loading, /Caricamento delle carte/)
+  assert.doesNotMatch(loading, /La tua collezione è vuota/)
 })
 test('deck page renders empty state and creation without claiming validation success', () => {
   const html = render('DeckScreen', { go })

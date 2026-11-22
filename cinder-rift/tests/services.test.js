@@ -4,7 +4,9 @@ import { apiFetch, ApiError, setSessionHandlers } from '../src/services/api.js'
 import * as auth from '../src/services/authService.js'
 import { listDecks, getDeck, createDeck, saveDeck, deleteDeck, deckPayload } from '../src/services/deckService.js'
 import { playPve } from '../src/services/battleService.js'
-import { getCollection } from '../src/services/cardService.js'
+import { buildCollectionParams, getCatalog, getCollection } from '../src/services/cardService.js'
+import { cardKey, defaultFilters } from '../src/models/cards.js'
+import { catalogCard, collectionCard, pageOf } from './cardFixtures.js'
 
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch; setSessionHandlers() })
@@ -130,7 +132,75 @@ test('PvE violations remain available for 422 and unknown responses fail closed'
   globalThis.fetch = async () => json({ outcome: 'UNKNOWN', battleLog: [] })
   await assert.rejects(playPve('stage_01', 8, 'token'), { status: 502 })
 })
-test('unavailable card service does not invent an endpoint or return an empty collection', async () => {
-  globalThis.fetch = () => assert.fail('Undocumented API must not be called')
-  await assert.rejects(getCollection(), { status: 501 })
+test('card query uses canonical codes, inclusive bounds and zero-based pagination without an owner', () => {
+  assert.deepEqual(buildCollectionParams(), { sort: 'name', direction: 'asc', page: 0, size: 15 })
+  assert.deepEqual(buildCollectionParams({ filters: { ...defaultFilters, name: ' Ash & Fire ', faction: 'SAP', rarity: 'RARE', type: 'CREATURE', expansion: 'CR01', energyMin: '0', energyMax: '3', attackMin: 0, defenseMax: '8', powerMin: '2', powerMax: '5', userId: 999 }, sort: 'power', direction: 'desc', page: 3, pageSize: 20 }), {
+    sort: 'power', direction: 'desc', page: 2, size: 20, name: 'Ash & Fire', faction: 'SAP', rarity: 'RARE', type: 'CREATURE', expansion: 'CR01', energyMin: '0', energyMax: '3', attackMin: 0, defenseMax: '8', powerMin: '2', powerMax: '5',
+  })
+})
+
+test('catalog calls the authenticated backend and preserves its envelope and all artworks', async () => {
+  const expected = pageOf([catalogCard], { page: 1, totalElements: 16, totalPages: 2 })
+  globalThis.fetch = async (url, options) => {
+    const request = new URL(url, 'https://example.invalid')
+    assert.equal(request.pathname, '/api/cards')
+    assert.equal(request.searchParams.get('name'), 'Ash & Fire')
+    assert.equal(request.searchParams.get('page'), '1')
+    assert.equal(request.searchParams.get('size'), '15')
+    assert.equal(options.headers.Authorization, 'Bearer test-token')
+    assert.equal(options.method, 'GET')
+    assert.equal(options.body, undefined)
+    return json(expected)
+  }
+  assert.deepEqual(await getCatalog(buildCollectionParams({ filters: { name: 'Ash & Fire' }, page: 2 }), { token: 'test-token' }), expected)
+})
+
+test('private collection preserves separate artwork rows and stored copy counts', async () => {
+  const variant = { ...collectionCard, cardArtId: 202, artCode: 'ALT', ownedReplica: 1, tradableReplica: 0 }
+  const expected = pageOf([collectionCard, variant])
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/users/me/collections?sort=name&direction=asc&page=0&size=15')
+    assert.equal(options.headers.Authorization, 'Bearer owner-token')
+    return json(expected)
+  }
+  const result = await getCollection(buildCollectionParams(), { token: 'owner-token' })
+  assert.deepEqual(result, expected)
+  assert.notEqual(cardKey(result.items[0]), cardKey(result.items[1]))
+})
+
+test('valid empty card pages stay distinct from malformed responses and failed requests', async () => {
+  globalThis.fetch = async () => json(pageOf([]))
+  assert.equal((await getCatalog()).totalElements, 0)
+  assert.deepEqual((await getCollection()).items, [])
+  for (const body of [{}, [], { ...pageOf([]), totalElements: -1 }, { ...pageOf([]), totalPages: 2 }, pageOf([{ ...catalogCard, artworks: null }]), pageOf([{ ...catalogCard, id: null }]), pageOf([{ ...catalogCard, type: 'CREATURE' }])]) {
+    globalThis.fetch = async () => json(body)
+    await assert.rejects(getCatalog(), { status: 502 })
+  }
+  globalThis.fetch = async () => json(pageOf([{ ...collectionCard, tradableReplica: collectionCard.ownedReplica + 1 }]))
+  await assert.rejects(getCollection(), { status: 502 })
+  for (const status of [400, 401, 500]) {
+    globalThis.fetch = async () => json({ detail: 'Server error' }, status)
+    await assert.rejects(getCollection(), { status, message: 'Server error' })
+  }
+})
+
+test('nullable card fields and unfamiliar catalog codes remain authoritative', async () => {
+  const card = { ...catalogCard, faction: { id: 99, code: 'FUTURE', name: 'Future faction' }, rarity: null, type: null, expansion: null, name: null, energyCost: null, attack: null, defense: null, power: null, artworks: [] }
+  globalThis.fetch = async () => json(pageOf([card]))
+  assert.deepEqual((await getCatalog()).items[0], card)
+})
+
+test('card requests preserve cancellation and renew rejected Bearer tokens once', async () => {
+  const controller = new AbortController()
+  controller.abort()
+  globalThis.fetch = async (_, options) => options.signal.throwIfAborted()
+  await assert.rejects(getCollection({}, { signal: controller.signal }), { name: 'AbortError' })
+  const tokens = []
+  setSessionHandlers({ renew: async () => 'new-token' })
+  globalThis.fetch = async (_, options) => {
+    tokens.push(options.headers.Authorization)
+    return tokens.length === 1 ? json({}, 401) : json(pageOf([catalogCard]))
+  }
+  assert.equal((await getCatalog({}, { token: 'old-token' })).items[0].id, catalogCard.id)
+  assert.deepEqual(tokens, ['Bearer old-token', 'Bearer new-token'])
 })

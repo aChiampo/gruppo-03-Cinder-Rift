@@ -1,39 +1,54 @@
 # Catalogo e collezione delle carte
 
-ID: F04 · Perimetro: confermato; contratto API condiviso in approfondimento.
-Implementazione: API backend aggiunte, interfaccia e integrazione non implementate.
-Ultimo aggiornamento significativo: 2026-11-15. Filtri, ordinamenti e restituzione delle varianti grafiche seguono le scelte dell'utente; il [contratto BackEnd F04](../BackEnd/collezione-carte.md) è la fonte canonica di percorsi, parametri, DTO, permessi ed errori.
+ID: F04 · Perimetro: confermato; contratto HTTP implementato.
+Implementazione: catalogo e collezione React collegati alle API backend esistenti.
+Ultimo aggiornamento significativo: **2026-11-22**, su richiesta dell'utente di usare le API backend, allineare la documentazione e correggere i test. Fonte canonica: [contratto BackEnd F04](../BackEnd/collezione-carte.md).
 
-## Obiettivo e comportamento previsto
+## Schermate e richieste
 
-- Consultare il catalogo delle carte e la collezione dell'utente autenticato.
-- Chiedere `GET /api/cards` per il catalogo e `GET /api/users/me/collections` per la collezione. Il client invia il bearer token secondo il [contratto F01](../BackEnd/accesso-utenti.md).
-- Usare i filtri condivisi: nome, fazione, rarità, tipo, espansione e intervalli min/max per energia, attacco, difesa e punti potenza.
-- Usare gli ordinamenti per nome, fazione, rarità, energia, attacco, difesa o punti potenza, con direzione crescente/decrescente. Paginazione: `page` a base zero, `size` predefinito 20 e massimo 100.
-- I codici dei cataloghi sono i valori dei filtri categoriali. L'API restituisce i codici associati alle carte, ma non una rotta separata per tutte le opzioni dei filtri.
-- La collezione è identificata dal token, non da un ID utente scelto dal client. Ogni risultato distingue la variante grafica e mostra i contatori di copie forniti dal backend.
-- Statistiche, riferimenti e URL delle immagini possono essere null. Il client deve tollerare immagini mancanti; il trattamento visivo è ancora da definire.
+- Catalogo e collezione usano componenti condivisi; il parametro `catalog` sceglie la rotta di lettura documentata. Le richieste passano dal client F01 con Bearer, rinnovo della sessione e cancellazione delle richieste superate.
+- Il catalogo mostra una riga per carta; il dettaglio permette di scegliere fra tutte le varianti grafiche restituite. La collezione mostra una riga per carta e variante, identificata dalla coppia degli ID, con copie possedute e scambiabili registrate.
+- I dettagli sono già presenti negli elenchi: le due rotte di dettaglio backend non sono chiamate da queste schermate.
+- Il client conserva i payload canonici, inclusi riferimenti, valori nulli e contatori. Non inventa durata, effetti, lore, saldi o disponibilità netta agli scambi.
+- Immagini assenti o non caricabili mostrano un segnaposto; statistiche nulle mostrano un trattino. Riferimenti sconosciuti usano nome o codice ricevuto; riferimenti assenti mostrano «Non disponibile».
 
-## Stati e integrazione
+## Filtri, ordinamento e paginazione
 
-- `401`: sessione assente o non valida; seguire il flusso di accesso F01.
-- `400`: parametri non validi; mostrare un errore recuperabile e conservare, se possibile, i filtri già inseriti.
-- `200` con lista vuota: stato senza risultati per il catalogo o collezione ancora vuota.
-- In caso di errore temporaneo, contenuto vuoto o pagina vuota non deve essere presentato come risultato riuscito.
-- Dopo apertura di pacchetti o scambi, la collezione dovrà essere ricaricata secondo i contratti F03/F06. Questi flussi non sono implementati in questa attività.
+- Ricerca per nome, tipo, fazione, rarità, codice espansione e intervalli inclusivi di energia, attacco, difesa e punti potenza.
+- Ogni filtro categoriale seleziona un solo codice, come previsto dal contratto. I selettori di fazione e rarità offrono i codici del set corrente; non esiste una rotta di metadati e le opzioni non sono dedotte da una sola pagina di risultati.
+- I limiti numerici sono facoltativi e indipendenti: un campo vuoto non invia il limite, mentre zero resta un valore esplicito. Non vengono applicati intervalli impliciti che escludano carte con statistiche nulle.
+- Tutti gli ordinamenti canonici sono disponibili, con direzione crescente o decrescente; default nome crescente.
+- Il client richiede 15 elementi per pagina. L'interfaccia usa pagine a base uno e traduce soltanto la query in base zero; totale e numero di pagine provengono dal server.
+- Cambiare un filtro o l'ordinamento riporta alla prima pagina; «Azzera filtri» conserva l'ordinamento. La ricerca ha debounce di 200 ms e le richieste superate sono annullate. Una pagina divenuta vuota con totale positivo riporta alla prima pagina.
 
-## Da definire
+## Stati e accessibilità
 
-- Schermate, filtri visuali, combinazione/reset dei filtri, dettagli carta e visualizzazione delle varianti.
-- Origine delle opzioni complete per fazioni, rarità, tipi ed espansioni, nonché comportamento responsive e accessibile.
-- Stati di caricamento, retry, errori di rete e conservazione della query durante la navigazione.
-- Integrazione con apertura dei pacchetti F03, scambi F06 e composizione dei mazzi F05.
+- Caricamento con scheletri e stato accessibile; errori con messaggio del server e pulsante «Riprova», mantenendo i filtri.
+- Il catalogo vuoto, la collezione vuota e una ricerca senza risultati hanno messaggi distinti. Un errore non diventa un elenco vuoto riuscito.
+- I parametri non validi restano soggetti alla validazione backend; il client mostra anche gli errori degli intervalli invertiti.
+- Un `401` segue il rinnovo F01 e, se rifiutato, il ritorno all'accesso. I payload riusciti ma malformati producono un errore `502` locale.
+- Filtri numerici, selettori, ricerca e paginazione hanno etichette accessibili. Su mobile il pannello dei filtri è richiudibile.
+
+## Verifiche e limiti
+
+Verifica del **2026-11-22**, copia di lavoro di `test-connessione`: **33 test frontend superati** con `npm test`, inclusi servizi e rendering statico; build Vite riuscita. Coperti endpoint distinti, Bearer e rinnovo, query, paginazione, varianti, conteggi, nullabilità, risposte malformate, cancellazione, stati vuoti ed errori.
+
+Il client sorgente è stato provato contro Spring locale sulla porta 8081: accesso con l'account dimostrativo documentato, catalogo e collezione con 30 elementi ciascuno, filtro combinato, seconda pagina e risposte `400`/`401` attese; sessione di prova chiusa. Dopo la ricostruzione del solo frontend con Compose, ripetute le letture attraverso Nginx sulla porta 8082: verificati anche i cinque equipaggiamenti, la conservazione dei payload, il bundle aggiornato e lo stato di salute. Nessuna modifica al catalogo o alle copie. La suite backend non è stata ripetuta perché il contratto e il codice Java non sono cambiati.
+
+La verifica browser non è disponibile in questa sessione perché l'host di accesso al browser non è raggiungibile. I test statici non attestano interazioni, responsive o caricamento effettivo delle immagini nel browser.
+
+## Integrazioni da completare
+
+- Selettore visivo nel deck builder F05: resta l'editor di ID carta/variante, con validazione del server.
+- Aggiornamento dopo apertura pacchetti F03 o scambi F06, quando i rispettivi flussi saranno disponibili.
+- Metadati completi dei filtri ed eventuali nuovi codici, da coordinare con F10.
 
 ## Collegamenti
 
-- [Contratto API catalogo e collezione F04](../BackEnd/collezione-carte.md)
-- [Accesso utenti F01](../BackEnd/accesso-utenti.md)
-- [Apertura pacchetti F03](../BackEnd/acquisto-pacchetti.md)
-- [Composizione dei mazzi F05](gestione-mazzi.md)
+- [Contratto API F04](../BackEnd/collezione-carte.md)
+- [Autenticazione F01](../BackEnd/accesso-utenti.md)
+- [Mazzi F05](gestione-mazzi.md)
+- [Pacchetti F03](../BackEnd/acquisto-pacchetti.md)
 - [Scambi F06](scambi-mercato.md)
+- [Frontend: avvio e verifiche](../../cinder-rift/README.md)
 - [Indice FrontEnd](README.md)

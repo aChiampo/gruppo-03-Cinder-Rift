@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { BookCopy, Layers, Plus, Save, Trash2 } from 'lucide-react'
 import Panel from '../components/ui/Panel.jsx'
 import RequestState from '../components/ui/RequestState.jsx'
-import Unavailable from '../components/ui/Unavailable.jsx'
 import RoundSelector from '../components/deck-builder/RoundSelector.jsx'
 import DeckSummary from '../components/deck-builder/DeckSummary.jsx'
 import DeckValidation from '../components/deck-builder/DeckValidation.jsx'
@@ -78,7 +77,7 @@ export default function DeckScreen({ go }) {
   return <main className="deck-builder-layout live-deck-layout">
     <aside className="panel">
       <h2><Layers size={22} /> COLLEZIONE CARTE</h2>
-      <Unavailable feature="Le carte della collezione" />
+      <p className="hint">Consulta le tue carte nella collezione. La selezione visiva per il mazzo resta da integrare.</p>
       <button className="btn-ghost" onClick={() => go('collezione')}>APRI COLLEZIONE</button>
       <hr />
       <div className="section-heading"><h2>I TUOI MAZZI</h2><button className="icon-btn" aria-label="Crea mazzo" onClick={create} disabled={busy || status === 'loading'}><Plus /></button></div>

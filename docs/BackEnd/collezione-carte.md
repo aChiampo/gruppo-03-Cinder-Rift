@@ -1,8 +1,8 @@
 # Catalogo e collezione delle carte
 
-ID: F04 · Perimetro: confermato; contratto API in approfondimento.
-Implementazione: controller, servizi e repository JDBC disponibili; otto test API superati il 2026-11-21. Integrazione React da realizzare.
-Ultimo aggiornamento significativo: 2026-11-21, integrazione del branch `feature/api-collezione-catalogo` su richiesta dell'utente. Contratto iniziale: 2026-11-15. Fonte: richiesta F04 e scelte dell'utente su filtri, ordinamenti e varianti grafiche. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
+ID: F04 · Perimetro: confermato; contratto HTTP implementato.
+Implementazione: controller, servizi e repository JDBC disponibili; catalogo e collezione React collegati. Otto test API superati il 2026-11-21; verifiche frontend e client contro Spring del 2026-11-22 descritte sotto.
+Ultimo aggiornamento significativo: 2026-11-22, su richiesta dell'utente di collegare React alle API esistenti, allineare la documentazione e correggere i test. Il contratto backend resta invariato. Contratto iniziale: 2026-11-15; importazione del branch `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
 
 ## Obiettivo e decisioni note
 
@@ -129,6 +129,8 @@ La composizione e il bilanciamento delle carte non sono approvati definitivament
 
 ## Dati dimostrativi e verifica
 
+Il set CR01 locale e la collezione dimostrativa sono inseriti dalle migrazioni V5/V6. Le fixture API descritte sotto restano isolate dai dati applicativi. [Seed corrente](../../springboot_app/app/README.md#set-iniziale-e-utente-dimostrativo-f01f05).
+
 I test database usano fixture isolate: 25 creature ripartite in cinque gruppi da cinque e cinque equipaggiamenti. La proposta V2.1 è rispettata per distribuzione di rarità, energia dei gruppi e budget punti potenza; attacco e difesa sono solo valori di prova perché le statistiche non sono bilanciate. Le fixture creano due varianti grafiche e conteggi di collezione, lasciando intenzionalmente una carta solo nel catalogo per verificare che non compaia nella collezione del chiamante. Non sono account o righe demo inseriti nelle migrazioni di produzione; le URL usano il dominio riservato `example.invalid`.
 
 Evidenza storica del branch sorgente: la prima esecuzione mirata del **2026-11-15** si è fermata al caricamento del contesto Spring per un conflitto nel nome del bean `cardCatalogRepository`; il nome del bean del repository F04 è stato reso esplicito. La ripetizione dei test non è stata eseguita. La compilazione di test è arrivata all'avvio del contesto, ma non costituisce esito positivo dei test. Restano da verificare query, risposte HTTP, filtri, proprietà della collezione e dati su PostgreSQL.
@@ -145,6 +147,14 @@ Ambiente: Windows, JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedi
 
 I 220 test sono passati in esecuzioni distinte: la suite completa non è stata ripetuta dopo le sole correzioni ai test importati. Browser, integrazione React, immagini Compose e distribuzione sul database applicativo non verificati da questa attività.
 
+## Integrazione React e verifica del 2026-11-22
+
+Il client usa le due rotte di elenco, senza body nelle richieste GET né scelta del proprietario. Conserva `CardPage<T>` e i DTO canonici; la sola conversione della paginazione avviene tra interfaccia a base uno e query a base zero. La UI richiede `size=15`, nome crescente come default e filtri singoli per i codici categoriali. Nessun limite numerico è implicito; i campi vuoti sono omessi e zero viene conservato.
+
+Catalogo e collezione hanno sorgenti distinte: il catalogo conserva tutte le arti nella stessa carta e consente di selezionarle nel dettaglio; la collezione conserva una riga per variante e i due contatori persistiti, senza dedurre gli hold F06. Gli elenchi contengono già i dettagli necessari: le rotte di dettaglio rimangono implementate solo nel backend. [Comportamento dell'interfaccia, verifiche e limiti](../FrontEnd/collezione-carte.md).
+
+Nella copia di lavoro di `test-connessione` con base `9e0dd83` e modifiche non committate, `npm test` ha superato 33 test frontend e `npm run build` ha prodotto il bundle. Il client sorgente è stato verificato anche contro Spring locale: catalogo e collezione da 30 righe, filtro combinato, seconda pagina, intervallo invertito `400` e accesso senza Bearer `401`. Dopo la ricostruzione del solo frontend con Compose, gli stessi controlli sono passati attraverso Nginx sulla porta 8082, insieme alla lettura dei cinque equipaggiamenti, alla conservazione dei payload e al controllo del bundle e della salute. Usato l'account dimostrativo già documentato; sessioni di prova chiuse, nessuna scrittura su carte o copie. Nessuna modifica al codice Java o al contratto HTTP; suite backend non ripetuta. Browser non verificato: host di accesso non disponibile.
+
 ## Dati, copie e varianti grafiche
 
 - Gli ID generati di utenti, carte e arti sono `int` auto-incrementali. `COLLECTIONS` eredita gli interi nella PK `(id_user, id_card, id_card_art)` e non genera nuovi identificativi.
@@ -157,8 +167,7 @@ I 220 test sono passati in esecuzioni distinte: la suite completa non è stata r
 ## Da definire
 
 - Conferma definitiva del regolamento V2.1, dei valori numerici e dei contenuti delle carte.
-- Modalità di caricamento di un catalogo dimostrativo consultabile nell'ambiente locale; al momento i dati demo sono fixture di test.
-- Comportamento UI per immagini mancanti, filtri attivi, paginazione e ordinamento; integrazione FrontEnd non implementata.
+- Verifica browser di immagini mancanti, filtri, varianti e paginazione; comportamento implementato e descritto nella pagina FrontEnd, verifica browser ancora da eseguire.
 - Compatibilità delle modifiche amministrative con flussi e dati di gioco non ancora presenti, da coordinare nelle funzionalità F03, F05 e F06.
 
 ## Collegamenti
