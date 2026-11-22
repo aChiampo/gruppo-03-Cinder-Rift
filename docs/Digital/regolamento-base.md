@@ -183,6 +183,8 @@ Se la partita termina anticipatamente, gli equipaggiamenti non ancora estratti r
 - Il server mescola separatamente ciascun mazzetto di creature e quello degli equipaggiamenti.
 - Il punteggio dei round parte da 0–0.
 
+Decisione dell'utente del **2026-11-22**: il tutorial segue lo stesso mescolamento delle battaglie normali. Gli equipaggiamenti sono mescolati all'inizio della partita e ciascun mazzetto di creature all'inizio del relativo round; il tutorial non impone un ordine fisso.
+
 Tutte le estrazioni sono gestite dal server e non possono essere influenzate dai giocatori.
 
 ## 9. Inizio di ogni round

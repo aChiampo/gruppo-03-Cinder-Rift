@@ -1,7 +1,7 @@
 # Gestione e validazione dei mazzi
 
 - ID: F05 · Perimetro: confermato; specifica in approfondimento.
-- Implementazione: persistenza, validazione e API REST backend implementate; frontend non implementato. Responsabile: DA DEFINIRE (Software Developer).
+- Implementazione: persistenza, validazione e API REST backend implementate; [editor React con collezione visiva F04](../FrontEnd/gestione-mazzi.md) disponibile. Responsabile: DA DEFINIRE (Software Developer).
 - Ultimo aggiornamento significativo **2026-11-20**, completamento approvato dall'utente delle regole V2.1 nel validatore condiviso F05/F07; energia per carta e potenza per destinazione restano quelle confermate il 2026-11-18.
 - Branch documentale richiesto: `docs/f05-deck-validation-v2`.
 

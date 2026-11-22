@@ -1,10 +1,10 @@
 # Lore, identità e carte
 
 ID: D01 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: non iniziata. Responsabile: DA DEFINIRE (Digital Strategist).
+Implementazione: illustrazioni dimostrative CR01 disponibili; lore e contenuti definitivi in approfondimento. Responsabile: DA DEFINIRE (Digital Strategist).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente. Validazione dei contenuti definitivi: non eseguita.
+Ultimo aggiornamento significativo: 2026-11-22, disponibilità delle illustrazioni dimostrative CR01 su richiesta dell’utente. Allineamento dei riferimenti al regolamento Versione 2.1 del 2026-11-09. Validazione dei contenuti definitivi: non eseguita.
 
 ## Obiettivo e decisioni note
 
@@ -16,6 +16,10 @@ Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al 
 - La Versione 2.1 propone le [caratteristiche delle creature](regolamento-base.md#5-caratteristiche-delle-creature), le [fazioni e i loro vantaggi](regolamento-base.md#6-fazioni) e il comportamento degli [equipaggiamenti](regolamento-base.md#7-equipaggiamenti).
 - Nomi e relazioni di gioco restano nel regolamento senza copie concorrenti. La proposta non definisce automaticamente lore, identità visiva o asset finali.
 - Statistiche, punti potenza ed effetti precisi delle carte devono ancora essere definiti e bilanciati secondo gli [elementi da completare e testare](regolamento-base.md#15-elementi-da-completare-e-testare).
+
+## Illustrazioni dimostrative disponibili
+
+Aggiornamento del **2026-11-22**, su richiesta dell'utente: le illustrazioni centrali delle 30 carte CR01 fornite nella cartella locale `Carte/` sono ritagliate e pubblicate nel frontend come WebP lossless. I nomi stampati corrispondono al seed V5; V10 collega gli asset alle arti `default` esistenti. Il retro comune è escluso. Si tratta di materiali del set dimostrativo: l'estrazione non certifica approvazione definitiva dei contenuti, bilanciamento o licenze. [Asset e associazioni F04](../BackEnd/collezione-carte.md#immagini-del-set-cr01) · [Verifiche dei ritagli](../FrontEnd/collezione-carte.md#immagini-del-set-cr01).
 
 ## Da definire
 

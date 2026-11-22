@@ -42,3 +42,17 @@ async function readPage(path, params, options, catalog) {
 export const getCatalog = (params = {}, options = {}) => readPage(ENDPOINTS.cards, params, options, true)
 /** GET /api/users/me/collections; the owner is always determined by the Bearer token. */
 export const getCollection = (params = {}, options = {}) => readPage(ENDPOINTS.collection, params, options, false)
+
+/** Read all collection pages for the deck picker, retaining each owned artwork row. */
+export async function getDeckCollection(options = {}) {
+  const cards = []
+  let page = 0
+  let totalPages
+  do {
+    const result = await getCollection({ page, size: 100, sort: 'name', direction: 'asc' }, options)
+    cards.push(...result.items)
+    totalPages = result.totalPages
+    page++
+  } while (page < totalPages)
+  return cards
+}

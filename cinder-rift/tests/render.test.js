@@ -22,7 +22,11 @@ const result = await build({
     import ProfileScreen from './src/screens/ProfileScreen.jsx'
     import DeckValidation from './src/components/deck-builder/DeckValidation.jsx'
     import RequestState from './src/components/ui/RequestState.jsx'
-    const components = { LoginScreen, HomeScreen, CollectionScreen, DeckScreen, BattleScreen, ShopScreen, ProfileScreen, DeckValidation, RequestState }
+    import CollectionPicker from './src/components/deck-builder/CollectionPicker.jsx'
+    import DeckSlots from './src/components/deck-builder/DeckSlots.jsx'
+    import RoundSelector from './src/components/deck-builder/RoundSelector.jsx'
+    export { RoundSelector }
+    const components = { LoginScreen, HomeScreen, CollectionScreen, DeckScreen, BattleScreen, ShopScreen, ProfileScreen, DeckValidation, RequestState, CollectionPicker, DeckSlots, RoundSelector }
     export const render = (name, props) => renderToStaticMarkup(React.createElement(components[name], props))
   ` },
   plugins: [{
@@ -30,6 +34,7 @@ const result = await build({
     setup(build) {
       build.onLoad({ filter: /[\\/]context[\\/]AuthContext\.jsx$/ }, () => ({ loader: 'js', contents: 'export const useAuth = () => globalThis.__renderAuth' }))
       build.onLoad({ filter: /[\\/]hooks[\\/]useDecks\.js$/ }, () => ({ loader: 'js', contents: 'export const useDecks = () => globalThis.__renderDecks' }))
+      build.onLoad({ filter: /[\\/]hooks[\\/]useDeckCollection\.js$/ }, () => ({ loader: 'js', contents: 'export const useDeckCollection = () => globalThis.__renderDeckCollection' }))
       build.onLoad({ filter: /[\\/]hooks[\\/]useCardCollection\.js$/ }, () => ({ loader: 'js', contents: 'export const useCardCollection = (options) => { globalThis.__renderCollectionOptions = options; return globalThis.__renderCollection }' }))
     },
   }],
@@ -38,12 +43,13 @@ const compiled = new Module(root + 'tests/rendered-components.cjs')
 compiled.filename = root + 'tests/rendered-components.cjs'
 compiled.paths = Module._nodeModulePaths(root)
 compiled._compile(result.outputFiles[0].text, compiled.filename)
-const { render } = compiled.exports
+const { render, RoundSelector } = compiled.exports
 globalThis.__renderAuth = {
   user: { id: 42, nickname: 'Test player', name: 'Test player', email: 'test@example.invalid', role: 'USER', rankingPoints: 10, iconUrl: null },
   token: 'test-token', login() {}, register() {}, logout() {}, updateUser() {},
 }
 globalThis.__renderDecks = { status: 'ready', data: [], error: null, retry() {} }
+globalThis.__renderDeckCollection = { status: 'ready', data: [], error: null, retry() {} }
 const go = () => {}
 const collectionState = (changes = {}) => ({
   filters: defaultFilters, status: 'ready', error: null, visible: [], total: 0, loaded: true,
@@ -139,6 +145,63 @@ test('deck page renders empty state and creation without claiming validation suc
   assert.match(html, /DECK BUILDER/)
   assert.match(html, /CREA MAZZO/)
   assert.doesNotMatch(html, /Validazione superata/)
+  assert.doesNotMatch(html, /COLLEZIONE CARTE|Creature possedute|Clicca una carta/)
+  assert.ok(html.indexOf('I TUOI MAZZI') < html.indexOf('Cerca nella collezione'))
+})
+
+test('deck collection displays only owned variants matching the active group', () => {
+  const equipment = { ...collectionCard, cardId: 102, name: 'Equipment only', type: { code: 'EQUIPMENT' } }
+  const collection = { status: 'ready', data: [collectionCard, equipment] }
+  const html = render('CollectionPicker', { collection, entries: [], destination: 'ROUND2', onAdd: go })
+  assert.match(html, /Ash &amp; Fire/)
+  assert.match(html, /draggable="true"/)
+  assert.match(html, /3 copie disponibili/)
+  assert.doesNotMatch(html, /Equipment only/)
+  const equipmentHtml = render('CollectionPicker', { collection, entries: [], destination: 'EQUIPMENT', onAdd: go })
+  assert.match(equipmentHtml, /Equipment only/)
+  assert.doesNotMatch(equipmentHtml, /Ash &amp; Fire/)
+  const disabled = render('CollectionPicker', { collection, entries: [], destination: 'ROUND1', disabled: true, onAdd: go })
+  assert.match(disabled, /disabled="" draggable="false"/)
+})
+
+test('deck slots preserve targeted holes and display saved card metadata or a repair fallback', () => {
+  const entries = [{ cardId: 101, cardArtId: 201, destination: 'ROUND1', slot: 3 }]
+  const html = render('DeckSlots', { entries, cards: [collectionCard], destination: 'ROUND1' })
+  assert.equal((html.match(/class="entry-slot /g) ?? []).length, 5)
+  assert.match(html, /Slot 1: vuoto/)
+  assert.match(html, /Slot 4: Ash &amp; Fire/)
+  assert.match(html, /Rimuovi Ash &amp; Fire dallo slot 4/)
+  assert.match(html, /class="tile-stats"/)
+  assert.match(html, new RegExp(`</svg>${collectionCard.attack ?? '—'}</span>`))
+  assert.match(html, new RegExp(`</svg>${collectionCard.defense ?? '—'}</span>`))
+  assert.ok(html.indexOf('Rimuovi Ash &amp; Fire') > html.indexOf('class="tile-stats"'))
+  assert.equal((html.match(/<button/g) ?? []).length, 1)
+  assert.match(render('DeckSlots', { entries, cards: [], destination: 'ROUND1' }), /Carta #101/)
+})
+
+test('round selector includes an active equipment destination and sends its selection', () => {
+  const html = render('RoundSelector', { activeDestination: 'EQUIPMENT', onChange: go })
+  assert.equal((html.match(/<button/g) ?? []).length, 6)
+  assert.match(html, /class="round-selector__button active" aria-pressed="true">Equipaggiamenti/)
+  const changes = []
+  const selector = RoundSelector({ activeDestination: 'ROUND1', onChange: (value) => changes.push(value) })
+  selector.props.children[5].props.onClick()
+  selector.props.children[1].props.onClick()
+  assert.deepEqual(changes, ['EQUIPMENT', 'ROUND2'])
+})
+
+test('compact deck picker hides creatures exceeding the active round or lacking an energy cost', () => {
+  const card = (cardId, name, energyCost) => ({ ...collectionCard, cardId, name, energyCost })
+  const collection = { status: 'ready', data: [card(1, 'Below limit', 1), card(2, 'At limit', 2), card(3, 'Above limit', 3), card(4, 'Missing cost', null)] }
+  const html = render('CollectionPicker', { collection, entries: [], destination: 'ROUND2', onAdd: go })
+  assert.match(html, /Below limit/)
+  assert.match(html, /At limit/)
+  assert.doesNotMatch(html, /Above limit|Missing cost/)
+  assert.doesNotMatch(html, /Creature possedute|Clicca una carta|deck-collection-help/)
+  assert.match(html, /--s:22px/)
+  const nextRound = render('CollectionPicker', { collection, entries: [], destination: 'ROUND3', onAdd: go })
+  assert.match(nextRound, /Above limit/)
+  assert.doesNotMatch(nextRound, /Missing cost/)
 })
 test('server deck violations render structured messages rather than React object children', () => {
   const html = render('DeckValidation', { validation: { valid: false, errors: [{ code: 'NOT_OWNED', destination: 'ROUND1', message: 'Card copy unavailable' }], warnings: [] } })

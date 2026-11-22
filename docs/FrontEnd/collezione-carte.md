@@ -2,7 +2,7 @@
 
 ID: F04 · Perimetro: confermato; contratto HTTP implementato.
 Implementazione: catalogo e collezione React collegati alle API backend esistenti.
-Ultimo aggiornamento significativo: **2026-11-22**, su richiesta dell'utente di usare le API backend, allineare la documentazione e correggere i test. Fonte canonica: [contratto BackEnd F04](../BackEnd/collezione-carte.md).
+Ultimo aggiornamento significativo: **2026-11-22**, su richiesta dell'utente di usare le API backend, pubblicare le 30 illustrazioni CR01 in WebP e allineare documentazione e verifiche. Fonte canonica: [contratto BackEnd F04](../BackEnd/collezione-carte.md).
 
 ## Schermate e richieste
 
@@ -36,6 +36,14 @@ Verifica del **2026-11-22**, copia di lavoro di `test-connessione`: **33 test fr
 Il client sorgente è stato provato contro Spring locale sulla porta 8081: accesso con l'account dimostrativo documentato, catalogo e collezione con 30 elementi ciascuno, filtro combinato, seconda pagina e risposte `400`/`401` attese; sessione di prova chiusa. Dopo la ricostruzione del solo frontend con Compose, ripetute le letture attraverso Nginx sulla porta 8082: verificati anche i cinque equipaggiamenti, la conservazione dei payload, il bundle aggiornato e lo stato di salute. Nessuna modifica al catalogo o alle copie. La suite backend non è stata ripetuta perché il contratto e il codice Java non sono cambiati.
 
 La verifica browser non è disponibile in questa sessione perché l'host di accesso al browser non è raggiungibile. I test statici non attestano interazioni, responsive o caricamento effettivo delle immagini nel browser.
+
+## Immagini del set CR01
+
+Dal **2026-11-22**, su richiesta dell'utente, [public/img/cards](../../cinder-rift/public/img/cards/) contiene 30 illustrazioni WebP lossless estratte dalle carte originali, con un file distinto per carta. La build copia gli asset in `dist/img/cards/`; il componente esistente usa gli URL ricevuti dalle API. Associazione alle arti `default`, aggiornamento dei dati e conservazione degli identificativi seguono il [contratto BackEnd F04](../BackEnd/collezione-carte.md#immagini-del-set-cr01).
+
+Per distribuire questa modifica servono il backend con V10 e la ricostruzione del frontend. Nessun URL usa percorsi del filesystem o un host locale fisso. Il segnaposto resta disponibile per immagini assenti o non caricabili e per altre carte senza URL.
+
+Verifica locale del **2026-11-22**, copia di lavoro di `test-connessione`: esaminati visivamente tutti i 30 ritagli; verificata l'identità dei pixel fra WebP decodificati e ritagli PNG originali, senza ridimensionamento. `npm test` supera 33 test e `npm run build` riesce. Tutti i 30 file di `public` e `dist` coincidono byte per byte; ogni URL della migrazione restituisce `200` e `Content-Type: image/webp` dal build servito con Vite preview. I test Node e l'avvio preview hanno richiesto l'esecuzione fuori dal sandbox dopo il rifiuto Windows `spawn EPERM`. Verifica del database nel [contratto BackEnd](../BackEnd/collezione-carte.md#immagini-del-set-cr01). Nessuna prova browser o distribuzione sullo stack applicativo.
 
 ## Integrazioni da completare
 

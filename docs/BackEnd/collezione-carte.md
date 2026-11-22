@@ -2,7 +2,7 @@
 
 ID: F04 · Perimetro: confermato; contratto HTTP implementato.
 Implementazione: controller, servizi e repository JDBC disponibili; catalogo e collezione React collegati. Otto test API superati il 2026-11-21; verifiche frontend e client contro Spring del 2026-11-22 descritte sotto.
-Ultimo aggiornamento significativo: 2026-11-22, su richiesta dell'utente di collegare React alle API esistenti, allineare la documentazione e correggere i test. Il contratto backend resta invariato. Contratto iniziale: 2026-11-15; importazione del branch `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
+Ultimo aggiornamento significativo: 2026-11-22, su richiesta dell'utente di collegare React alle API esistenti e pubblicare le illustrazioni delle 30 carte CR01 tramite V10, allineando documentazione e verifiche. Il contratto backend resta invariato. Contratto iniziale: 2026-11-15; importazione del branch `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
 
 ## Obiettivo e decisioni note
 
@@ -154,6 +154,18 @@ Il client usa le due rotte di elenco, senza body nelle richieste GET né scelta 
 Catalogo e collezione hanno sorgenti distinte: il catalogo conserva tutte le arti nella stessa carta e consente di selezionarle nel dettaglio; la collezione conserva una riga per variante e i due contatori persistiti, senza dedurre gli hold F06. Gli elenchi contengono già i dettagli necessari: le rotte di dettaglio rimangono implementate solo nel backend. [Comportamento dell'interfaccia, verifiche e limiti](../FrontEnd/collezione-carte.md).
 
 Nella copia di lavoro di `test-connessione` con base `9e0dd83` e modifiche non committate, `npm test` ha superato 33 test frontend e `npm run build` ha prodotto il bundle. Il client sorgente è stato verificato anche contro Spring locale: catalogo e collezione da 30 righe, filtro combinato, seconda pagina, intervallo invertito `400` e accesso senza Bearer `401`. Dopo la ricostruzione del solo frontend con Compose, gli stessi controlli sono passati attraverso Nginx sulla porta 8082, insieme alla lettura dei cinque equipaggiamenti, alla conservazione dei payload e al controllo del bundle e della salute. Usato l'account dimostrativo già documentato; sessioni di prova chiuse, nessuna scrittura su carte o copie. Nessuna modifica al codice Java o al contratto HTTP; suite backend non ripetuta. Browser non verificato: host di accesso non disponibile.
+
+## Immagini del set CR01
+
+Aggiornamento del **2026-11-22**, su richiesta dell'utente. La migrazione [V10](../../springboot_app/app/src/main/resources/db/migration/V10__set_initial_card_art_urls.sql) assegna alle arti `default` delle 30 carte CR01 gli URL `/img/cards/<nome-carta>.webp`, risolvendo la carta tramite nome esatto e codice editoriale. Sostituisce anche eventuali URL precedenti su queste arti; varianti diverse, carte con nome/codice non corrispondenti e carte esterne al set restano escluse. Conserva ID, `source_image` e riferimenti di collezioni e mazzi; non modifica lo schema o i DTO.
+
+I 30 file in [public/img/cards](../../cinder-rift/public/img/cards/) contengono soltanto l'illustrazione centrale ritagliata dagli originali forniti nella cartella locale `Carte/`, con nomi stampati verificati contro il seed V5. Sono WebP lossless, senza ridimensionamento o rigenerazione dell'illustrazione; cornici, pannelli del titolo, statistiche e testi sono esclusi. Il retro comune non rappresenta una carta e non entra nella migrazione. Gli originali restano esterni al repository; `source_image` ne conserva il nome originale.
+
+Flyway applica V10 al normale avvio del backend su un database a V9, senza reset o modifica delle migrazioni precedenti. Gli URL sono relativi all'origine del frontend: Vite e Nginx servono gli asset da `/img/cards/`. Ricostruire e distribuire anche il frontend con i nuovi file; il backend non serve queste immagini. Per controlli ed esiti correnti vedere la [verifica degli asset](../FrontEnd/collezione-carte.md#immagini-del-set-cr01).
+
+Verifica locale del **2026-11-22**, copia di lavoro di `test-connessione`: il test `RoundConfigurationMigrationDatabaseTests` passa con JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato. Flyway applica V1–V10 su schema vuoto e non applica ulteriori migrazioni al secondo avvio. Comando dalla cartella backend, con le variabili di prova documentate: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`.
+
+Controlli SQL separati, nello stesso database isolato, verificano tutte le 30 associazioni dopo l'installazione e l'aggiornamento di uno schema a V9: sostituzione di un URL precedente, conservazione di ID e metadati delle arti, carte, collezioni, mazzi e relative copie, esclusione di un'arte alternativa e di una carta esterna con lo stesso nome, rispetto del nome esatto e seconda esecuzione senza aggiornamenti. Le fixture di aggiornamento sono annullate con rollback; il database applicativo non è modificato. Suite backend completa, distribuzione Compose e browser non verificati da questa attività.
 
 ## Dati, copie e varianti grafiche
 

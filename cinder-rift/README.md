@@ -33,7 +33,13 @@ Navigazione tramite hash URL, con cronologia e ricaricamento. JWT solo in memori
 
 Il catalogo e la collezione usano il [contratto F04](../docs/BackEnd/collezione-carte.md); i dettagli sono già inclusi nelle risposte degli elenchi. La UI conserva riferimenti e valori nulli del backend, mostra un segnaposto per immagini mancanti e distingue ogni variante posseduta. Richiede 15 righe per pagina e traduce la numerazione della UI in base zero. I filtri categoriali hanno un solo valore; i limiti numerici vuoti sono omessi, senza escludere implicitamente statistiche nulle. [Comportamento completo F04](../docs/FrontEnd/collezione-carte.md).
 
-Il selettore visuale del builder F05 resta da integrare; è disponibile un editor di ID carta/variante per copie note. Il contratto F05 non fornisce nomi, immagini o statistiche delle carte nei dettagli dei mazzi. Composizione e possesso restano verificati dal server.
+Aggiornamento F05 del **2026-11-22**, su richiesta dell'utente: il builder mostra le varianti possedute tramite F04, in formato compatto, filtrate per il gruppo attivo (creature con energia non superiore al numero del round, equipaggiamenti nel gruppo dedicato). Il selettore unico include Round 1–5 ed Equipaggiamenti. Un clic riempie il primo dei cinque slot vuoti; il trascinamento sceglie lo slot. Sono gestiti copie disponibili nell'intero mazzo, rimozione, ricerca, caricamento ed errori. I metadati delle copie salvate provengono da F04; la validazione completa resta al server. Il contratto F05 persiste copie e destinazioni, senza le posizioni locali degli slot. [Comportamento e limiti](../docs/FrontEnd/gestione-mazzi.md).
+
+## Immagini delle carte CR01
+
+Aggiornamento del **2026-11-22**, su richiesta dell'utente: le 30 illustrazioni centrali del set CR01 sono ritagliate dagli originali `Carte/` e salvate come WebP lossless in [public/img/cards](public/img/cards/), con nomi descrittivi distinti. Il retro comune è escluso. I file conservano i pixel del ritaglio originale senza ridimensionamento; non contengono cornici, pannelli dei nomi, statistiche o testi di gioco.
+
+`npm run build` copia i file in `dist/img/cards/`. La migrazione backend V10 collega le arti esistenti agli URL della stessa origine `/img/cards/<nome-carta>.webp`; distribuire insieme backend aggiornato e frontend ricostruito. Il componente F04 legge già `imageUrl` e conserva il segnaposto per immagini assenti o non caricabili. [Associazione e aggiornamento dei dati](../docs/BackEnd/collezione-carte.md#immagini-del-set-cr01).
 
 ## Verifiche
 
@@ -43,6 +49,8 @@ npm run build
 ```
 
 I test verificano servizi e rendering statico con fixture isolate nei test. Non sostituiscono una verifica browser contro Spring/PostgreSQL. Il build aggiorna `dist/`, già versionata. Per servire il build localmente: `npm run preview`.
+
+Verifica F05 del **2026-11-22**: 44 test frontend superati e build riuscita, incluse le verifiche del selettore, degli slot e dei limiti energetici inclusivi dei cinque round. Trascinamento nativo e flusso browser contro il backend non verificati in questa attività.
 
 Verifica F04 del **2026-11-22**: 33 test frontend superati e build riuscita. Client sorgente verificato contro Spring locale: 30 carte nel catalogo e 30 righe nella collezione dimostrativa, filtro combinato, seconda pagina, `400` per intervallo invertito e `401` senza token. Nessuna modifica ai payload o al codice backend. Browser non verificato perché l'host di accesso non è disponibile.
 

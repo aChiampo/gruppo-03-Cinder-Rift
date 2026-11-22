@@ -81,15 +81,6 @@ public class PveBattleService {
 
         PlayerDeck enemyDeck = cardLoaderService.loadDeck(stage.getEnemyDeckPath());
 
-        if (stage.isDeterministic()) {
-            if (challengerDeck != null) {
-                challengerDeck.setDeterministic(true);
-            }
-            if (enemyDeck != null) {
-                enemyDeck.setDeterministic(true);
-            }
-        }
-
         String challengerName = resolveChallengerName(request.getChallenger());
         Player challengerPlayer = new Player(challengerName, challengerDeck);
 
