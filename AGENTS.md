@@ -2,13 +2,17 @@
 
 ## Contesto e fonti
 
-- I backend F01 (autenticazione e profili) e F05 (mazzi) sono implementati
+- I backend F01 (autenticazione e profili), F04 (catalogo e collezione),
+  F05 (mazzi), F07 (orchestrazione PvE) e le scritture catalogo F10 sono implementati
   in `springboot_app/app/` con Java 21,
   Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18.
-  Il frontend React e la relativa integrazione F01 sono ancora da avviare.
+  Il frontend React in `cinder-rift/` usa F01, F04, F05 e F07 reali;
+  il risultato PvE è consultabile in memoria, senza storico persistito.
   I contratti correnti sono in `docs/BackEnd/accesso-utenti.md` e
-  `docs/BackEnd/gestione-mazzi.md`; Flyway applica V1–V6,
-  incluso il set iniziale CR01 e l’utente dimostrativo.
+  `docs/BackEnd/gestione-mazzi.md`, `docs/BackEnd/collezione-carte.md`
+  e `docs/BackEnd/app-battaglie-api.md`; Flyway applica V1–V10,
+  inclusi set CR01, utente dimostrativo, effetti e URL delle illustrazioni.
+  Allineamento ai sorgenti del 2026-11-23; stato e limiti in `docs/README.md`.
 - Leggi [README](README.md), [linee guida](Linee-Guida-e-Regole.md) e
   [indice della documentazione](docs/README.md) prima di intervenire.
 - Per ogni attività consulta le pagine pertinenti di `docs/Digital/`,

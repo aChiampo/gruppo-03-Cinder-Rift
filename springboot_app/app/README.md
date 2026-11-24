@@ -1,16 +1,14 @@
 # Applicazione backend
 
-Importazione parziale del **2026-11-22** da `test-connessione`: API F04/F10, test e mescolamento ordinario del tutorial F07. Migrazioni ferme a V9; V10, modifica al relativo test di migrazione e modifiche frontend escluse. Le verifiche del branch sorgente riportate sotto sono evidenze storiche, non nuove esecuzioni.
+Evidenza storica dell'importazione parziale del **2026-11-22** in `dev`: **220 test applicativi** e **51 test JUnit del motore** superati; a quella data frontend e V10 immagini erano esclusi. [Ambito e limiti](../../docs/BackEnd/collezione-carte.md#verifica-dellimportazione-parziale-del-2026-11-22).
 
-Verifica locale dell'importazione parziale del **2026-11-22**: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` supera **220 test**, con zero fallimenti, errori o casi saltati; JAR prodotto su JDK 21.0.11/PostgreSQL 18.6 isolato. Verificate V1-V9 senza modificare il test di migrazione. [Ambito e limiti](../../docs/BackEnd/collezione-carte.md#verifica-dellimportazione-parziale-del-2026-11-22).
-
-Ultimo aggiornamento significativo il **2026-11-18**, con i limiti F05 di energia per carta e potenza per destinazione approvati dall’utente nelle migrazioni V3/V4. La rinomina degli endpoint F01 e la cancellazione logica degli account risalgono al 2026-11-13. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
+Ultimo aggiornamento significativo il **2026-11-22**, con V10 e le immagini delle 30 carte CR01 richieste dall’utente. Aggiornamento del **2026-11-18**, con i limiti F05 di energia per carta e potenza per destinazione approvati dall’utente nelle migrazioni V3/V4. La rinomina degli endpoint F01 e la cancellazione logica degli account risalgono al 2026-11-13. Il backend include la base del recupero password, il prefisso `/api/auth` e la pulizia programmata delle sessioni. Invio email e interfaccia di recupero sono rinviati. La configurazione iniziale del backend per F01 risale al 2026-11-11. Le dipendenze sono dichiarate nel [POM](pom.xml).
 
 Aggiornamento del **2026-11-21**: importate le API [F04 di catalogo e collezione](../../docs/BackEnd/collezione-carte.md) e [F10 di gestione carte](../../docs/BackEnd/gestione-amministrativa.md), inclusi fixture e test database; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
 
-Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [prototipo React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Autenticazione frontend e API di gioco restano da integrare. [Avvio e configurazione comune](../../guida-avvio.md).
+Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [frontend React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Allineamento ai sorgenti del **2026-11-23**: React usa F01, F04, F05 e PvE F07; storico persistito, PvP, negozio e scambi restano da realizzare. [Avvio e configurazione comune](../../guida-avvio.md).
 
-Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V9. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
+Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V10. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
 
 Questo documento descrive dipendenze, configurazione e stato del backend. F01 è implementato con JWT emessi localmente e verificati da Spring Security; il [contratto F01](../../docs/BackEnd/accesso-utenti.md) riporta comportamento ed evidenze. La sola presenza di una dipendenza non attesta l’implementazione delle altre funzionalità o il funzionamento delle integrazioni.
 
@@ -74,14 +72,14 @@ Il motore di gioco deve restare un componente Java isolato e coperto da test JUn
 
 ## Responsabilità implementative
 
-Le dipendenze forniscono l'infrastruttura. L'applicazione deve comunque implementare:
+Le dipendenze forniscono l'infrastruttura. Rispetto ai sorgenti correnti restano da completare:
 
-- Integrazione FrontEnd di registrazione, accesso, profilo, rinnovo e uscita. Il backend F01 è descritto nel [contratto di accesso](../../docs/BackEnd/accesso-utenti.md).
-- Completamento delle regole V2.1 e del coordinamento con il catalogo: proprietà e validazione iniziale dei mazzi sono già implementate in F05.
+- Interfacce di cancellazione account e recupero password, invio email e cleanup F13/F06. Registrazione, accesso, profilo, rinnovo e uscita React sono già collegati al [backend F01](../../docs/BackEnd/accesso-utenti.md).
+- Bilanciamento definitivo V2.1 e coordinamento con i futuri scrittori del catalogo: validazione F05 e riuso nel PvE sono già implementati.
 - Acquisti e scambi atomici, rispettando il protocollo di lock documentato nella specifica del database.
-- Migrazioni per le funzionalità successive: V1–V4 coprono F01 e la base F05; le tabelle del resto del modello v1.1 e i relativi mapping JSONB restano da implementare.
-- Simulazione delle partite, snapshot immutabili e storico.
-- Configurazione di database, SMTP, JWT ed eventuali servizi Compose.
+- Migrazioni per le funzionalità successive: V1–V10 coprono la base implementata, seed, effetti e URL immagini; le altre tabelle del modello v1.1 restano da implementare.
+- Sfide PvP e storico persistito. Simulazione PvE e snapshot per la singola esecuzione sono già implementati.
+- Configurazione SMTP; database, JWT e servizi Compose richiedono già le impostazioni di avvio descritte sotto.
 
 La selezione di PostgreSQL differisce dal database MySQL indicato nella traccia originale. Il punto è riportato nelle [differenze rispetto alla traccia](../../docs/README.md#differenze-rispetto-alla-traccia).
 
@@ -113,7 +111,7 @@ Le proprietà `app.security.access-token-lifetime` e `app.security.refresh-token
 
 Usare PostgreSQL 18 e configurare la connessione con `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`. Con Compose, la connessione è configurata a partire dalle variabili `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD`. L’utente che esegue Flyway deve poter creare oggetti nello schema e inserire righe in `roles` usando il relativo generatore di ID. DDL Hibernate, inizializzazione SQL Spring e baseline automatica di Flyway sono disabilitati. [Specifica v1.1](../../docs/BackEnd/Database/database-schema-v1.1.md) · [Configurazione applicativa](src/main/resources/application.properties).
 
-**Database nuovo.** Creare un database vuoto e avviare normalmente il backend. Flyway applica V1 per creare le cinque tabelle F01 e V2 per inserire i ruoli `USER` e `ADMIN`. V3 crea le tabelle di catalogo, arti, collezione, configurazioni dei round e mazzi; V4 inserisce tipi, rarità, fazioni e configurazioni dei round. V5 importa le 30 carte del set iniziale CR01 e le relative arti; V6 crea l’utente dimostrativo e la sua collezione, come descritto sotto. Le migrazioni non realizzano tutto il modello v1.1. Con Compose, dalla radice del repository eseguire `docker compose up --build -d spring_app` con un database vuoto. Verificare V1–V9 in `flyway_schema_history` e lo stato di `GET /actuator/health`. [V1](src/main/resources/db/migration/V1__create_f01_schema.sql) · [V2](src/main/resources/db/migration/V2__seed_f01_roles.sql) · [V3](src/main/resources/db/migration/V3__create_f05_cards_and_decks_schema.sql) · [V4](src/main/resources/db/migration/V4__seed_f05_reference_data.sql).
+**Database nuovo.** Creare un database vuoto e avviare normalmente il backend. Flyway applica V1 per creare le cinque tabelle F01 e V2 per inserire i ruoli `USER` e `ADMIN`. V3 crea le tabelle di catalogo, arti, collezione, configurazioni dei round e mazzi; V4 inserisce tipi, rarità, fazioni e configurazioni dei round. V5 importa le 30 carte del set iniziale CR01 e le relative arti; V6 crea l’utente dimostrativo e la sua collezione, come descritto sotto. Le migrazioni non realizzano tutto il modello v1.1. Con Compose, dalla radice del repository eseguire `docker compose up --build -d spring_app` con un database vuoto. Verificare V1–V10 in `flyway_schema_history` e lo stato di `GET /actuator/health`. [V1](src/main/resources/db/migration/V1__create_f01_schema.sql) · [V2](src/main/resources/db/migration/V2__seed_f01_roles.sql) · [V3](src/main/resources/db/migration/V3__create_f05_cards_and_decks_schema.sql) · [V4](src/main/resources/db/migration/V4__seed_f05_reference_data.sql).
 
 **Database esistente senza cronologia Flyway.**
 
@@ -126,25 +124,31 @@ Usare PostgreSQL 18 e configurare la connessione con `SPRING_DATASOURCE_URL`, `S
    flyway -defaultSchema=public -schemas=public -baselineOnMigrate=false -locations=filesystem:src/main/resources/db/migration migrate
    ```
 
-4. Verificare in `flyway_schema_history` la baseline a 1 e l’applicazione di V2–V9. Verificare i dati esistenti, gli ID dei ruoli già presenti e la presenza dei due ruoli richiesti, quindi avviare il backend e verificare `GET /actuator/health`.
+4. Verificare in `flyway_schema_history` la baseline a 1 e l’applicazione di V2–V10. Verificare i dati esistenti, gli ID dei ruoli già presenti e la presenza dei due ruoli richiesti, quindi avviare il backend e verificare `GET /actuator/health`.
 
 ### Set iniziale e utente dimostrativo F01/F05
 
 Aggiornamento del **2026-11-16**, su richiesta dell’utente. [V5](src/main/resources/db/migration/V5__seed_initial_card_set.sql) importa le **30 carte** di `cinder-rift-cards.csv`; i valori importati sono riportati direttamente nella migrazione. Sono importate soltanto le 30 carte originali, da `CR01-001` a `CR01-030`, associate a `CR01` / «Set Dimostrativo». Le 90 carte successive del CSV sono escluse, anche dalla collezione dimostrativa. Celle vuote e valori testuali `NULL` diventano SQL `NULL`.
 
-Gli ID numerici restano generati dal database. `cards.code` conserva l’ID editoriale; V5 aggiunge anche `transfer_and_discard`, `duration` e `flavor_text`. Le nuove colonne sono nullable per conservare la compatibilità con le carte esistenti. «Radioactive monsters» usa la fazione `RADIOACTIVE` già presente; gli equipaggiamenti usano la nuova fazione `NEUTRAL`. Ogni carta riceve un’arte `default`, anche senza immagine. `cards_arts.source_image` conserva il nome originale del file; `url_card_art` resta nullo finché gli asset non sono pubblicati.
+Gli ID numerici restano generati dal database. `cards.code` conserva l’ID editoriale; V5 aggiunge anche `transfer_and_discard`, `duration` e `flavor_text`. Le nuove colonne sono nullable per conservare la compatibilità con le carte esistenti. «Radioactive monsters» usa la fazione `RADIOACTIVE` già presente; gli equipaggiamenti usano la nuova fazione `NEUTRAL`. V5 assegna a ogni carta un’arte `default`; V10 ne converte il codice in `STANDARD` senza cambiare gli identificativi. `cards_arts.source_image` conserva il nome originale del file; `url_card_art` viene valorizzato da V10 con gli asset WebP descritti sotto.
 
 [V6](src/main/resources/db/migration/V6__seed_test_user.sql) crea nickname ed email `test@email.com`, con la password dimostrativa richiesta `Megapassword1` salvata esclusivamente come hash BCrypt. Il ruolo è `USER`; punteggio iniziale 1000, data di registrazione corrente, account attivo e inventario con tutte le valute a zero seguono i default F01. La collezione contiene una copia posseduta e scambiabile di ciascuna delle 30 carte. Mazzi, sessioni e token di recupero sono creati dai rispettivi flussi quando richiesti.
 
 V6 è una migrazione ordinaria applicata automaticamente: crea questo account dimostrativo in ogni database che applica V6. Un’email o un nickname già occupati fanno fallire la migrazione senza sovrascrivere account esistenti. Un nuovo avvio non duplica i dati grazie alla cronologia Flyway.
 
-I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V9 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
+I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V10 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
+
+### Immagini del set iniziale F04
+
+Aggiornamento del **2026-11-24**. [V10](src/main/resources/db/migration/V10__set_initial_card_art_urls.sql) converte `default` in `STANDARD` e collega tutte le 30 arti standard CR01 alle illustrazioni estratte dagli originali `Carte/` e salvate in [public/img/cards](../../cinder-rift/public/img/cards/) come WebP lossless. Le associazioni usano nome esatto e codice editoriale e impostano URL `/img/cards/<nome-carta>.webp`, sostituendo eventuali URL precedenti sulle sole righe corrispondenti. Identificativi, nomi originali in `source_image`, collezioni, mazzi e altre varianti restano invariati. [Contratto e limiti F04](../../docs/BackEnd/collezione-carte.md#immagini-del-set-cr01).
+
+Per un database già a V9 avviare normalmente il backend con Flyway abilitato e verificare V10 in `flyway_schema_history`; non servono reset o riparazioni della cronologia. Distribuire anche il frontend ricostruito: le immagini sono servite dalla sua origine, non dal backend. Con Compose, dalla radice: `docker compose up --detach --build --wait spring_app react`.
 
 ### Effetti delle carte F07
 
 Aggiornamento richiesto dall'utente il **2026-11-20**. [V7](src/main/resources/db/migration/V7__create_card_effects_schema.sql) aggiunge `effects` e `card_effects` con FK, parametri JSONB a oggetto e ordine positivo univoco per carta. [V8](src/main/resources/db/migration/V8__seed_initial_card_effects.sql) inizializza tre comportamenti e sette associazioni ai cinque equipaggiamenti CR01, risolvendo gli ID tramite i codici delle carte e degli effetti. Il modello vale anche per le creature; non vengono aggiunte abilità non presenti nel seed originale.
 
-Per un database già a V6 basta il normale avvio con Flyway abilitato: V7–V9 vengono applicate senza reset, modifiche a V1–V6 o riparazioni della cronologia. Su database vuoto si applicano V1–V9. Le descrizioni delle carte restano testo editoriale; il comportamento eseguibile deriva da codice effetto e parametri. Il backend carica le associazioni ordinate per `execution_order` per costruire gli snapshot del [contratto interno del motore](../../docs/BackEnd/app-battaglie.md#attivazione-e-responsabilità-degli-effetti).
+Per un database già a V6 basta il normale avvio con Flyway abilitato: V7–V10 vengono applicate senza reset, modifiche a V1–V6 o riparazioni della cronologia. Su database vuoto si applicano V1–V10. Le descrizioni delle carte restano testo editoriale; il comportamento eseguibile deriva da codice effetto e parametri. Il backend carica le associazioni ordinate per `execution_order` per costruire gli snapshot del [contratto interno del motore](../../docs/BackEnd/app-battaglie.md#attivazione-e-responsabilità-degli-effetti).
 
 ### Battaglie applicative PvE F07
 
@@ -204,14 +208,14 @@ mvnw.cmd -o "-Dtest=AccountDeletionTests,RegistrationRequestTests,SecurityConfig
 
 Su approvazione dell’utente, V3 definisce `max_card_energy` e `max_round_power`. V4 configura energia individuale uguale a `round_number`, cinque carte per destinazione, potenza 14 per `ROUND1`–`ROUND5` e 10 per `EQUIPMENT`, la cui energia massima è 6. Il server applica `cards.energy_cost <= max_card_energy` per ogni copia e `sum(cards.power) <= max_round_power` per destinazione. La potenza è sommata con `long`; costi mancanti o negativi producono errori bloccanti. I limiti sono inclusivi e configurabili nel database. Il [contratto F05](../../docs/BackEnd/gestione-mazzi.md#implementazione-backend-disponibile) descrive i nuovi codici di errore.
 
-La procedura scelta dall’utente per il prototipo ricrea il database tramite il reset dei volumi Docker Compose. Al successivo avvio Flyway applica V1–V9 su un database vuoto, usando lo schema V3 e i dati iniziali V4 aggiornati. Dalla radice del repository eseguire la procedura seguente.
+La procedura scelta dall’utente per il prototipo ricrea il database tramite il reset dei volumi Docker Compose. Al successivo avvio Flyway applica V1–V10 su un database vuoto, usando lo schema V3 e i dati iniziali V4 aggiornati. Dalla radice del repository eseguire la procedura seguente.
 
 ```sh
 docker compose down --volumes
 docker compose up --build --wait
 ```
 
-Verificare V1–V9 in `flyway_schema_history` e i limiti di `round_configurations`, inclusi energia 6 e potenza 10 per `EQUIPMENT`.
+Verificare V1–V10 in `flyway_schema_history` e i limiti di `round_configurations`, inclusi energia 6 e potenza 10 per `EQUIPMENT`.
 
 ### Cancellazione account F01
 

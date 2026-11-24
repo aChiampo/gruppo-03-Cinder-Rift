@@ -1,7 +1,7 @@
 # Sfide e simulazione
 
 ID: F07 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: endpoint interno del motore e orchestrazione applicativa PvE disponibili nella copia di lavoro; integrazione React e funzionalità complete PvP da realizzare. Responsabile: DA DEFINIRE (Software Developer).
+Implementazione: endpoint interno del motore, orchestrazione applicativa PvE e client React disponibili; funzionalità complete PvP e persistenza da realizzare. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
 Ultimo aggiornamento significativo il 2026-11-20, implementazione applicativa PvE e completamento del validatore F05 su richiesta dell'utente. [Verifiche applicative e del motore](../report/2026-11-20-orchestrazione-pve.md); browser, distribuzione e bilanciamento definitivo restano da verificare.
@@ -17,7 +17,7 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 ## Dati e confini della persistenza v1.1
 
 - Utenti, mazzi, carte, arti e battaglie hanno identificativi `int`; le PK autonome sono auto-incrementali. Le FK copiano gli ID esistenti. `DECKS.is_challengeable`, obbligatorio con default `false`, abilita la selezione nel matchmaking senza attestare la validità del mazzo.
-- Prima dello snapshot il backend dovrà rivalidare proprietà, composizione, possesso della precisa variante e configurazioni di `ROUND_CONFIGURATIONS`, inclusi numero massimo di carte, energia di ogni carta entro `max_card_energy` e potenza aggregata per destinazione entro `max_round_power`. Il [contratto F05](gestione-mazzi.md#implementazione-backend-disponibile) descrive i limiti iniziali, incluso `EQUIPMENT`; l’integrazione della rivalidazione in F07 resta da implementare.
+- La porzione PvE rivalida già proprietà, composizione, possesso della precisa variante e configurazioni di `ROUND_CONFIGURATIONS` prima dello snapshot, inclusi numero massimo di carte, energia individuale e potenza aggregata per destinazione. Il [contratto F05](gestione-mazzi.md#implementazione-backend-disponibile) descrive i limiti iniziali, incluso `EQUIPMENT`; l'estensione al flusso PvP resta da realizzare.
 - `BATTLE_HISTORY` conserva due partecipanti, vincitore nullable, `deck_player1` e `deck_player2` JSONB obbligatori, data e `ranking_reward` nullable. Vincitore nullo significa pareggio; altrimenti il `CHECK` lo limita a uno dei partecipanti. La diversità dei partecipanti è applicativa.
 - `ranking_reward` non nullo è la variazione con segno applicata esclusivamente a `player1_id`, nella transazione del risultato. `player2_id` non riceve variazioni per questa battaglia; nelle amichevoli il valore è `NULL`. Le formule non sono fissate dallo schema.
 - Gli snapshot preservano carte e arti usate dopo modifiche dei mazzi o del catalogo. Lo schema non contiene sfide attive, log dei round o un vincolo contro doppi avvii della stessa partita; contratto JSON e idempotenza restano da definire.
@@ -34,7 +34,7 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 
 La specifica del **2026-11-20**, richiesta dall'utente, è raccolta in [App battaglie](app-battaglie.md). Il riferimento canonico di endpoint, header e payload pubblici è [API delle battaglie per il FrontEnd](app-battaglie-api.md). L'integrazione usa il flusso `frontend → applicazione → motore`, identità dal Bearer, ID delle carte del database, log della PR #36 senza messaggi tutorial, rifiuto degli invii sovrapposti e timeout HTTP di 10 secondi.
 
-La [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36) è integrata in `dev` con `786707a` e introduce l'endpoint interno dimostrativo. Il branch `feature/app_battle_pve_flow` aggiunge l'orchestrazione applicativa, il validatore F05 completo per il prototipo e deadline cooperative nel motore. L'utente ha scelto L2 + T2, transazione breve `REPEATABLE READ`, budget 8/9/10 secondi e rilascio del guard al termine HTTP anche in esito incerto. Contratto interno, comportamento server ed evidenze sono in App battaglie. Integrazione React, persistenza PvE, ricompense, progressione e scoperta degli stage restano da realizzare o **DA DEFINIRE**; questa porzione non completa F07.
+L'endpoint interno introdotto dalla PR #36, l'orchestrazione applicativa, il validatore F05 condiviso e le deadline cooperative sono presenti nei sorgenti correnti. L'utente ha scelto L2 + T2, transazione breve `REPEATABLE READ`, budget 8/9/10 secondi e rilascio del guard al termine HTTP anche in esito incerto. Contratto interno, comportamento server ed evidenze sono in App battaglie. React chiama il backend e mostra round, scambi e replay del risultato in memoria. Persistenza PvE, ricompense, progressione e scoperta degli stage restano da realizzare o **DA DEFINIRE**; questa porzione non completa F07. Allineamento documentale del **2026-11-23**: [verifica e limiti](../report/2026-11-23-allineamento-documentazione.md).
 
 ## Da definire
 

@@ -34,7 +34,7 @@ F01 usa Java 21, Spring Boot 4.1.2, Spring MVC, Bean Validation e Spring Securit
 - Chi si registra ottiene il ruolo `USER` e accede subito. Il ruolo deriva dalla riga `ROLES.code = 'USER'`.
 - Gli account attivi `ADMIN` e `USER` possono accedere e ottenere il proprio profilo. Spring Security assegna esclusivamente l’autorità `ROLE_` corrispondente al ruolo corrente nel database. I privilegi per le altre funzionalità si definiscono nei rispettivi contratti.
 - Gli account con `is_deleted = true` o con un codice di ruolo diverso da `ADMIN` e `USER` ricevono `401` su accesso, rinnovo e richieste protette. L’ID dell’account da solo non conferisce permessi.
-- Non esiste una gerarchia tra ruoli. Il namespace `/api/admin/**` richiede `ADMIN` per ogni metodo HTTP; `USER` riceve `403` e un chiamante privo di autenticazione riceve `401`. Le singole operazioni di backoffice non sono ancora implementate e i relativi permessi di dettaglio restano da definire nel [contratto F10](gestione-amministrativa.md).
+- Non esiste una gerarchia tra ruoli. Il namespace `/api/admin/**` richiede `ADMIN` per ogni metodo HTTP; `USER` riceve `403` e un chiamante privo di autenticazione riceve `401`. Le scritture amministrative delle carte sono implementate; operazioni e limiti correnti sono nel [contratto F10](gestione-amministrativa.md). Gli altri flussi di backoffice restano da realizzare. Allineamento ai sorgenti del **2026-11-23**.
 
 ## Contratto tecnico condiviso
 

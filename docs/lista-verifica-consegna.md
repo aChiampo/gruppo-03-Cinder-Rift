@@ -2,9 +2,11 @@
 
 Le caselle si completano solo con evidenze pertinenti; il superamento della suite backend non completa la consegna integrata. Collegare le evidenze nelle relative issue o pull request.
 
+Revisione del **2026-11-23**: documentazione confrontata con i sorgenti locali, con correzioni per integrazione React F01/F04/F05/F07, migrazioni V1–V10, backoffice carte e visualizzatore PvE della sessione. Superati 54 test frontend e build. [Report corrente e limiti](report/2026-11-23-allineamento-documentazione.md). Le caselle di consegna restano aperte: questa verifica non certifica l'intera applicazione o i materiali finali.
+
 Aggiornamento documentale F13/F01/F06 del **2026-11-18**, su richiesta dell'utente: aggiunti i requisiti concordati per amicizie e cleanup account. Le caselle sotto restano aperte; la propagazione dei contratti non implementa né verifica la funzionalità.
 
-Revisione corrente del **2026-11-13**: **118 test** superati su PostgreSQL **18.6**, migrazioni V1–V4 e JAR verificati. [Report con riferimento e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Le note del 2026-11-12 sotto sono storiche.
+Revisione storica del **2026-11-13**: **118 test** superati su PostgreSQL **18.6**, migrazioni V1–V4 e JAR verificati. [Report con riferimento e limiti](report/2026-11-13-revisione-stato-sviluppo.md). Anche le note del 2026-11-12 sotto sono storiche.
 
 Revisione documentale F01 del **2026-11-12**, su richiesta dell’utente: backend, test e report locali esistono; stato ed evidenze sono nel [contratto di autenticazione](BackEnd/accesso-utenti.md#verifiche-ed-evidenze). Le caselle di consegna restano distinte dai test già presenti: integrazione React e verifica su PostgreSQL 18 tramite Compose non sono completate da questa revisione.
 

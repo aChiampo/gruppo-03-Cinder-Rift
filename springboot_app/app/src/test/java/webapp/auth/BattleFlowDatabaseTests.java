@@ -334,9 +334,10 @@ class BattleFlowDatabaseTests {
                 SELECT c.id, a.id_art, c.code, t.code AS type
                 FROM cards c JOIN cards_arts a ON a.id_card=c.id
                 JOIN card_types t ON t.id=c.id_type
-                WHERE c.code LIKE 'CR01-%' AND a.art_code='default' ORDER BY c.code
+                WHERE c.code LIKE 'CR01-%' AND a.art_code='STANDARD' ORDER BY c.code
                 """).query((row, index) -> new Object[]{row.getInt("id"), row.getInt("id_art"),
                         row.getString("code"), row.getString("type")}).list();
+        assertThat(rows).hasSize(30);
         jdbc.sql("DELETE FROM decks_cards WHERE id_deck=:deck").param("deck", deckId).update();
         int creature = 0;
         for (Object[] row : rows) {

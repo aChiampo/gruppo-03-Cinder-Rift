@@ -7,7 +7,7 @@ Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo 
 Ultimo aggiornamento significativo il **2026-11-18**, propagazione delle decisioni dell'utente sui confini dei permessi F13 e sul futuro cleanup F01/F06. I permessi amministrativi di cancellazione account F01 risalgono al 2026-11-13; la protezione del namespace amministrativo al 2026-11-12. L'allineamento a inventario, mercy e regolamento Versione 2.1 risale al 2026-11-09. Verifiche delle funzionalità di backoffice da eseguire.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
 
-Evidenza storica di `test-connessione` del **2026-11-21**: importate le API CRUD del catalogo da `feature/api-collezione-catalogo`; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
+Aggiornamento del **2026-11-21**: importate le API CRUD del catalogo da `feature/api-collezione-catalogo`; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
 
 ## Obiettivo e decisioni note
 
@@ -68,7 +68,7 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 - [Accesso](accesso-utenti.md)
 - [Offerte di pacchetti](acquisto-pacchetti.md)
 - [Carte e identità](../Digital/lore-identita-carte.md)
-- [Regolamento Versione 2.1](../Digital/regolamento-base.md)
+- [Regolamento Versione 2.0](../Digital/regolamento-base.md)
 - [Catalogo e collezione F04](collezione-carte.md)
 - [Schema dati v1.1](Database/database-schema-v1.1.md)
 - [Mazzi](gestione-mazzi.md)

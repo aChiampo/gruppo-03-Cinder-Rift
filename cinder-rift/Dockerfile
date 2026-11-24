@@ -12,8 +12,7 @@ COPY public/ public/
 
 # These values are public and embedded by Vite; never pass secrets here.
 ARG VITE_API_URL=/api
-ARG VITE_USE_MOCK=false
-RUN VITE_API_URL="$VITE_API_URL" VITE_USE_MOCK="$VITE_USE_MOCK" npm run build
+RUN VITE_API_URL="$VITE_API_URL" npm run build
 
 FROM nginx:stable-alpine
 COPY nginx.conf /etc/nginx/nginx.conf

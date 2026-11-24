@@ -1,44 +1,14 @@
-import { useState } from "react";
-import { Cpu, Bomb, Ghost, Package } from "lucide-react";
+import { useState } from 'react'
+import { Package } from 'lucide-react'
+import { cardArtworks } from '../../models/cards.js'
 
-const icons = { Cpu, Bomb, Ghost };
-
-/**
- * Illustrazione di una carta. `art.x/y/zoom/flip` ritagliano la stessa immagine in modi diversi.
- * Senza `src` (o se l'immagine non si carica) mostra un segnaposto con icona: la pagina non resta mai "rotta".
- */
-export default function CardArt({ card, className = "" }) {
-  const { src, x = 50, y = 50, zoom = 1, flip = false, icon } = card.art;
-  const [failed, setFailed] = useState(false);
-
-  if (!src || failed) {
-    const Icon = icons[icon] ?? Package;
-    return (
-      <span className={`art art-placeholder ${className}`} aria-hidden="true">
-        <Icon strokeWidth={1.2} />
-      </span>
-    );
-  }
-  return (
-    <span className={`art ${className}`} aria-hidden="true">
-      <span
-        className="art-flip"
-        style={flip ? { transform: "scaleX(-1)" } : undefined}
-      >
-        <img
-          src={src}
-          alt=""
-          loading="lazy"
-          draggable="false"
-          onError={() => setFailed(true)}
-          style={{
-            width: `${zoom * 100}%`,
-            height: `${zoom * 100}%`,
-            left: `${-(zoom - 1) * x}%`,
-            top: `${-(zoom - 1) * y}%`,
-          }}
-        />
-      </span>
-    </span>
-  );
+/** Missing or failed artwork uses a placeholder; a different URL can load independently. */
+export default function CardArt({ card, artwork, className = '' }) {
+  const src = (artwork ?? cardArtworks(card)[0])?.imageUrl
+  const [failedSrc, setFailedSrc] = useState(null)
+  if (!src || failedSrc === src) return <span className={`art art-placeholder ${className}`} aria-hidden="true"><Package strokeWidth={1.2} /></span>
+  return <span className={`art ${className}`} aria-hidden="true">
+    <span className="art-flip"><img src={src} alt="" loading="lazy" draggable="false"
+      onError={() => setFailedSrc(src)} style={{ width: '100%', height: '100%', left: 0, top: 0 }} /></span>
+  </span>
 }

@@ -9,6 +9,8 @@ Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-b
 
 ## Obiettivo e decisioni note
 
+Chiarimento del **2026-11-23** dall'ispezione dei sorgenti: F07 restituisce il risultato PvE e React conserva soltanto l'ultimo report in memoria. Non sono presenti migrazione `BATTLE_HISTORY`, repository o API di storico; il [visualizzatore della sessione](../FrontEnd/sfide-simulazione.md#risultato-della-sessione) non implementa la persistenza F08.
+
 - Conservare le sfide giocate e i risultati per entrambi i partecipanti.
 - Rendere consultabile il dettaglio prodotto dalla simulazione.
 

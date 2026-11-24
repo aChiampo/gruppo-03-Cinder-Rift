@@ -39,8 +39,8 @@ export default function CardBase({
           </div>
 
           <div className="card-base__meta">
-            <span>{card?.faction || 'Generica'}</span>
-            <span>{card?.rarity || 'Comune'}</span>
+            <span>{card?.faction || '—'}</span>
+            <span>{card?.rarity || '—'}</span>
           </div>
 
           <div className="card-base__stats">{children}</div>

@@ -1,9 +1,9 @@
 # API delle battaglie PvE per il FrontEnd
 
-ID funzionalità: F07. Ultimo aggiornamento significativo: **2026-11-20**.
-Stato: endpoint applicativo **implementato nella copia di lavoro** del branch `feature/app_battle_pve_flow`; integrazione React non implementata. L'API interna del motore deriva dalla [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), integrata in `dev` con `786707a`; include ID carta numerici, snapshot completi e deadline cooperativa, come descritto in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
+ID funzionalità: F07. Ultimo aggiornamento significativo: **2026-11-23**, allineamento dello stato ai sorgenti su richiesta dell'utente; contratto HTTP invariato.
+Stato: endpoint applicativo e chiamata React implementati nei sorgenti correnti. L'API interna del motore deriva dalla PR #36, integrata con `786707a`; include ID carta numerici, snapshot completi e deadline cooperativa, come descritto in [App battaglie](app-battaglie.md#api-interna-del-motore-implementata).
 
-Questo file è il riferimento canonico di endpoint, header e payload pubblici per l'implementazione FrontEnd. [App battaglie](app-battaglie.md) contiene il comportamento server, il contratto interno del motore e le decisioni infrastrutturali. Il frontend applicherà la presente specifica; l'integrazione browser non è verificata.
+Questo file è il riferimento canonico di endpoint, header e payload pubblici usati dal FrontEnd. [App battaglie](app-battaglie.md) contiene il comportamento server, il contratto interno del motore e le decisioni infrastrutturali. Il [client React](../FrontEnd/sfide-simulazione.md) applica la specifica; l'integrazione browser non è verificata in questa revisione.
 
 ## Endpoint e header
 

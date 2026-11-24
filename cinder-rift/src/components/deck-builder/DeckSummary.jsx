@@ -1,54 +1,16 @@
-export default function DeckSummary({ validation, onVerify }) {
-  const totalCards = (validation?.creatureCount ?? 0) + (validation?.equipmentCount ?? 0)
-  const goalPower = 250
-  const progress = Math.min(100, ((validation?.totalPower ?? 0) / goalPower) * 100)
+import { DESTINATIONS } from '../../services/deckService.js'
 
-  return (
-    <aside className="deck-summary">
-      <div className="deck-summary__header">
-        <h3>Riepilogo mazzo</h3>
-      </div>
+const destinationEntries = (values) => Object.entries(values ?? {})
+  .sort(([left], [right]) => DESTINATIONS.indexOf(left) - DESTINATIONS.indexOf(right))
 
-      <div className="deck-summary__power">
-        <div className="deck-summary__ring">
-          <span>{validation?.totalPower ?? 0}</span>
-        </div>
-      </div>
-
-      <div className="deck-summary__progress">
-        <div className="deck-summary__progress-bar">
-          <span style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
-      <div className="deck-summary__metrics">
-        <div><span>Creature</span><strong>{validation?.creatureCount ?? 0}</strong></div>
-        <div><span>Equipaggiamenti</span><strong>{validation?.equipmentCount ?? 0}</strong></div>
-        <div><span>Totale carte</span><strong>{totalCards}</strong></div>
-      </div>
-
-      <div className="deck-summary__rarity">
-        {Object.entries(validation?.rarityCounts ?? {}).map(([label, count]) => (
-          <div key={label}><span>{label}</span><strong>{count}</strong></div>
-        ))}
-      </div>
-
-      <div className="deck-summary__rounds">
-        {(validation?.roundValidation ?? []).map((round) => (
-          <div key={round.round} className="deck-summary__round">
-            <span>Round {round.round}</span>
-            <b>{round.creatures}/5</b>
-          </div>
-        ))}
-      </div>
-
-      <div className="deck-summary__equipment-rarity">
-        {Object.entries(validation?.equipmentRarityCounts ?? {}).map(([label, count]) => (
-          <div key={label}><span>{label}</span><strong>{count}</strong></div>
-        ))}
-      </div>
-
-      <button type="button" className="deck-summary__verify" onClick={onVerify}>Verifica mazzo</button>
-    </aside>
-  )
+export default function DeckSummary({ validation, dirty }) {
+  const summary = validation?.summary
+  return <section className="deck-summary"><h2>RIEPILOGO MAZZO</h2>
+    <p className="hint">{dirty ? 'Valori dell’ultimo salvataggio. Salva per verificare le modifiche.' : 'Validazione fornita dal server.'}</p>
+    {!summary ? <p className="request-state">Seleziona un mazzo per visualizzare il riepilogo.</p> : <>
+      <div className="deck-summary__metrics">{[['Totale carte', summary.totalCards], ['Creature', summary.creatureCount], ['Equipaggiamenti', summary.equipmentCount]].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value ?? '—'}</strong></div>)}</div>
+      <h3>Copie per destinazione</h3><dl className="summary-list">{destinationEntries(summary.cardCountByDestination).map(([key, count]) => <div key={key}><dt>{key}</dt><dd>{count}</dd></div>)}</dl>
+      <h3>Energia totale per destinazione</h3><dl className="summary-list">{destinationEntries(summary.energyByDestination).map(([key, energy]) => <div key={key}><dt>{key}</dt><dd>{energy}</dd></div>)}</dl>
+    </>}
+  </section>
 }
