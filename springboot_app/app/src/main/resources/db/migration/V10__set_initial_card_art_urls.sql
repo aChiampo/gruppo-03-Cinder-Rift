@@ -1,5 +1,8 @@
 -- Central artwork extracted from the original card fronts in Carte/.
 -- Files are served from the frontend's public/img/cards/ directory.
+-- Normalize the legacy seed code without replacing artwork or ownership rows.
+UPDATE cards_arts SET art_code = 'STANDARD' WHERE art_code = 'default';
+
 WITH artwork_assets(card_code, card_name, filename) AS (
     VALUES
         ('CR01-001', 'Sentinel K-17', 'sentinel-k-17.webp'),
@@ -40,6 +43,6 @@ JOIN cards c
     ON c.name = asset.card_name
    AND c.code = asset.card_code
 WHERE ca.id_card = c.id
-  AND ca.art_code = 'default'
+  AND ca.art_code = 'STANDARD'
   AND ca.url_card_art IS DISTINCT FROM
       ('/img/cards/' || asset.filename);

@@ -39,7 +39,7 @@ La verifica browser non è disponibile in questa sessione perché l'host di acce
 
 ## Immagini del set CR01
 
-Dal **2026-11-22**, su richiesta dell'utente, [public/img/cards](../../cinder-rift/public/img/cards/) contiene 30 illustrazioni WebP lossless estratte dalle carte originali, con un file distinto per carta. La build copia gli asset in `dist/img/cards/`; il componente esistente usa gli URL ricevuti dalle API. Associazione alle arti `default`, aggiornamento dei dati e conservazione degli identificativi seguono il [contratto BackEnd F04](../BackEnd/collezione-carte.md#immagini-del-set-cr01).
+Dal **2026-11-22**, su richiesta dell'utente, [public/img/cards](../../cinder-rift/public/img/cards/) contiene 30 illustrazioni WebP lossless estratte dalle carte originali, con un file distinto per carta. La build copia gli asset in `dist/img/cards/`; il componente esistente usa gli URL ricevuti dalle API. Associazione alle arti `STANDARD`, aggiornamento dei dati e conservazione degli identificativi seguono il [contratto BackEnd F04](../BackEnd/collezione-carte.md#immagini-del-set-cr01).
 
 Per distribuire questa modifica servono il backend con V10 e la ricostruzione del frontend. Nessun URL usa percorsi del filesystem o un host locale fisso. Il segnaposto resta disponibile per immagini assenti o non caricabili e per altre carte senza URL.
 
