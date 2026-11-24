@@ -33,9 +33,9 @@ Aggiornamento implementato del **2026-11-20**: V7/V8 aggiungono gli effetti cond
 - [F07 — Endpoint e payload PvE per il FrontEnd](app-battaglie-api.md) — riferimento canonico del contratto pubblico implementato e usato da React.
 - [F08 — Storico delle partite](storico-partite.md)
 - [F10 — Gestione amministrativa](gestione-amministrativa.md)
-- [F13 — Amicizie; dipendenza di F06](amicizie.md) — contratto API definito il **2026-11-20** su decisioni e delega dell'utente: Bearer JWT, sole relazioni proprie per `USER`/`ADMIN`, elenchi completi dal più recente con nickname, icona e timestamp. Implementazione non iniziata; UI e coordinamento F01/F06 da completare.
+- [F13 — Amicizie; dipendenza di F06](amicizie.md) — backend, migrazione V11 e cleanup amicizie F01 implementati il **2026-11-22** nella copia di lavoro. Frontend e F06 esclusi; [report e verifiche](../report/2026-11-22-implementazione-amicizie.md).
 
-Allineamento documentale F13/F01/F06 del **2026-11-18**: la [cancellazione account](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) richiede una futura pulizia delle amicizie e degli scambi aperti, con storico completato conservato. La [rimozione dell'amicizia e il cleanup degli scambi](scambi-mercato.md#amicizie-e-cancellazione-degli-account) hanno effetti distinti sul TTL e sulla ripubblicazione. La propagazione dei requisiti non modifica il codice F01 corrente né implementa F13/F06.
+Aggiornamento F13/F01 del **2026-11-22**: il cleanup delle amicizie usa la stessa transazione della [cancellazione account](accesso-utenti.md#integrazione-prevista-con-f13-e-f06). Il [cleanup scambi F06](scambi-mercato.md#amicizie-e-cancellazione-degli-account) resta da implementare.
 
 ## Collegamenti
 

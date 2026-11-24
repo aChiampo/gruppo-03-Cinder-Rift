@@ -4,11 +4,11 @@ ID funzionalità: **F13**; dipendenze: **F01** e **F06**.
 Perimetro: richieste e amicizie reciproche; **contratto API definito**, specifica dell'interfaccia in approfondimento.
 Implementazione: **non iniziata**. Responsabile: **DA DEFINIRE (Web Developer)**.
 Fonte: decisioni dell'utente del **2026-11-18** e **2026-11-20**, con delega delle restanti scelte API semplici.
-Ultimo aggiornamento significativo: **2026-11-20**. Verifiche applicative: **non eseguite**.
+Ultimo aggiornamento significativo: **2026-11-24**. Verifiche applicative frontend: **non eseguite**.
 
 ## Obiettivo e decisioni note
 
-- Consentire la consultazione delle proprie amicizie e delle richieste ricevute o inviate, secondo il [contratto canonico F13](../BackEnd/amicizie.md). API, payload, permessi, errori e regole server sono definiti in quella pagina; nessuna rotta è ancora implementata.
+- Consentire la consultazione delle proprie amicizie e delle richieste ricevute o inviate, secondo il [contratto canonico F13](../BackEnd/amicizie.md). API, payload, permessi, errori e regole server sono implementati nel backend; l'integrazione frontend resta da realizzare.
 - L'interfaccia è personale per entrambi i ruoli; `ADMIN` usa le stesse azioni di `USER` e non dispone di una funzione per eliminare relazioni altrui. Disponibilità di accettazione, rifiuto, annullamento e rimozione deriva dai [vincoli di partecipazione](../BackEnd/amicizie.md#attori-autorizzazioni-e-precondizioni), verificati dal server.
 - Gli elenchi F13 sono completi e senza paginazione. L'interfaccia non richiede controlli per caricare pagine successive; il filtro delle richieste ricevute/inviate segue il contratto. Il client mantiene l'ordine server: richieste dalla creazione più recente e amici dall'accettazione più recente. Ogni voce comprende nickname, icona e timestamp; un'icona assente è rappresentata da `null` secondo il contratto, con presentazione grafica da definire.
 - Tutte le chiamate F13 usano il JWT Bearer F01. Il client mostra i messaggi di errore e segue le regole di autenticazione e autorizzazione del contratto, senza affidarsi alla sola visibilità dei comandi nell'interfaccia.
