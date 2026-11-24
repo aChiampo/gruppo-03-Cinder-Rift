@@ -4,7 +4,7 @@ Ultimo aggiornamento significativo il **2026-11-22**, con V10 e le immagini dell
 
 Aggiornamento del **2026-11-21**: importate le API [F04 di catalogo e collezione](../../docs/BackEnd/collezione-carte.md) e [F10 di gestione carte](../../docs/BackEnd/gestione-amministrativa.md), inclusi fixture e test database; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
 
-Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [prototipo React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Autenticazione frontend e API di gioco restano da integrare. [Avvio e configurazione comune](../../guida-avvio.md).
+Il backend utilizza Java 21 e Spring Boot 4.1.2; il database previsto è PostgreSQL 18. Dal **2026-11-16**, Compose include i Dockerfile del [frontend React](../../cinder-rift/README.md#avvio-con-docker-compose) in `cinder-rift/` e del [motore dimostrativo](../game_engine/README.md#avvio-con-docker-compose) in `game_engine/`. Allineamento ai sorgenti del **2026-11-23**: React usa F01, F04, F05 e PvE F07; storico persistito, PvP, negozio e scambi restano da realizzare. [Avvio e configurazione comune](../../guida-avvio.md).
 
 Il codice corrente include anche profili pubblici e aggiornamento profilo F01, CRUD e validazione dei mazzi F05 e le migrazioni V1–V10. [Contratto F05](../../docs/BackEnd/gestione-mazzi.md).
 
@@ -70,14 +70,14 @@ Il motore di gioco deve restare un componente Java isolato e coperto da test JUn
 
 ## Responsabilità implementative
 
-Le dipendenze forniscono l'infrastruttura. L'applicazione deve comunque implementare:
+Le dipendenze forniscono l'infrastruttura. Rispetto ai sorgenti correnti restano da completare:
 
-- Integrazione FrontEnd di registrazione, accesso, profilo, rinnovo e uscita. Il backend F01 è descritto nel [contratto di accesso](../../docs/BackEnd/accesso-utenti.md).
-- Completamento delle regole V2.1 e del coordinamento con il catalogo: proprietà e validazione iniziale dei mazzi sono già implementate in F05.
+- Interfacce di cancellazione account e recupero password, invio email e cleanup F13/F06. Registrazione, accesso, profilo, rinnovo e uscita React sono già collegati al [backend F01](../../docs/BackEnd/accesso-utenti.md).
+- Bilanciamento definitivo V2.1 e coordinamento con i futuri scrittori del catalogo: validazione F05 e riuso nel PvE sono già implementati.
 - Acquisti e scambi atomici, rispettando il protocollo di lock documentato nella specifica del database.
-- Migrazioni per le funzionalità successive: V1–V4 coprono F01 e la base F05; le tabelle del resto del modello v1.1 e i relativi mapping JSONB restano da implementare.
-- Simulazione delle partite, snapshot immutabili e storico.
-- Configurazione di database, SMTP, JWT ed eventuali servizi Compose.
+- Migrazioni per le funzionalità successive: V1–V10 coprono la base implementata, seed, effetti e URL immagini; le altre tabelle del modello v1.1 restano da implementare.
+- Sfide PvP e storico persistito. Simulazione PvE e snapshot per la singola esecuzione sono già implementati.
+- Configurazione SMTP; database, JWT e servizi Compose richiedono già le impostazioni di avvio descritte sotto.
 
 La selezione di PostgreSQL differisce dal database MySQL indicato nella traccia originale. Il punto è riportato nelle [differenze rispetto alla traccia](../../docs/README.md#differenze-rispetto-alla-traccia).
 

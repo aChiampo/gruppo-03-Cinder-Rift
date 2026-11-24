@@ -6,6 +6,8 @@ Aggiornamento del **2026-11-21**: importate le API F04 di [catalogo e collezione
 
 Aggiornamento del **2026-11-22**, su richiesta dell'utente: catalogo e collezione React collegati alle API F04 esistenti, con filtri, ordinamenti, paginazione e varianti; 33 test frontend superati, build riuscita e client sorgente verificato contro Spring locale. [Comportamento e limiti della verifica F04](docs/FrontEnd/collezione-carte.md). Le note precedenti descrivono lo stato alle rispettive date; il frontend corrente usa autenticazione F01 reale, senza modalità mock.
 
+Verifica documentale del **2026-11-23** sulla copia locale `test-connessione`, base `936708e`: allineati indici, guide e schede al codice corrente. React integra F01/F04/F05/F07 e include il risultato PvE con round, scambi e replay locale; il report resta in memoria, senza storico F08. **54 test frontend e build superati**; backend, database e browser non rieseguiti. [Discrepanze corrette, controlli e limiti](docs/report/2026-11-23-allineamento-documentazione.md).
+
 ## Indice generale
 
 - [Gioco di carte collezionabili digitale](#gioco-di-carte-collezionabili-digitale)
@@ -43,7 +45,7 @@ Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pa
 | Pacchetto | Contenitore di carte con composizione e apertura da definire | Un pacchetto del tipo «Rare» |
 | Carta | Elemento della collezione utilizzabile nei mazzi | Creatura con attacco, difesa e fazione |
 
-Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti non rientrano nel perimetro. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità di carte definitive. Ultimo aggiornamento significativo di F03: **2026-11-04**, su istruzione dell'utente; riferimento canonico: [offerte e acquisto di pacchetti](docs/BackEnd/acquisto-pacchetti.md). Implementazione non iniziata; verifiche applicative non eseguite.
+Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti non rientrano nel perimetro. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità di carte definitive. Ultimo aggiornamento significativo di F03: **2026-11-23**, su istruzione dell'utente: descrizione JSONB con anteprime nel formato `/api/cards` e `pack_price int` nel modello; riferimento canonico: [offerte e acquisto di pacchetti](docs/BackEnd/acquisto-pacchetti.md). Implementazione non iniziata; verifiche applicative non eseguite.
 
 ## Tecnologie
 

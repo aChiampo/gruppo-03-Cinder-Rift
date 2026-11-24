@@ -1,10 +1,10 @@
 # Sfide tra utenti
 
 ID: F07 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: interfaccia e integrazione React non iniziate; contratto applicativo PvE documentato nell'area BackEnd. Responsabile: DA DEFINIRE (Web Developer).
+Implementazione: campagna PvE e visualizzatore del risultato React disponibili; sfide PvP e storico persistito non implementati. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-20, separazione richiesta dall'utente tra comportamento dell'interfaccia e specifica server. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-23**, allineamento richiesto dall'utente al codice corrente. Verifica frontend: 54 test e build superati; browser integrato non verificato in questa revisione.
 
 ## Obiettivo e decisioni note
 
@@ -17,22 +17,28 @@ Ultimo aggiornamento significativo: 2026-11-20, separazione richiesta dall'utent
 - L'interfaccia dovrà distinguere partita, round e scambi di attacco e rappresentare risultati e pareggi secondo le condizioni proposte di [fine round](../Digital/regolamento-base.md#12-conclusione-del-round) e [fine partita](../Digital/regolamento-base.md#13-conclusione-della-partita), dopo la loro conferma.
 - Il risultato autorevole e gli stati tecnici dipendono dal [contratto canonico BackEnd di F07](../BackEnd/sfide-simulazione.md). La porzione PvE è documentata nel riferimento API collegato sotto; il contratto completo PvP resta da definire. La proposta non conferma animazioni, aggiornamenti in tempo reale o canali di comunicazione.
 
-## Integrazione PvE pianificata
+## Integrazione PvE implementata
 
-Per endpoint, header, payload, codici di errore e vincoli temporali usare esclusivamente [API delle battaglie per il FrontEnd](../BackEnd/app-battaglie-api.md). L'endpoint applicativo è implementato nella copia di lavoro del branch backend `feature/app_battle_pve_flow`; l'integrazione React resta da realizzare. Questa pagina descrive soltanto il comportamento del client; orchestrazione, validazione, pulizia del resoconto, lock e recupero sono definiti in [App battaglie](../BackEnd/app-battaglie.md).
+Per endpoint, header, payload, codici di errore e vincoli temporali usare esclusivamente [API delle battaglie per il FrontEnd](../BackEnd/app-battaglie-api.md). `BattleScreen` e `battleService` chiamano l'endpoint applicativo con la sessione F01; questa pagina descrive soltanto il client. Orchestrazione, validazione, pulizia del resoconto, lock e recupero sono definiti in [App battaglie](../BackEnd/app-battaglie.md).
 
-- Consentire la scelta del mazzo e costruire la chiamata secondo il contratto pubblico, usando il client di autenticazione F01.
-- Durante l'invio mostrare lo stato di attesa e disabilitare un nuovo avvio dalla stessa schermata.
-- Presentare l'esito e il log testuale ordinato ricevuti, senza ricostruire round o vincitore analizzando le frasi; non mostrare una sezione di suggerimenti tutorial.
-- Gestire conflitti, validazione ed errori di servizio secondo le risposte documentate, senza duplicare qui regole o payload server.
-- Dopo un errore di trasporto o un esito incerto, informare l'utente senza ripetere automaticamente il POST.
+- La schermata carica i mazzi dell'utente e richiede il codice stage, con `stage_01` come esempio; non esiste ancora una scoperta automatica degli stage.
+- Durante l'invio mostra l'attesa e impedisce un nuovo avvio dalla stessa schermata.
+- Al successo apre il risultato dedicato; non mostra una sezione di suggerimenti tutorial.
+- Conflitti, validazione ed errori di servizio vengono mostrati secondo le risposte documentate; le violazioni `422` restano visibili.
+- Dopo errori di trasporto informa l'utente senza ripetere automaticamente il POST.
 
-Per le dipendenze non ancora definite consultare la [specifica applicativa BackEnd](../BackEnd/app-battaglie.md#decisioni-aperte-e-stato-delle-verifiche). Layout e messaggi dell'interfaccia restano da definire.
+## Risultato della sessione
+
+`BattleResultScreen` usa `outcome` come esito autorevole della partita. `parseBattleReport` interpreta i marcatori riconosciuti del log corrente per mostrare round, creature, equipaggiamenti, statistiche e scambi simultanei; non deduce il vincitore della partita dai nomi. Dati mancanti, ambigui o non riconosciuti restano indisponibili e il log originale è sempre consultabile. Le immagini facoltative F04 non sostituiscono le statistiche del report. Questo adattatore dipende dal formato testuale del motore: non esiste ancora un contratto di eventi strutturati.
+
+La navigazione `#risultato-battaglia?round=1&scambio=2` seleziona un punto del report in memoria. I controlli consentono avanzamento, ritorno, selezione round e replay locale; non effettuano nuove simulazioni. Home e Campagna riaprono l'ultimo risultato, che viene perso al ricaricamento o all'uscita. Senza risultato la pagina invita a tornare alla campagna. Questa vista appartiene a F07 e non implementa lo storico F08.
+
+Verifica del **2026-11-23**: 54 test frontend superati e build riuscita. Coperti parser, log incompleti/ambigui, navigazione, rendering e servizi; test con fixture e HTTP simulato, senza verifica browser o nuova integrazione con Spring. [Evidenze e limiti](../report/2026-11-23-allineamento-documentazione.md).
 
 ## Da definire
 
-- Ricerca degli avversari, schermate, stati delle richieste e presentazione della simulazione.
-- Stati di attesa ed errore e recupero del risultato in accordo con il contratto BackEnd; criteri di accessibilità e verifica della rappresentazione dei risultati.
+- Ricerca degli avversari, invio/accettazione e stati delle sfide PvP.
+- Recupero persistito del risultato, eventi strutturati, scoperta stage e criteri di accessibilità; verifica browser della rappresentazione e del replay.
 
 ## Collegamenti
 

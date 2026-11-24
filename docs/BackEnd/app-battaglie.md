@@ -2,8 +2,8 @@
 
 ID funzionalità: F07; dipendenze F01, F05 e F08.
 Specifica: flusso PvE, strategia **L2 + T2**, transazione di snapshot e budget 8/9/10 secondi confermati dall'utente.
-Implementazione applicativa: disponibile nella copia di lavoro del branch `feature/app_battle_pve_flow`; integrazione React non implementata. Responsabile: **DA DEFINIRE**.
-Ultimo aggiornamento significativo: **2026-11-20**, implementazione richiesta dall'utente: L2 + T2, snapshot `REPEATABLE READ`, budget 8/9/10 secondi, rilascio al termine HTTP, regole F05 condivise e riparazione mirata del seed tramite V9.
+Implementazione applicativa: disponibile nei sorgenti correnti e chiamata da React, con visualizzatore del risultato della sessione. Responsabile: **DA DEFINIRE**.
+Ultimo aggiornamento significativo: **2026-11-23**, allineamento documentale ai sorgenti richiesto dall'utente. L'implementazione L2 + T2, snapshot `REPEATABLE READ`, budget 8/9/10 secondi, regole F05 condivise e riparazione del seed V9 risale al 2026-11-20.
 Fonti: decisioni dell'utente nella conversazione del 2026-11-19/20; [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), revisione `7018b4f2a1f0e1bb33d5d0afc586e4170079451d`.
 Verifica applicativa: test locali di orchestrazione con PostgreSQL e doppio HTTP del motore superati; verifiche finali della porzione corrente riportate sotto, distinte dalle evidenze precedenti.
 
@@ -13,7 +13,7 @@ Descrivere l'orchestrazione di una battaglia PvE nel flusso `frontend → spring
 
 Questa pagina approfondisce la porzione applicativa di [F07 — Sfide e simulazione](sfide-simulazione.md). Il documento [API delle battaglie per il FrontEnd](app-battaglie-api.md) è l'unico riferimento canonico di endpoint, header, payload e risposte HTTP di questa porzione. Qui sono definiti flusso server, concorrenza, dipendenze e decisioni aperte, senza duplicare i payload.
 
-La PR #36 è integrata in `dev` con il commit `786707a` ed è presente in questo branch tramite il merge `ec6a5dc`. Il branch corrente aggiunge l'orchestrazione in `springboot_app/app`, i controlli cooperativi di deadline nel motore, le regole mancanti del validatore condiviso F05 e la migrazione correttiva V9. L'integrazione React resta da implementare.
+La cronologia locale include la PR #36 con `786707a`, il merge `ec6a5dc` e l'orchestrazione applicativa di `73ad701`. I sorgenti correnti includono orchestrazione in `springboot_app/app`, deadline cooperative nel motore, validatore condiviso F05 e migrazione correttiva V9. React invia il mazzo e mostra il risultato secondo il [comportamento FrontEnd](../FrontEnd/sfide-simulazione.md); non persiste il report.
 
 ## API interna del motore implementata
 
@@ -271,7 +271,7 @@ Per gli scenari di crash e perdita di sessione DB valgono i limiti L2 + T2 accet
 - **IMPLEMENTATA:** consistenza di validazione e snapshot tramite transazione breve applicativa `REPEATABLE READ`; coordinamento del futuro protocollo condiviso F06/F10 ancora da integrare.
 - **CONFERMATO:** autenticazione e autorizzazione degli utenti nell'applicazione; confine di accesso applicazione-motore affidato alla rete Docker, senza ulteriori credenziali interne; binding locale di debug mantenuto.
 - **DA DEFINIRE:** persistenza PvE, ricompense, progressione della campagna e scoperta degli stage.
-- Dipendenze note: adattatore frontend da implementare; persistenza F08 e funzionalità complete PvP escluse dalla porzione corrente.
+- Dipendenze note: client e adattatore visuale React presenti, con dipendenza dal formato testuale del log; persistenza F08 e funzionalità complete PvP escluse dalla porzione corrente.
 
 La revisione della PR dichiara 25 test JUnit superati il 2026-11-19. È un'evidenza riportata dall'autore, non una nuova esecuzione di questa attività né una verifica dell'integrazione applicativa.
 

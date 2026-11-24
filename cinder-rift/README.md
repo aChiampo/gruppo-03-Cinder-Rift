@@ -41,8 +41,8 @@ Aggiornamento del **2026-11-22**, su richiesta dell'utente: pagina dedicata ispi
 
 Dopo una simulazione la pagina si apre automaticamente. Home e Campagna riaprono l'ultimo risultato della sessione; `#risultato-battaglia?round=1&scambio=2` seleziona una posizione nel risultato presente in memoria. Il replay non richiama il POST. Ricaricando la pagina il report non è più disponibile: non è stato introdotto uno storico persistito.
 
-- [Decisioni, file modificati e verifiche](docs/risultato-battaglia-decisioni.md).
-- [Valutazione della complessità del formato di tracciamento proposto](docs/complessita-tracciamento-battaglie.md).
+- [Comportamento del visualizzatore e limiti del log testuale](../docs/FrontEnd/sfide-simulazione.md#risultato-della-sessione).
+- [Verifica documentale e frontend del 2026-11-23](../docs/report/2026-11-23-allineamento-documentazione.md).
 
 Verifica frontend: **54 test superati**, build Vite riuscita. Il browser non è disponibile nell'ambiente: confronto visivo, controlli interattivi e integrazione con Spring non verificati in questa attività. Payload, servizi API e backend invariati.
 
