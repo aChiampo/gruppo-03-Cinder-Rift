@@ -110,7 +110,7 @@ class AccountDeletionDatabaseTests {
         };
         new ResourceDatabasePopulator(new ClassPathResource("db/migration/V1__create_f01_schema.sql"),
                 new ClassPathResource("db/migration/V2__seed_f01_roles.sql"),
-                new ClassPathResource("db/migration/V10__create_friendships.sql")).execute(isolated);
+                new ClassPathResource("db/migration/V11__create_friendships.sql")).execute(isolated);
         jdbc = JdbcClient.create(isolated);
         accounts = spy(new AccountRepository(jdbc));
         context = new AnnotationConfigWebApplicationContext();

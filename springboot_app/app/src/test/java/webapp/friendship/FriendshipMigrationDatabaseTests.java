@@ -13,7 +13,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import static org.assertj.core.api.Assertions.*;
 
-/** Verifies V10 installation, upgrade, constraints and physical-deletion cascades. */
+/** Verifies V11 installation, upgrade, constraints and physical-deletion cascades. */
 @SpringBootTest(properties = {"app.security.session-token-cleanup-cron=-", "app.security.password-reset-token-cleanup-cron=-"})
 class FriendshipMigrationDatabaseTests {
     @Autowired DataSource dataSource;
@@ -43,15 +43,15 @@ class FriendshipMigrationDatabaseTests {
 
     @Test
     void freshInstallationAndRepeatStartup() {
-        assertThat(target("10").migrate().migrationsExecuted).isEqualTo(10);
-        assertThat(target("10").migrate().migrationsExecuted).isZero();
+        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(11);
+        assertThat(target("11").migrate().migrationsExecuted).isZero();
     }
 
     @Test
-    void upgradeFromV9PreservesExistingProfilesAndCards() {
-        target("9").migrate();
+    void upgradeFromV10PreservesExistingProfilesAndCards() {
+        target("10").migrate();
         int people = count("users"), cards = count("cards");
-        assertThat(target("10").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(1);
         assertThat(count("users")).isEqualTo(people);
         assertThat(count("cards")).isEqualTo(cards);
         assertThat(count("friendships")).isZero();
@@ -61,7 +61,7 @@ class FriendshipMigrationDatabaseTests {
     @ValueSource(strings = {"user_a_id = user_b_id", "requested_by = 2147483647", "status = 'removed'",
             "accepted_at = now()", "status = 'accepted'"})
     void rejectsInvalidRows(String assignment) {
-        target("10").migrate();
+        target("11").migrate();
         int a = user(), b = user();
         insert(a, b, a);
         assertThatThrownBy(() -> jdbc.sql("UPDATE friendships SET " + assignment).update())
@@ -70,7 +70,7 @@ class FriendshipMigrationDatabaseTests {
 
     @Test
     void enforcesUniquenessForeignKeysDefaultsAndCascadesOnEitherSide() {
-        target("10").migrate();
+        target("11").migrate();
         int a = user(), b = user(), c = user();
         insert(a, b, b);
         insert(b, c, c);

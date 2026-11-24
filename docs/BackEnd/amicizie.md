@@ -3,9 +3,9 @@
 ID funzionalità: **F13**; dipendenze: **F01** e **F06**.
 Perimetro: richieste e amicizie reciproche; contratto API definito e backend implementato, frontend e F06 da completare.
 Implementazione: **backend F13 e cleanup amicizie F01 disponibili nella copia di lavoro** del branch `feature/f13-friendships-backend`; frontend e F06 esclusi dall'attività su scelta dell'utente. Responsabile: **DA DEFINIRE**.
-Ultimo aggiornamento significativo: **2026-11-22**, implementazione richiesta e scelte confermate dall’utente. Il contratto API risale al **2026-11-20**; ruoli, errori, elenchi completi e requisiti F01/F06 al **2026-11-18**.
-Fonti dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md) e [DBML](Database/db_schema-v1.1.dbml). V10 realizza i vincoli F13 del modello esistente.
-Aggiornamento implementativo: **2026-11-22**, su richiesta dell'utente. Migrazione V10, API e cleanup atomico F01; verifiche e problemi dell'attività nel [report](../report/2026-11-22-implementazione-amicizie.md). Le evidenze precedenti restano storiche.
+Ultimo aggiornamento significativo: **2026-11-24**, migrazione amicizie V11. Il contratto API risale al **2026-11-20**; ruoli, errori, elenchi completi e requisiti F01/F06 al **2026-11-18**.
+Fonti dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md) e [DBML](Database/db_schema-v1.1.dbml). V11 realizza i vincoli F13 del modello esistente.
+Aggiornamento implementativo: **2026-11-24**. Migrazione V11, API e cleanup atomico F01; verifiche e problemi dell'attività nel [report](../report/2026-11-22-implementazione-amicizie.md). Le evidenze precedenti restano storiche.
 
 ## Obiettivo, perimetro e dipendenze
 
