@@ -1,5 +1,5 @@
 {
-  "version": "3.0.0",
+  "version": "4.0.0",
   "darkMode": true,
   "gridEnabling": false,
   "currentViewName": null,
@@ -204,6 +204,12 @@
         "schemaName": "public",
         "x": 2894.7373046875,
         "y": 282
+      },
+      {
+        "name": "ARTWORK_PULL_RATES",
+        "schemaName": "public",
+        "x": 12,
+        "y": 3938
       }
     ],
     "tableGroupCollapseStates": [],
@@ -949,8 +955,26 @@
         "secondSchemaName": "public",
         "secondRelation": "1",
         "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_artwork_pull_rates"
+        ],
+        "firstTableName": "PACKS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "ARTWORK_PULL_RATES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
       }
-    ]
+    ],
+    "elementPositions": [],
+    "groupCollapseStates": [],
+    "linkPaths": []
   },
   "views": {}
 }

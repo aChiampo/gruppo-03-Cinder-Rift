@@ -7,8 +7,14 @@
   Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18.
   Il frontend React e la relativa integrazione F01 sono ancora da avviare.
   I contratti correnti sono in `docs/BackEnd/accesso-utenti.md` e
-  `docs/BackEnd/gestione-mazzi.md`; Flyway applica V1–V6,
-  incluso il set iniziale CR01 e l’utente dimostrativo.
+  `docs/BackEnd/gestione-mazzi.md`; Flyway applica V1–V10,
+  incluso il set iniziale CR01 e l’utente dimostrativo. V10 crea le strutture F03;
+  catalogo e CRUD pacchetti sono implementati, senza seed dei pacchetti.
+  V10 inizializza `artwork_pull_rates` (81/10/7,5/1,5), collegata direttamente
+  da `packs.id_artwork_pull_rates`, e normalizza i quattro `cards_arts.art_code`
+  (`STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`).
+  Showcase e livelli di effetti speciali sono esclusi. Acquisto, apertura e
+  avanzamento mercy restano rinviati; contratto in `docs/BackEnd/acquisto-pacchetti.md`.
 - Leggi [README](README.md), [linee guida](Linee-Guida-e-Regole.md) e
   [indice della documentazione](docs/README.md) prima di intervenire.
 - Per ogni attività consulta le pagine pertinenti di `docs/Digital/`,

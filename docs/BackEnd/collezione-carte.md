@@ -47,7 +47,7 @@ Gli intervalli devono avere limiti non negativi e il minimo non può superare il
 
 ### Risposta catalogo
 
-Ogni elemento contiene `id`, `name`, `faction`, `rarity`, `energyCost`, `attack`, `defense`, `power`, `type`, `expansion` e `artworks`. Un riferimento ha `id`, `code` e `name`; statistiche e riferimenti opzionali possono essere `null`. Ogni elemento di `artworks` contiene `cardArtId`, `artCode` e `imageUrl`, che può essere `null`.
+Ogni elemento contiene `id`, `name`, `faction`, `rarity`, `energyCost`, `attack`, `defense`, `power`, `type`, `expansion` e `artworks`. Un riferimento ha `id`, `code` e `name`; statistiche e riferimenti opzionali possono essere `null`. Ogni elemento di `artworks` contiene `cardArtId`, `artCode` e `imageUrl`, che può essere `null`. Dal 2026-11-24, su decisione dell’utente, `artCode` ammette solo `STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`; il codice storico `default` viene convertito da V10 conservando gli ID e il possesso. Nessuna variante Showcase o livello di effetti speciali è previsto. [Tipi e probabilità F03](acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork).
 
 Esempio illustrativo:
 

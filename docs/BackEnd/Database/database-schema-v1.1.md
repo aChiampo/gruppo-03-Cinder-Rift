@@ -1,6 +1,6 @@
 # Specifica della base di dati — v1.1
 
-**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-20. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
+**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-24. Migrazione V10 F03 e CRUD del catalogo pacchetti implementati su richiesta dell’utente; apertura rinviata e seed dei pacchetti escluso. Tipi di artwork e probabilità confermati: `STANDARD` 81%, `EXTENDED_ART` 10%, `FULL_ART` 7,5%, `ALTERNATE_ART` 1,5%; FK diretta `PACKS.id_artwork_pull_rates` e nessun livello di effetti speciali. Revisione F03 richiesta dall’utente: `PACKS.pack_description` diventa JSONB strutturato con anteprime nel formato del catalogo carte; aggiunto `pack_price int`. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
 
 Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
@@ -16,13 +16,15 @@ Allineamento documentale F13/F01/F06 del **2026-11-18**, su decisioni dell'utent
 
 ### Perimetro SQL implementato
 
+Stato F03 del **2026-11-24**: V10 crea `ARTWORK_PULL_RATES`, `PACKS`, `INVENTORY_PACKS` e `USER_MERCY`, inizializza solo la configurazione artwork approvata e normalizza `CARDS_ARTS.art_code`, senza seed dei pacchetti. Sono disponibili catalogo e CRUD; apertura, acquisto e aggiornamento mercy non sono implementati. [Verifiche F03/artwork: 244 test backend e JAR](../acquisto-pacchetti.md#verifiche-artwork).
+
 Aggiornamento F07 del **2026-11-20**, su decisione dell'utente: V9 corregge soltanto fazioni mancanti delle 25 creature CR01 note e assegna energia 0 ai cinque equipaggiamenti iniziali se nulla, conservando valori non nulli, ID e possesso. Non aggiunge tabelle, colonne o vincoli e non cambia il DBML. L'orchestrazione usa advisory lock di sessione PostgreSQL per utente e una transazione breve `REPEATABLE READ` per validazione/snapshot, conclusa prima della chiamata remota. Non crea `BATTLE_HISTORY` né il guard catalogo comune. [Verifica corrente: 212 test applicativi, 49 del motore e flusso reale fra JAR](../../report/2026-11-20-orchestrazione-pve.md).
 
-Aggiornamento del **2026-11-20**: V7 crea `effects` e `card_effects`; V8 inizializza tre comportamenti e sette associazioni agli equipaggiamenti CR01. Le nuove migrazioni aggiornano normalmente un database a V6 senza modificare V1–V6 o richiedere un reset. Allineati nei diagrammi anche i campi editoriali introdotti da V5 in `cards` e `cards_arts`. Verifica locale corrente: 139 test applicativi e 45 del motore superati con JDK 21.0.11, PostgreSQL 18.6 isolato per le migrazioni e H2 per la campagna; installazione, aggiornamento, vincoli ed effetti verificati, orchestrazione applicativa PvE e browser non verificati.
+Aggiornamento del **2026-11-20**: V7 crea `effects` e `card_effects`; V8 inizializza tre comportamenti e sette associazioni agli equipaggiamenti CR01. Le nuove migrazioni aggiornano normalmente un database a V6 senza modificare V1–V6 o richiedere un reset. Allineati nei diagrammi anche i campi editoriali introdotti da V5 in `cards` e `cards_arts`. Verifica storica locale degli effetti: 139 test applicativi e 45 del motore superati con JDK 21.0.11, PostgreSQL 18.6 isolato per le migrazioni e H2 per la campagna; installazione, aggiornamento, vincoli ed effetti verificati, orchestrazione applicativa PvE e browser non verificati.
 
 Aggiornamento del **2026-11-18** con `max_card_energy` e `max_round_power` nelle configurazioni dei round. V4 configura energia uguale al numero del round, potenza 14 per i cinque gruppi creature e 10 per `EQUIPMENT`, con energia 6. La [procedura scelta dall’utente](../../../springboot_app/app/README.md#aggiornamento-dei-limiti-f05-del-2026-11-18) ricrea il database tramite il reset dei volumi Docker Compose e applica V1–V6 su uno schema vuoto. V5/V6 inizializzano il set CR01 e l’utente dimostrativo.
 
-Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. Pacchetti, mercy, amicizie, scambi, missioni e partite del modello completo non hanno ancora migrazioni in questa applicazione. Le evidenze di quella revisione sono nel [report di verifica](../../report/2026-11-13-revisione-stato-sviluppo.md).
+Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. A quella data pacchetti, mercy, amicizie, scambi, missioni e partite del modello completo non avevano ancora migrazioni in questa applicazione; la successiva V10 F03 è descritta sopra. Le evidenze di quella revisione sono nel [report di verifica](../../report/2026-11-13-revisione-stato-sviluppo.md).
 
 **Differenza da riconciliare.** V3 dichiara `decks_cards.id_deck → decks.id ON DELETE CASCADE`, usata dalla cancellazione dei mazzi F05; il DBML v1.1 e i diagrammi non dichiarano questa cascata. Il comportamento SQL corrente è descritto nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile); il modello completo richiede un successivo allineamento esplicito. Il guard condiviso del catalogo resta da implementare.
 
@@ -162,10 +164,19 @@ erDiagram
         int rift_cores "NOT NULL; default 0"
         int scraps "NOT NULL; default 0"
     }
+    ARTWORK_PULL_RATES {
+        int id PK "NOT NULL; auto-incremento"
+        numeric standard "NOT NULL; default 81.00"
+        numeric extended_art "NOT NULL; default 10.00"
+        numeric full_art "NOT NULL; default 7.50"
+        numeric alternate_art "NOT NULL; default 1.50"
+    }
     PACKS {
         int id PK "NOT NULL; auto-incremento"
+        int id_artwork_pull_rates FK "NOT NULL"
         varchar pack_name "NOT NULL"
-        varchar pack_description "NOT NULL"
+        jsonb pack_description "NOT NULL; oggetto descrittivo con example_pull"
+        int pack_price "NOT NULL; senza default"
         varchar pack_image_url "NULL ammesso"
         jsonb allowed_factions "NOT NULL"
         jsonb allowed_types "NOT NULL"
@@ -326,6 +337,7 @@ erDiagram
     USERS ||..o{ REFRESH_TOKENS : "id_user -> id"
     USERS ||..o| INVENTORY : "id_user -> id"
     INVENTORY ||--o{ INVENTORY_PACKS : "id_inventory -> id"
+    ARTWORK_PULL_RATES ||..o{ PACKS : "id_artwork_pull_rates -> id"
     PACKS ||--o{ INVENTORY_PACKS : "id_pack -> id"
     USERS ||--o{ USER_MERCY : "id_user -> id"
     PACKS ||--o{ USER_MERCY : "id_pack -> id"
@@ -477,7 +489,7 @@ erDiagram
 
 **Catalogo.** `CARDS` conserva nome, descrizione, energia, potenza, attacco, difesa e classificazioni tramite FK nullable a `CARD_TYPES`, `RARITIES`, `FACTIONS` ed `EXPANSIONS`. I metadati di gioco sono nullable nel modello: il backend deve rifiutare una validazione o un'apertura che richieda dati mancanti. I codici di filtro sono `CARD_TYPES.code`, `FACTIONS.code`, `RARITIES.code` ed `EXPANSIONS.code`; solo il primo è anche obbligatorio. La coerenza del catalogo è verificata prima dell'uso. `EXPANSIONS.is_active` è distinto da `is_deleted`.
 
-**Varianti grafiche.** `CARDS_ARTS` ha PK `(id_card, art_code)`, per esempio con codici `STANDARD` o `LV2`. `id_art` è un intero auto-incrementale, obbligatorio e univoco; `url_card_art` è univoco ma nullable. L'unicità composta `(id_card, id_art)` sostiene le FK composte di collezione, mazzi e prenotazioni e impedisce di associare un'arte alla carta sbagliata.
+**Varianti grafiche.** `CARDS_ARTS` ha PK `(id_card, art_code)`, con i soli codici esatti `STANDARD`, `EXTENDED_ART`, `FULL_ART` e `ALTERNATE_ART`, imposti da `cards_arts_art_code_check`. Una carta ha al massimo una variante per tipo; non sono previsti Showcase o effetti speciali sovrapposti. `id_art` è un intero auto-incrementale, obbligatorio e univoco; `url_card_art` è univoco ma nullable. L'unicità composta `(id_card, id_art)` sostiene le FK composte di collezione, mazzi e prenotazioni e impedisce di associare un'arte alla carta sbagliata.
 
 **Effetti delle carte.** `EFFECTS` ha ID intero generato, `code` obbligatorio univoco nel formato `^[A-Z][A-Z0-9_]*$` e descrizione obbligatoria non vuota dopo `trim`. `CARD_EFFECTS` ha PK autonoma generata e FK obbligatorie `card_id → CARDS.id` con cancellazione a cascata ed `effect_id → EFFECTS.id` senza cascata. `parameters` è JSONB obbligatorio con default `{}` e `CHECK` che richiede un oggetto. `execution_order` è positivo e univoco insieme a `card_id`; l'indice su `effect_id` supporta la ricerca delle associazioni. Lo stesso effetto può comparire più volte sulla stessa carta in posizioni diverse. I parametri specifici sono verificati dall'applicazione e dalla classe Java eseguibile, non da vincoli SQL che interpretano la descrizione. Questa struttura sostituisce la precedente proposta di parole chiave, mai migrata nell'applicazione.
 
@@ -592,10 +604,19 @@ erDiagram
         int rift_cores "NOT NULL; default 0"
         int scraps "NOT NULL; default 0"
     }
+    ARTWORK_PULL_RATES {
+        int id PK "NOT NULL; auto-incremento"
+        numeric standard "NOT NULL; default 81.00"
+        numeric extended_art "NOT NULL; default 10.00"
+        numeric full_art "NOT NULL; default 7.50"
+        numeric alternate_art "NOT NULL; default 1.50"
+    }
     PACKS {
         int id PK "NOT NULL; auto-incremento"
+        int id_artwork_pull_rates FK "NOT NULL"
         varchar pack_name "NOT NULL"
-        varchar pack_description "NOT NULL"
+        jsonb pack_description "NOT NULL; oggetto descrittivo con example_pull"
+        int pack_price "NOT NULL; senza default"
         varchar pack_image_url "NULL ammesso"
         jsonb allowed_factions "NOT NULL"
         jsonb allowed_types "NOT NULL"
@@ -618,6 +639,7 @@ erDiagram
     INVENTORY ||--o{ INVENTORY_PACKS : "id_inventory -> id"
     PACKS ||--o{ INVENTORY_PACKS : "id_pack -> id"
     PACKS ||--o{ USER_MERCY : "id_pack -> id"
+    ARTWORK_PULL_RATES ||..o{ PACKS : "id_artwork_pull_rates -> id"
 ```
 
 **Risorse economiche.** Le Scaglie sono la risorsa guadagnata nel mondo di gioco; i Nuclei Rift sono la riserva premium acquistabile; i Rotami sono residui recuperabili dai doppioni. Queste definizioni, confermate il 2026-11-09, distinguono tre concetti e non implicano equivalenza, conversione o trasferibilità fra le risorse. Il recupero dai doppioni non determina da solo la risorsa prodotta dalla cancellazione di una carta dal catalogo.
@@ -626,7 +648,38 @@ erDiagram
 
 **Disponibilità e corrispondenze aperte.** Ogni addebito identifica la risorsa e aggiorna il relativo saldo sotto i guard comuni. I campi `*_token_offer`, `TRADE_TOKEN_RESERVATIONS.token_amount` e `reward_token_quantity` restano nello schema con i nomi e tipi attuali, ma non indicano quale delle tre risorse rappresentino. La tabella degli hold monetari non ha un discriminatore di risorsa: la FK al proprietario non risolve questa corrispondenza. Occorre definire una risorsa unica per il contratto monetario oppure estenderne la rappresentazione per distinguere le risorse; trasferibilità, prezzi, conversioni e risorsa dei premi restano **DA DEFINIRE**. Nessun campo generico è attribuito implicitamente alle Scaglie, ai Nuclei Rift o ai Rotami. Non sono aggiunti un registro dei movimenti o contatori duplicati di riservato.
 
-**Pacchetti.** `PACKS` ha ID auto-incrementale, nome e descrizione obbligatori, immagine facoltativa e JSONB obbligatori `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`, `slot_pulls`. I filtri usano codici dei rispettivi cataloghi, senza FK interne al JSON. Gli slot possono indicare probabilità per rarità o carte fisse identificate da interi; struttura definitiva, probabilità, significato dei filtri vuoti e scelta delle arti restano da definire. Il backend verifica configurazione, codici e risultati prima di aggiornare il possesso.
+**Pacchetti.** `PACKS` ha ID auto-incrementale, nome obbligatorio, `pack_description jsonb` obbligatorio, `pack_price int` obbligatorio senza default e immagine facoltativa. Restano obbligatori i JSONB `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`, `slot_pulls`. I filtri usano codici dei rispettivi cataloghi, senza FK interne al JSON. Gli slot possono indicare probabilità per rarità o carte fisse identificate da interi; struttura definitiva, probabilità per rarità, significato dei filtri vuoti e applicazione degli slot restano da definire. Le probabilità artwork sono nella configurazione separata descritta sotto. Il backend verifica configurazione, codici e risultati prima di aggiornare il possesso.
+
+**Descrizione strutturata del pacchetto.** Decisione dell’utente del **2026-11-23**: il valore di `PACKS.pack_description` è un oggetto JSON, con le seguenti proprietà obbligatorie. `varchar` nello schema proposto corrisponde a una stringa JSON, `int` a un numero intero JSON. I nomi corretti sono `card_number` e `best_pull_rarity`.
+
+| Proprietà JSON | Tipo | Significato |
+| --- | --- | --- |
+| `pack_description` | string | Testo descrittivo del pacchetto, interno alla colonna omonima. |
+| `card_number` | integer | Numero di carte contenute nel pacchetto. |
+| `granted_number` | integer | Quantità di carte garantite della rarità indicata. |
+| `granted_rarity` | string | Codice del catalogo rarità per la garanzia del pacchetto. |
+| `best_pull_rarity` | string | Codice della migliore rarità ottenibile secondo la configurazione del pacchetto. |
+| `example_pull` | object | Mappa `card1`, `card2`, …, `cardN` di carte dimostrative; cinque nell’esempio richiesto, senza fissare a cinque tutti i pacchetti. |
+
+Ogni valore di `example_pull` è un oggetto carta completo. Tutte le proprietà seguenti sono obbligatorie, anche quelle nullable:
+
+| Campo carta | Tipo e nullabilità |
+| --- | --- |
+| `id` | integer a 32 bit, non nullable. |
+| `name` | string oppure null. |
+| `faction`, `rarity`, `type`, `expansion` | object oppure null; ogni oggetto richiede `id` (integer a 32 bit oppure null), `code` (string oppure null) e `name` (string oppure null). |
+| `energyCost`, `attack`, `defense`, `power` | integer a 32 bit oppure null. |
+| `artworks` | array non nullable, anche vuoto; ogni elemento richiede `cardArtId` (integer a 32 bit non nullable), `artCode` (string non nullable: `STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`) e `imageUrl` (string oppure null). |
+
+Si conservano nomi camelCase e tutte le varianti grafiche, senza ridurre la carta a un ID o a un oggetto della collezione. Non sono previste proprietà aggiuntive negli oggetti carta, riferimento e variante. La definizione formale autonoma, con tipi annidati, proprietà obbligatorie e nullabilità espliciti, è lo [schema JSON completo della carta in F03](../acquisto-pacchetti.md#schema-json-completo-di-una-carta); l’[esempio completo del pacchetto](../acquisto-pacchetti.md#esempio-di-descrizione-e-prezzo) ne mostra l’utilizzo.
+
+Questi dati sono un’anteprima descrittiva: non assegnano carte alla collezione e non sostituiscono filtri, `slot_pulls` o progresso mercy. La validazione applicativa deve controllare forma, tipi, riferimenti e coerenza della descrizione con la configurazione di estrazione; JSONB da solo non impone questo contratto e non crea FK annidate. I valori numerici, i codici effettivi e le policy di aggiornamento delle anteprime dopo modifiche al catalogo restano da definire. Non sono aggiunti nuovi `CHECK` SQL per descrizione o prezzo.
+
+La migrazione V10 del branch `feature/f03-packages`, basato su `dev` a V9, crea `ARTWORK_PULL_RATES`, `PACKS`, `INVENTORY_PACKS` e `USER_MERCY` con i vincoli descritti, senza inserire dati di pacchetti. Il CRUD è descritto nel [contratto F03](../acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api); apertura e progressione mercy non sono implementate. Non è stata eseguita una conversione di dati esistenti; un’eventuale descrizione testuale preesistente richiede la costruzione dell’oggetto completo e la valorizzazione del prezzo, non un semplice cast a JSONB.
+
+**Probabilità artwork.** Decisione dell’utente del **2026-11-24**: `ARTWORK_PULL_RATES` ha ID intero generato e quattro colonne `numeric(5,2)` obbligatorie: `standard` 81,00, `extended_art` 10,00, `full_art` 7,50 e `alternate_art` 1,50. Sono percentuali, non frazioni; ogni valore è fra 0 e 100 e la somma deve essere 100 tramite i due `CHECK` SQL. V10 inizializza una sola configurazione con questi valori. `PACKS.id_artwork_pull_rates` è una FK obbligatoria senza default verso questa tabella; una configurazione può essere riutilizzata da più pacchetti, senza tabella di relazione. La FK impedisce di eliminare una configurazione referenziata. Il CRUD configura soltanto l’ID; non espone scritture delle probabilità. Le configurazioni sono gestite a livello database. Le percentuali valgono per una singola estrazione del tipo di artwork; numero e posizione degli slot, interazione con i filtri e comportamento se manca una variante restano da definire prima dell’apertura. Non sono probabilità della rarità di gioco.
+
+V10 converte gli alias legacy `default` → `STANDARD`, `EXTENDED` → `EXTENDED_ART`, `FULL` → `FULL_ART`, `ALTERNATE` → `ALTERNATE_ART`, conservando `id_art`, URL, sorgenti e riferimenti di collezione/mazzi. Codici diversi o collisioni con un tipo già presente devono essere riconciliati esplicitamente prima della migrazione: non si eliminano varianti per far passare il vincolo.
 
 **Soglia mercy.** `PACKS.mercy_threshold` è un intero nullable senza default. `NULL` disabilita il sistema per quel pacchetto; un valore non nullo deve essere positivo tramite `packs_mercy_threshold_check`. Il valore indica quante aperture del pacchetto corrispondente possono trascorrere prima di una pesca garantita. `10` è un esempio di configurazione, non un default aggiunto allo schema.
 
@@ -642,7 +695,7 @@ Il progresso non riferisce la riga volatile di `INVENTORY_PACKS`: consumare l'ul
 
 **Atomicità e configurazione.** Dopo aver acquisito i guard comuni, il backend rilegge configurazione e possesso, inizializza il progresso se necessario e genera la composizione con l'eventuale garanzia. Consumo di `INVENTORY_PACKS`, decremento/reset di `USER_MERCY` e accredito delle carte in `COLLECTIONS` condividono un solo commit. Un errore ripristina tutti gli effetti, anche una nuova riga mercy. Due aperture concorrenti dello stesso utente sono serializzate dal guard utente. La deduplicazione di una richiesta di apertura dopo un commit incerto richiede una chiave o un registro ancora da definire: la PK del progresso non identifica la richiesta. Modifiche di soglia o rarità e riattivazione dopo `NULL` devono riconciliare i progressi esistenti secondo una policy ancora da definire; non si azzerano silenziosamente a ogni apertura.
 
-**Offerte acquistabili.** Ogni offerta del negozio contiene esattamente una unità di un pacchetto. Non è modellata una colonna prezzo o una tabella delle offerte: fonte del prezzo e collegamento offerta/pacchetto restano da definire. Lo schema non supporta implicitamente offerte composte da più pacchetti.
+**Offerte acquistabili.** Ogni offerta del negozio contiene esattamente una unità di un pacchetto. Il prezzo del singolo pacchetto è conservato in `PACKS.pack_price`, intero obbligatorio senza default; importi approvati e risorsa richiesta restano da definire. Non è modellata una tabella delle offerte: il collegamento offerta/pacchetto resta da definire. Lo schema non supporta implicitamente offerte composte da più pacchetti.
 
 **Pacchetti posseduti.** `INVENTORY_PACKS` ha PK `(id_inventory, id_pack)`, due FK obbligatorie e `item_quantity` intero obbligatorio senza default. Il `CHECK` impone quantità maggiore di zero. Una coppia assente significa zero dopo una lettura riuscita. Il consumo dell'ultimo pacchetto elimina la riga, senza memorizzare zero. Acquisto e apertura sono operazioni atomiche: l'acquisto, dopo la definizione di prezzo e risorsa ammessa, addebita la disponibilità della risorsa identificata e incrementa i pacchetti; l'apertura decrementa i pacchetti e incrementa `COLLECTIONS` per carta/arte estratta. Errori annullano tutti gli effetti dell'operazione.
 
@@ -870,7 +923,7 @@ L'unicità composta aggiuntiva di `CARDS_ARTS.(id_card, id_art)` sostiene le FK 
 - **Contratti JSON.** JSONB valida la sintassi JSON; non impone forma, chiavi, quantità, unicità interna o riferimenti ai cataloghi. Filtri, slot, fotografie e dati storici definitivi restano da completare.
 - **Mazzi e gioco.** Definire valori iniziali delle configurazioni, minimi e limiti di gioco aggiuntivi, regole di `EQUIPMENT`, riutilizzo delle copie in più mazzi, utilizzo delle copie prenotate e riparazione dopo trasferimenti. Un flag di matchmaking non certifica la validità.
 - **Risorse economiche.** `cobalt_shards`, `rift_cores` e `scraps` sono saldi distinti `int` con default `0`. Definire risorse ammesse nei prezzi, trasferibilità, conversioni e corrispondenza dei campi monetari di offerte, hold e ricompense; gli hold attuali non distinguono la risorsa. Condizioni e quantità di recupero dei Rotami dai doppioni restano aperte.
-- **Negozio.** Definire fonte del prezzo, risorsa richiesta, offerta acquistabile e collegamento al pacchetto, mantenendo una sola unità per offerta; precisare probabilità, filtri vuoti e scelta delle arti.
+- **Negozio.** Il prezzo è conservato in `PACKS.pack_price`; definire importi, limiti, risorsa richiesta, offerta acquistabile e collegamento al pacchetto, mantenendo una sola unità per offerta; precisare probabilità per rarità, filtri vuoti e applicazione agli slot delle probabilità artwork già confermate e aggiornamento delle anteprime descrittive rispetto al catalogo.
 - **Mercy.** La progressione avviene sulle aperture del pacchetto corrispondente e si resetta a ogni pesca della rarità richiesta o superiore. Definire la policy iniziale di `mercy_rarity`, l'ordinamento completo delle rarità, lo slot usato per la garanzia, la deduplicazione delle aperture e la riconciliazione dei progressi quando soglia, rarità o abilitazione cambiano. Non è modellato un registro delle singole richieste di apertura.
 - **Missioni.** Definire eventi di avanzamento, configurazione e pacchetto premio, modifiche dei requisiti nel periodo, effetti della cancellazione logica e orari di reset UTC con coordinamento delle riscossioni.
 - **Autenticazione e conservazione.** Il contratto F01 definisce algoritmi e cicli dei token di sessione e recupero, account ammessi e pulizie senza conservazione; invio email e frontend del recupero restano da implementare. F13 conferma i permessi identici di `USER` e `ADMIN` sulle proprie relazioni, la pulizia applicativa delle amicizie al soft delete e il coordinamento con F06 per scambi aperti e storico completato conservato. Definire transazione, concorrenza e recupero del cleanup F01/F06/F13, visibilità dello storico con account eliminato, matrice dei permessi delle altre funzionalità e conservazione/anonimizzazione degli altri dati. Le FK possono impedire cancellazioni fisiche; solo amicizie e hold hanno le cascate dichiarate nel modello completo.

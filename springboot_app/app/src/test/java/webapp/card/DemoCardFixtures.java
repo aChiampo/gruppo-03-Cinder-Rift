@@ -29,7 +29,7 @@ final class DemoCardFixtures {
 
         FixtureCard first = cards.getFirst();
         FixtureCard unowned = cards.getLast();
-        int alternateArtId = insertArtwork(jdbc, first.cardId(), "ALTERNATE",
+        int alternateArtId = insertArtwork(jdbc, first.cardId(), "ALTERNATE_ART",
                 "https://example.invalid/demo/cards/" + first.cardId() + "-alternate.svg");
         insertCollection(jdbc, ownerId, first.cardId(), first.artworkId(), 2, 1);
         insertCollection(jdbc, ownerId, first.cardId(), alternateArtId, 1, 0);

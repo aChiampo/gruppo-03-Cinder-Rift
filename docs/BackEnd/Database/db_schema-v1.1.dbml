@@ -204,10 +204,27 @@ Table INVENTORY {
   Note: 'cobalt_shards stores Scaglie earned in the game world; rift_cores stores purchasable premium Nuclei Rift; scraps stores Rotami recoverable from duplicates. These are distinct required integer balances with default zero. Non-negative balances and integer bounds are validated by the backend. Legacy token offer, reservation and reward fields do not identify which resource they represent; that mapping is DA DEFINIRE. No cached reserved balance or movement registry is modeled. All resource writers follow the common locking protocol documented in database-schema-v1.1.md.'
 }
 
+Table ARTWORK_PULL_RATES {
+  id int [pk, not null, increment]
+  standard numeric(5,2) [not null, default: 81.00]
+  extended_art numeric(5,2) [not null, default: 10.00]
+  full_art numeric(5,2) [not null, default: 7.50]
+  alternate_art numeric(5,2) [not null, default: 1.50]
+
+  checks {
+    `standard BETWEEN 0 AND 100 AND extended_art BETWEEN 0 AND 100 AND full_art BETWEEN 0 AND 100 AND alternate_art BETWEEN 0 AND 100` [name: 'artwork_pull_rates_range_check']
+    `standard + extended_art + full_art + alternate_art = 100` [name: 'artwork_pull_rates_total_check']
+  }
+
+  Note: 'Approved on 2026-11-24: percentages per artwork roll, total 100. One configuration is seeded by V10. Packs reference one configuration directly; several packs may reuse it. No junction table, Showcase category or special-effects layer. Opening, slot application and missing-variant policy remain unimplemented.'
+}
+
 Table PACKS {
   id int [pk, not null, increment]
+  id_artwork_pull_rates int [not null]
   pack_name varchar [not null]
-  pack_description varchar [not null]
+  pack_description jsonb [not null, note: 'Required object: pack_description string, card_number integer, granted_number integer, granted_rarity string, best_pull_rarity string, example_pull object keyed by card1...cardN. Each card requires id (int32), name (string or null), faction/rarity/type/expansion (object or null; required id: int32 or null, code: string or null, name: string or null), energyCost/attack/defense/power (int32 or null), artworks (non-null array; each object requires cardArtId: int32, artCode: string, imageUrl: string or null). No additional card/reference/artwork properties. Complete JSON Schema: F03, Schema JSON completo di una carta. Application validation; no nested foreign keys.']
+  pack_price int [not null, note: 'Price for one pack; no SQL default. The payment resource and approved amounts remain DA DEFINIRE.']
   pack_image_url varchar
   allowed_factions jsonb [not null]
   allowed_types jsonb [not null]
@@ -220,7 +237,7 @@ Table PACKS {
     `mercy_threshold IS NULL OR mercy_threshold > 0` [name: 'packs_mercy_threshold_check']
   }
 
-  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. Source: user decision on 2026-11-04. price storage and the offer-to-pack mapping are DA DEFINIRE. Filters use FACTIONS.code, CARD_TYPES.code, EXPANSIONS.code and RARITIES.code. Slot probabilities may include common, rare, epic and legendary outcomes. JSON contracts are DA DEFINIRE.'
+  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. Source: user decisions on 2026-11-04 and 2026-11-23. pack_price stores the price; the payment resource and offer-to-pack mapping remain DA DEFINIRE. pack_description is structured display metadata; example_pull is a preview, not an opening result or a grant. Filters use FACTIONS.code, CARD_TYPES.code, EXPANSIONS.code and RARITIES.code. Slot probabilities may include common, rare, epic and legendary outcomes. Filter and slot JSON contracts remain DA DEFINIRE.'
 }
 
 Table USER_MERCY {
@@ -422,7 +439,7 @@ Table TRADES_COMPLETED {
 
 Table CARDS_ARTS {
   id_card int [not null]
-  art_code varchar [not null, note: 'Artwork variant code, for example STANDARD or LV2.']
+  art_code varchar [not null, note: 'Artwork type: STANDARD, EXTENDED_ART, FULL_ART or ALTERNATE_ART; case-sensitive.']
   id_art int [not null, unique, increment, note: 'Generated unique artwork identifier.']
   url_card_art varchar [unique]
   source_image varchar
@@ -430,6 +447,10 @@ Table CARDS_ARTS {
   indexes {
     (id_card, art_code) [pk]
     (id_card, id_art) [unique]
+  }
+
+  checks {
+    `art_code IN ('STANDARD', 'EXTENDED_ART', 'FULL_ART', 'ALTERNATE_ART')` [name: 'cards_arts_art_code_check']
   }
 
   Note: 'Artwork variants belong to a logical card. The composite unique key (id_card, id_art) supports collection referential integrity. The URL remains nullable as in the supplied artwork definition.'
@@ -492,6 +513,7 @@ Ref password_reset_tokens_id_user_fk: PASSWORD_RESET_TOKENS.id_user > USERS.id
 Ref refresh_tokens_id_user_fk: REFRESH_TOKENS.id_user > USERS.id
 Ref inventory_id_user_fk: INVENTORY.id_user > USERS.id
 Ref inventory_packs_id_inventory_fk: INVENTORY_PACKS.id_inventory > INVENTORY.id
+Ref packs_id_artwork_pull_rates_fk: PACKS.id_artwork_pull_rates > ARTWORK_PULL_RATES.id
 Ref inventory_packs_id_pack_fk: INVENTORY_PACKS.id_pack > PACKS.id
 Ref user_mercy_id_user_fk: USER_MERCY.id_user > USERS.id
 Ref user_mercy_id_pack_fk: USER_MERCY.id_pack > PACKS.id

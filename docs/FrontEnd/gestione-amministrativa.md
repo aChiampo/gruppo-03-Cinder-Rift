@@ -6,6 +6,8 @@ Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riport
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
 Ultimo aggiornamento significativo: **2026-11-18**, propagazione dei confini F13 e dei requisiti di cleanup account su richiesta dell'utente. L'allineamento al regolamento Versione 2.1 risale al 2026-11-09; la decisione F03 del 2026-11-04 conferma un solo pacchetto per offerta. Verifiche applicative: non eseguite.
 
+Aggiornamento del **2026-11-24**: il backend dispone del [CRUD pacchetti F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), riservato ad `ADMIN`; l’interfaccia resta da implementare. Formato della descrizione, anteprime complete F04, validazioni e rifiuto di modifiche ai pacchetti utilizzati seguono quel contratto. Acquisto, apertura e seed restano esclusi.
+
 ## Obiettivo e decisioni note
 
 - Interfacce di gestione delle carte e dei pacchetti.
@@ -16,7 +18,11 @@ Ultimo aggiornamento significativo: **2026-11-18**, propagazione dei confini F13
 ## Implicazioni della proposta di regolamento
 
 - Le [caratteristiche delle creature](../Digital/regolamento-base.md#5-caratteristiche-delle-creature) e gli [equipaggiamenti](../Digital/regolamento-base.md#7-equipaggiamenti) sono riferimenti di dominio proposti per la futura gestione delle carte.
-- Campi modificabili, validazioni ed esiti dipendono dal [contratto canonico BackEnd di F10](../BackEnd/gestione-amministrativa.md), ancora da definire. La proposta non assegna privilegi ai ruoli e non approva un modulo amministrativo.
+- Campi modificabili, validazioni ed esiti delle API carte e pacchetti sono definiti nei contratti canonici [F10](../BackEnd/gestione-amministrativa.md) e [F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api); altre operazioni restano da definire. La proposta non assegna privilegi ai ruoli e non approva un modulo amministrativo.
+
+## Configurazione artwork
+
+Per i pacchetti selezionare una configurazione esistente tramite la FK diretta definita in [F03](../BackEnd/acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork); non inviare percentuali come proprietà scrivibili del pacchetto. Per le carte, usare soltanto i quattro `artCode` ammessi dal [contratto F10](../BackEnd/gestione-amministrativa.md). Non sono previsti Showcase o livelli di effetti speciali. La UI amministrativa resta da implementare.
 
 ## Da definire
 

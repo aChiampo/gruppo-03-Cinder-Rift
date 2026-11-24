@@ -3,7 +3,7 @@
 ID: D03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Digital Strategist).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: 2026-11-09, per la terminologia delle risorse e per la garanzia mercy sulle aperture confermata dall'utente. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-24**, probabilità artwork confermate dall’utente; terminologia delle risorse e garanzia mercy confermate il 2026-11-09. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 
@@ -25,6 +25,12 @@ Terminologia confermata dall'utente il **2026-11-09**:
 Le tre risorse sono concetti distinti: non vanno considerate sinonimi di un unico saldo. La definizione non stabilisce importi, tassi di conversione, risorse ammesse nei prezzi o trasferibilità fra utenti. Il recupero dai doppioni non definisce automaticamente il trattamento delle carte cancellate dal catalogo.
 
 La [specifica dell'inventario](../BackEnd/Database/database-schema-v1.1.md#inventario-e-pacchetti) associa Scaglie a `cobalt_shards`, Nuclei Rift a `rift_cores` e Rotami a `scraps`: tre saldi interi obbligatori, inizializzati a zero. Canali di acquisto della riserva premium, regole di assegnazione delle Scaglie e condizioni/quantità di recupero dei Rotami restano **DA DEFINIRE**. Prezzi, importi generici degli scambi e quantità generiche dei premi richiedono ancora una corrispondenza esplicita con le risorse.
+
+## Probabilità degli artwork
+
+Distribuzione iniziale approvata dall’utente il **2026-11-24**: Standard Art **81%**, Extended Art **10%**, Full Art **7,5%**, Alternate Art **1,5%**; totale **100%**. Showcase è escluso e il suo precedente 1% passa a Standard. Si tratta di una scelta di bilanciamento del progetto, ispirata ai riferimenti pubblicati sui giochi di carte, non della distribuzione ufficiale di un prodotto esistente. I [tipi editoriali D01](lore-identita-carte.md#tipi-di-artwork) non includono livelli di effetti speciali.
+
+Le percentuali valgono per una singola estrazione del tipo di artwork; non fissano numero o posizione degli slot in un pacchetto e non sono le probabilità delle rarità delle carte. La configurazione è associata direttamente al pacchetto secondo [F03](../BackEnd/acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork). Applicazione agli slot, varianti mancanti e apertura restano da definire e implementare.
 
 ## Garanzia mercy all'apertura
 

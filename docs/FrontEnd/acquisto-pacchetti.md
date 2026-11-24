@@ -3,7 +3,9 @@
 ID: F03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: 2026-11-09, per le risorse economiche e per il sistema mercy sulle aperture confermato nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md). Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-24**, allineamento al catalogo e CRUD backend; risorse economiche e sistema mercy del 2026-11-09 restano descritti nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md). Verifiche applicative: non eseguite.
+
+Aggiornamento backend del **2026-11-24**: disponibili [catalogo e CRUD amministrativo F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), con migrazione senza seed dei pacchetti e configurazione artwork iniziale. Il client deve seguire quel contratto; negozio integrato, acquisto e apertura restano da realizzare. Apertura e assegnazione agli slot rinviate su indicazione dell’utente; tipi e percentuali artwork confermati nel contratto.
 
 ## Obiettivo e decisioni note
 
@@ -12,7 +14,13 @@ Ultimo aggiornamento significativo: 2026-11-09, per le risorse economiche e per 
 - Mostrare prezzo, risorsa richiesta e dati del singolo pacchetto usando le informazioni gestite dal backoffice. I tre saldi dell'inventario sono distinti; risorse ammesse nei prezzi e payload definitivi restano da precisare dal contratto backend.
 - Collegare il risultato dell'apertura alla collezione.
 
+## Presentazione degli artwork
+
+Il client segue i [quattro tipi e la configurazione restituita da F03](../BackEnd/acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork), senza stimare probabilità dagli esempi. Le varianti usano immagini e layout; non progettare né introdurre livelli di effetti speciali, foil o olografici. Showcase è escluso. `test-connessione` resta il riferimento per la futura integrazione frontend; questa modifica backend non importa né modifica quel branch.
+
 ## Progresso mercy per pacchetto
+
+Comportamento previsto per la futura integrazione: apertura e progresso non sono ancora disponibili tramite API.
 
 - Per i pacchetti abilitati, mostrare soglia, aperture residue e rarità minima usando lo stato autorevole restituito dal backend per l'utente e quel pacchetto, secondo [F03](../BackEnd/acquisto-pacchetti.md#mercy-sulle-aperture).
 - Il progresso viene aggiornato dopo un'apertura riuscita. Un esito della rarità richiesta o superiore ripristina la soglia; il backend applica la garanzia quando il conto raggiunge zero e restituisce il nuovo stato dopo il commit.

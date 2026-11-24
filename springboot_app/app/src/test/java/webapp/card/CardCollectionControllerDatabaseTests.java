@@ -18,6 +18,7 @@ import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -203,6 +204,38 @@ class CardCollectionControllerDatabaseTests {
         mvc.perform(get("/api/cards/{cardId}", cardId)
                         .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void adminCanCreateAllFourArtworkTypes() throws Exception {
+        promoteToAdmin(owner);
+        mvc.perform(post("/api/admin/cards")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Four artwork types","artworks":[
+                                  {"artCode":"STANDARD"}, {"artCode":"EXTENDED_ART"},
+                                  {"artCode":"FULL_ART"}, {"artCode":"ALTERNATE_ART"}
+                                ]}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.artworks.length()").value(4));
+    }
+
+    @Test
+    void adminCannotCreateUnsupportedArtworkTypes() throws Exception {
+        promoteToAdmin(owner);
+        for (String code : new String[]{"SHOWCASE", "default", "standard", "ALTERNATE", "LV2", ""}) {
+            mvc.perform(post("/api/admin/cards")
+                            .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"name":"Rejected artwork type","artworks":[{"artCode":"%s"}]}
+                                    """.formatted(code)))
+                    .andExpect(status().isBadRequest());
+        }
+        assertThat(jdbc.sql("SELECT count(*) FROM cards WHERE name = 'Rejected artwork type'")
+                .query(Integer.class).single()).isZero();
     }
 
     @Test

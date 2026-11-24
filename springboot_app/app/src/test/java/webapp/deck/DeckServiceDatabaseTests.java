@@ -42,7 +42,7 @@ class DeckServiceDatabaseTests {
                 .single();
         cardArtId = jdbc.sql("""
                 INSERT INTO cards_arts (id_card, art_code)
-                VALUES (:cardId, 'default')
+                VALUES (:cardId, 'STANDARD')
                 RETURNING id_art
                 """)
                 .param("cardId", cardId)

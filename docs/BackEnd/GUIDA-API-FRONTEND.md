@@ -1,6 +1,6 @@
 # Riepilogo degli endpoint
 
-Ultimo aggiornamento significativo: **2026-11-20**, su richiesta dell'utente di elencare gli endpoint documentati con percorso, funzione e stato, e con definizione del contratto F13 su decisioni e delega dell'utente. Fonte: contratti canonici collegati sotto, codice presente nel branch `docs/pve-battle-contract` e client React.
+Ultimo aggiornamento significativo: **2026-11-24**, allineamento al CRUD pacchetti F03 implementato su `feature/f03-packages`, creato da `dev`. Fonte: contratti canonici, controller del branch corrente e client React; il contratto F13 del 2026-11-20 resta pianificato.
 
 Aggiornamento del **2026-11-22**: importate parzialmente da `test-connessione` le sette rotte F04/F10 aggiunte il 2026-11-21 da `feature/api-collezione-catalogo`; frontend non integrato.
 
@@ -12,7 +12,7 @@ Gli stati usano esattamente queste etichette; BE significa Backend e FE signific
 - **BE Implemented**: rotta presente nel backend, senza corrispondente chiamata nel frontend.
 - **FE Implemented**: chiamata presente nel frontend. Per le quattro rotte qui indicate esiste anche il backend; lo stato non attesta una verifica integrata o il completamento di tutti i flussi della funzionalità.
 
-Riepilogo: **46 voci**, di cui **22 Planned**, **20 BE Implemented** e **4 FE Implemented**. La tabella riepiloga autenticazione, ruoli e codici HTTP; payload, regole complete e dettagli restano nei contratti canonici.
+Riepilogo: **51 voci**, di cui **22 Planned**, **25 BE Implemented** e **4 FE Implemented**. La tabella riepiloga autenticazione, ruoli e codici HTTP; payload, regole complete e dettagli restano nei contratti canonici.
 
 Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; `USER` e `ADMIN` operano soltanto sulle proprie richieste e amicizie. Gli elenchi completi senza paginazione includono nickname, icona e timestamp e sono ordinati dalle richieste o accettazioni più recenti. Percorsi, payload, codici HTTP e formato degli errori sono definiti nel [contratto canonico F13](amicizie.md#contratto-tecnico-condiviso); lo stato `Planned` indica qui solo che nessuna rotta F13 è implementata. Il riepilogo non estende questi codici a F01/F06. La futura [pulizia F13/F06 al soft delete](accesso-utenti.md#integrazione-prevista-con-f13-e-f06) non è compresa nell'implementazione corrente della cancellazione account F01.
 
@@ -64,6 +64,13 @@ Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; 
 | `POST /api/admin/cards` | Crea una carta e le varianti grafiche | BE Implemented | Bearer JWT | `201`, `400`, `401`, `403`, `409` | `ADMIN` | [F10 - Catalogo](gestione-amministrativa.md) |
 | `PUT /api/admin/cards/{cardId}` | Sostituisce una carta non presente in collezioni o mazzi | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409` | `ADMIN` | [F10 - Catalogo](gestione-amministrativa.md) |
 | `DELETE /api/admin/cards/{cardId}` | Cancella logicamente una carta non utilizzata | BE Implemented | Bearer JWT | `204`, `400`, `401`, `403`, `404`, `409` | `ADMIN` | [F10 - Catalogo](gestione-amministrativa.md) |
+| `GET /api/packs?page=0&size=20` | Elenca le definizioni dei pacchetti per ID con paginazione | BE Implemented | Bearer JWT | `200`, `400`, `401` | `USER`, `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api) |
+| `GET /api/packs/{packId}` | Legge una definizione di pacchetto | BE Implemented | Bearer JWT | `200`, `400`, `401`, `404` | `USER`, `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api) |
+| `POST /api/admin/packs` | Crea una definizione senza assegnare pacchetti o carte | BE Implemented | Bearer JWT | `201`, `400`, `401`, `403`, `415` | `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api) |
+| `PUT /api/admin/packs/{packId}` | Sostituisce integralmente un pacchetto senza possesso o progressi mercy | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409`, `415` | `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api) |
+| `DELETE /api/admin/packs/{packId}` | Elimina fisicamente una definizione non utilizzata | BE Implemented | Bearer JWT | `204`, `400`, `401`, `403`, `404`, `409` | `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api) |
+
+I pacchetti F03 richiedono `id_artwork_pull_rates` e restituiscono le quattro probabilità in sola lettura; `artCode` accetta soltanto i tipi canonici. Campi, valori e compatibilità sono nel [contratto artwork F03](acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork). Nessun livello di effetti speciali è previsto.
 
 ## Contratti e codice di riferimento
 
@@ -73,6 +80,8 @@ Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; 
 - [F01 — Recupero password](accesso-utenti.md#recupero-password-base-backend)
 - [F01 — Cancellazione account](accesso-utenti.md#cancellazione-account)
 - [F01 — Profili](accesso-utenti.md#profili-utente)
+- [F03 — Catalogo pacchetti e CRUD](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api)
+- [Controller catalogo pacchetti](../../springboot_app/app/src/main/java/webapp/pack/PackController.java) e [amministrazione pacchetti](../../springboot_app/app/src/main/java/webapp/pack/PackManagementController.java).
 - [F05 — API mazzi](gestione-mazzi.md#api-http-implementate)
 - [F07 — Endpoint e payload](app-battaglie-api.md)
 - [F06 — Endpoint proposti](scambi-mercato.md#endpoint-necessari)
@@ -82,8 +91,8 @@ Contratto F13 definito il **2026-11-20**: tutte le rotte richiedono Bearer JWT; 
 
 ## Ambito e verifiche
 
-L'endpoint pubblico PvE è **BE Implemented** nella copia di lavoro del branch `feature/app_battle_pve_flow`; la chiamata frontend resta da implementare. Le API di pacchetti F03, collezione F04, storico F08 e backoffice F10 non hanno ancora percorsi definiti nei rispettivi contratti canonici e non vengono inventate in questo elenco. Il client della collezione contiene un percorso provvisorio in [endpoints.js](../../cinder-rift/src/services/endpoints.js), ma il [contratto F04](collezione-carte.md) lascia le API da definire.
+Il branch corrente contiene le API PvE F07, catalogo/collezione F04, scritture carte F10 e catalogo/CRUD pacchetti F03. Per F03 sono implementate soltanto le cinque rotte elencate: acquisto, accredito, possesso, apertura e avanzamento mercy restano rinviati; non si inventano percorsi per questi flussi o per lo storico F08. La migrazione V10 del branch crea le tre tabelle F03 senza seed dei pacchetti. La chiamata React ai nuovi endpoint F03 non è implementata.
 
 Gli endpoint tecnici documentati separatamente sono [OpenAPI e salute del backend](accesso-utenti.md#guida-autenticazione-header-e-openapi) e [salute del motore](../../springboot_app/game_engine/README.md#avvio-con-docker-compose).
 
-Gli stati derivano dall'ispezione dei contratti, dei controller e delle chiamate React nella copia di lavoro; nessuna build, prova runtime o verifica integrata è stata eseguita per questo aggiornamento documentale. Le evidenze storiche restano nelle pagine collegate.
+Gli stati derivano dai contratti, dai controller e dalle chiamate React del branch corrente. La verifica F03 del **2026-11-24** ha superato **239 test backend**, inclusi 19 nuovi casi F03, e prodotto il JAR su JDK 21.0.11 e PostgreSQL 18.6 isolato; [ambito e limiti](acquisto-pacchetti.md#verifiche-della-prima-implementazione). La presente correzione documentale non riesegue quei test e non attesta integrazione FrontEnd o browser. Le evidenze precedenti conservano date e ambito originari.

@@ -130,7 +130,7 @@ class BattleFlowDatabaseTests {
                 """).query(Integer.class).list();
         for (int index = 0; index < cardIds.size(); index++) {
             int card = cardIds.get(index);
-            int art = jdbc.sql("INSERT INTO cards_arts(id_card, art_code) VALUES (:card, 'default') RETURNING id_art")
+            int art = jdbc.sql("INSERT INTO cards_arts(id_card, art_code) VALUES (:card, 'STANDARD') RETURNING id_art")
                     .param("card", card).query(Integer.class).single();
             jdbc.sql("""
                     INSERT INTO collections(id_user, id_card, id_card_art, owned_replica, tradable_replica)
@@ -334,7 +334,7 @@ class BattleFlowDatabaseTests {
                 SELECT c.id, a.id_art, c.code, t.code AS type
                 FROM cards c JOIN cards_arts a ON a.id_card=c.id
                 JOIN card_types t ON t.id=c.id_type
-                WHERE c.code LIKE 'CR01-%' AND a.art_code='default' ORDER BY c.code
+                WHERE c.code LIKE 'CR01-%' AND a.art_code='STANDARD' ORDER BY c.code
                 """).query((row, index) -> new Object[]{row.getInt("id"), row.getInt("id_art"),
                         row.getString("code"), row.getString("type")}).list();
         jdbc.sql("DELETE FROM decks_cards WHERE id_deck=:deck").param("deck", deckId).update();
