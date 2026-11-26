@@ -10,9 +10,8 @@ import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import webapp.card.CardCatalogRepository;
-import webapp.card.CardPage;
 
-/** Manages definitions only; no package purchase, grant, or opening is performed. */
+/** Manages definitions and reconciles ownership and mercy on administrative changes. */
 @Service
 public class PackService {
     private final PackRepository packs;
@@ -26,10 +25,17 @@ public class PackService {
     }
 
     @Transactional(readOnly = true)
-    public CardPage<PackView> list(int page, int size) {
-        long total = packs.count();
-        return new CardPage<>(packs.findPage(page, size), page, size, total,
-                total == 0 ? 0 : Math.toIntExact((total + size - 1) / size));
+    public List<PackView> list(boolean includeUnavailable) {
+        return packs.findAll(includeUnavailable);
+    }
+
+    @Transactional(readOnly = true)
+    public PackView getVisible(int id, boolean includeUnavailable) {
+        PackView pack = get(id);
+        if (!includeUnavailable && !pack.definition().acquirable()) {
+            throw failure(HttpStatus.NOT_FOUND, "Pack not found");
+        }
+        return pack;
     }
 
     @Transactional(readOnly = true)
@@ -45,23 +51,23 @@ public class PackService {
 
     @Transactional
     public PackView replace(int id, PackWriteRequest request) {
-        lockUnused(id);
+        lock(id);
         validate(request);
         packs.update(id, request);
+        packs.clearMercy(id);
         return get(id);
     }
 
     @Transactional
     public void delete(int id) {
-        lockUnused(id);
+        lock(id);
+        packs.refundAndRemoveOwnership(id);
+        packs.clearMercy(id);
         packs.delete(id);
     }
 
-    private void lockUnused(int id) {
+    private void lock(int id) {
         if (!packs.lock(id)) throw failure(HttpStatus.NOT_FOUND, "Pack not found");
-        // Preserve promised contents and historical mercy until a reconciliation policy exists.
-        if (packs.isInUse(id)) throw failure(HttpStatus.CONFLICT,
-                "Packs with ownership or mercy progress cannot be changed or deleted");
     }
 
     private void validate(PackWriteRequest pack) {
@@ -77,8 +83,14 @@ public class PackService {
         if (pack.description().grantedNumber() > pack.description().cardNumber()) {
             throw failure(HttpStatus.BAD_REQUEST, "granted_number cannot exceed card_number");
         }
-        if (!pack.slotPulls().isObject() && !pack.slotPulls().isArray()) {
-            throw failure(HttpStatus.BAD_REQUEST, "slot_pulls must be a JSON object or array");
+        if (pack.packSlots().size() != pack.description().cardNumber()) {
+            throw failure(HttpStatus.BAD_REQUEST, "pack_slots must contain one type ID per card_number");
+        }
+        // Lock in a stable order; repeated IDs represent distinct slots using the same type.
+        for (int typeId : pack.packSlots().stream().distinct().sorted().toList()) {
+            if (!packs.lockValidSlotPullType(typeId)) {
+                throw failure(HttpStatus.BAD_REQUEST, "Unknown or invalid slot pull type");
+            }
         }
         var preview = pack.description().examplePull();
         if (preview.size() != pack.description().cardNumber()) {

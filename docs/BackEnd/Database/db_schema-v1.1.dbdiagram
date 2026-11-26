@@ -210,6 +210,24 @@
         "schemaName": "public",
         "x": 12,
         "y": 3938
+      },
+      {
+        "name": "SLOT_PULL_TYPE",
+        "schemaName": "public",
+        "x": 337.87996078644403,
+        "y": 4176.640794408726
+      },
+      {
+        "name": "TYPE_PULL_RATE",
+        "schemaName": "public",
+        "x": 9.774977075648906,
+        "y": 4160.640794408726
+      },
+      {
+        "name": "PACK_SLOTS",
+        "schemaName": "public",
+        "x": 599.6428405279486,
+        "y": 4181.613267132606
       }
     ],
     "tableGroupCollapseStates": [],
@@ -967,6 +985,66 @@
           "id"
         ],
         "secondTableName": "ARTWORK_PULL_RATES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_pack"
+        ],
+        "firstTableName": "PACK_SLOTS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "PACKS",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_slot_pull_type"
+        ],
+        "firstTableName": "PACK_SLOTS",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "SLOT_PULL_TYPE",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_slot_pull_type"
+        ],
+        "firstTableName": "TYPE_PULL_RATE",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "SLOT_PULL_TYPE",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id_rarity"
+        ],
+        "firstTableName": "TYPE_PULL_RATE",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "RARITIES",
         "secondSchemaName": "public",
         "secondRelation": "1",
         "checkPoints": []

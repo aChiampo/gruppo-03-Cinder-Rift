@@ -1,5 +1,11 @@
 # Applicazione backend
 
+Aggiornamento F03 del **2026-11-26**: catalogo per ruolo senza paginazione, PUT con possesso conservato e pulizia mercy, DELETE con rimborso in `cobalt_shards` al prezzo corrente. **257 test backend superati** e JAR prodotto; [contratto, verifiche e limiti](../../docs/BackEnd/acquisto-pacchetti.md#verifiche-catalogo-e-riconciliazione-del-2026-11-26).
+
+Verifica F03 del **2026-11-25**: **251 test backend superati** e JAR prodotto su JDK 21.0.11/PostgreSQL 18.6 isolato. [Ambito e limiti](../../docs/BackEnd/acquisto-pacchetti.md#verifiche-slot-del-2026-11-25).
+
+Aggiornamento F03 del **2026-11-25**: [V11](src/main/resources/db/migration/V11__normalize_f03_slot_pull_rates.sql) sostituisce gli slot JSON con `pack_slots`, `slot_pull_type` e `type_pull_rate`. Distribuzioni per rarità e artwork usano `decimal(7,4)`; `packs.is_acquirable` parte da false. [Contratto API, vincoli e aggiornamento dei dati legacy](../../docs/BackEnd/acquisto-pacchetti.md#slot-e-probabilità-per-rarità). V1–V10 restano immutate; nessun seed commerciale o dei tipi, acquisto/apertura rinviati.
+
 
 Aggiornamento F03 del **2026-11-24**, branch `feature/f03-packages` da `dev` (`fa95b6c`): V10 crea `artwork_pull_rates`, `packs`, `inventory_packs` e `user_mercy`, inizializza la configurazione artwork 81/10/7,5/1,5 e normalizza `cards_arts.art_code`, senza seed dei pacchetti. Ogni pacchetto richiede `id_artwork_pull_rates`; codici ammessi e contratto sono in [F03](../../docs/BackEnd/acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork). Disponibili [catalogo e CRUD amministrativo](../../docs/BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api); apertura e acquisto rinviati. La V10 immagini del branch `test-connessione` non è inclusa. Verifica dell’allineamento artwork del **2026-11-24**: **244 test** e JAR superati con JDK 21.0.11/PostgreSQL 18.7 isolato; [dettagli e limiti](../../docs/BackEnd/acquisto-pacchetti.md#verifiche-artwork).
 Importazione parziale del **2026-11-22** da `test-connessione`: API F04/F10, test e mescolamento ordinario del tutorial F07. A quella data migrazioni ferme a V9; V10 delle immagini, modifica al relativo test di migrazione e modifiche frontend escluse. Le verifiche del branch sorgente riportate sotto sono evidenze storiche, non nuove esecuzioni.
@@ -140,7 +146,7 @@ Gli ID numerici restano generati dal database. `cards.code` conserva l’ID edit
 
 V6 è una migrazione ordinaria applicata automaticamente: crea questo account dimostrativo in ogni database che applica V6. Un’email o un nickname già occupati fanno fallire la migrazione senza sovrascrivere account esistenti. Un nuovo avvio non duplica i dati grazie alla cronologia Flyway.
 
-I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V10 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
+I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V11 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
 
 ### Effetti delle carte F07
 

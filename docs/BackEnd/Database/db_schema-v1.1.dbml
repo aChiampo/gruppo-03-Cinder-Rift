@@ -206,10 +206,10 @@ Table INVENTORY {
 
 Table ARTWORK_PULL_RATES {
   id int [pk, not null, increment]
-  standard numeric(5,2) [not null, default: 81.00]
-  extended_art numeric(5,2) [not null, default: 10.00]
-  full_art numeric(5,2) [not null, default: 7.50]
-  alternate_art numeric(5,2) [not null, default: 1.50]
+  standard decimal(7,4) [not null, default: 81.0000]
+  extended_art decimal(7,4) [not null, default: 10.0000]
+  full_art decimal(7,4) [not null, default: 7.5000]
+  alternate_art decimal(7,4) [not null, default: 1.5000]
 
   checks {
     `standard BETWEEN 0 AND 100 AND extended_art BETWEEN 0 AND 100 AND full_art BETWEEN 0 AND 100 AND alternate_art BETWEEN 0 AND 100` [name: 'artwork_pull_rates_range_check']
@@ -225,19 +225,56 @@ Table PACKS {
   pack_name varchar [not null]
   pack_description jsonb [not null, note: 'Required object: pack_description string, card_number integer, granted_number integer, granted_rarity string, best_pull_rarity string, example_pull object keyed by card1...cardN. Each card requires id (int32), name (string or null), faction/rarity/type/expansion (object or null; required id: int32 or null, code: string or null, name: string or null), energyCost/attack/defense/power (int32 or null), artworks (non-null array; each object requires cardArtId: int32, artCode: string, imageUrl: string or null). No additional card/reference/artwork properties. Complete JSON Schema: F03, Schema JSON completo di una carta. Application validation; no nested foreign keys.']
   pack_price int [not null, note: 'Price for one pack; no SQL default. The payment resource and approved amounts remain DA DEFINIRE.']
+  is_acquirable boolean [not null, default: false, note: 'Eligibility for new acquisitions and USER catalog visibility; ADMIN sees all packs. Existing ownership is preserved when disabled. Purchase is not implemented.']
   pack_image_url varchar
   allowed_factions jsonb [not null]
   allowed_types jsonb [not null]
   allowed_expansions jsonb [not null]
   allowed_rarities jsonb [not null]
   mercy_threshold int [note: 'NULL disables mercy for this pack. A positive value is the initial countdown copied by the backend into USER_MERCY.mercy_counter; it is not a SQL default on the user row.']
-  slot_pulls jsonb [not null]
 
   checks {
     `mercy_threshold IS NULL OR mercy_threshold > 0` [name: 'packs_mercy_threshold_check']
   }
 
-  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. Source: user decisions on 2026-11-04 and 2026-11-23. pack_price stores the price; the payment resource and offer-to-pack mapping remain DA DEFINIRE. pack_description is structured display metadata; example_pull is a preview, not an opening result or a grant. Filters use FACTIONS.code, CARD_TYPES.code, EXPANSIONS.code and RARITIES.code. Slot probabilities may include common, rare, epic and legendary outcomes. Filter and slot JSON contracts remain DA DEFINIRE.'
+  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. pack_price stores the price; the payment resource and offer-to-pack mapping remain DA DEFINIRE. pack_description is display metadata; example_pull is a preview. Filters use catalog codes. V11 replaces slot_pulls JSON with PACK_SLOTS and adds is_acquirable, default false. API writes require one ordered slot type ID per card_number; repeated types are allowed. Opening and filter interactions remain unimplemented.'
+}
+
+Table SLOT_PULL_TYPE {
+  id int [pk, not null, increment]
+  description varchar [not null]
+
+  Note: 'Reusable rarity distribution. Create the type and its rates in one transaction: deferred SQL triggers require a total of 100.0000 percent, including for new types. Rate writes lock the parent; any PACK_SLOTS reference freezes the distribution. Create a new type for revised odds. No seed or HTTP CRUD for types.'
+}
+
+Table TYPE_PULL_RATE {
+  id_slot_pull_type int [not null]
+  id_rarity int [not null]
+  probability decimal(7,4) [not null]
+
+  indexes {
+    (id_slot_pull_type, id_rarity) [pk]
+    id_rarity
+  }
+  checks {
+    `probability BETWEEN 0 AND 100` [name: 'type_pull_rate_probability_check']
+  }
+  Note: 'One rate per type and catalog rarity; omitted rarities have zero probability. Three integer digits and four decimal places. Aggregate totals are checked by deferred SQL triggers, not a row CHECK. API references require non-deleted rarities.'
+}
+
+Table PACK_SLOTS {
+  id_pack int [not null]
+  slot_position int [not null]
+  id_slot_pull_type int [not null]
+
+  indexes {
+    (id_pack, slot_position) [pk]
+    id_slot_pull_type
+  }
+  checks {
+    `slot_position > 0` [name: 'pack_slots_position_check']
+  }
+  Note: 'One row per ordered slot. API positions are consecutive from 1; repeated type IDs are allowed. Slot count equals pack_description.card_number on API writes. Deleting a pack cascades to its slots, preserving reusable types.'
 }
 
 Table USER_MERCY {
@@ -514,6 +551,10 @@ Ref refresh_tokens_id_user_fk: REFRESH_TOKENS.id_user > USERS.id
 Ref inventory_id_user_fk: INVENTORY.id_user > USERS.id
 Ref inventory_packs_id_inventory_fk: INVENTORY_PACKS.id_inventory > INVENTORY.id
 Ref packs_id_artwork_pull_rates_fk: PACKS.id_artwork_pull_rates > ARTWORK_PULL_RATES.id
+Ref pack_slots_pack_fk: PACK_SLOTS.id_pack > PACKS.id [delete: cascade]
+Ref pack_slots_type_fk: PACK_SLOTS.id_slot_pull_type > SLOT_PULL_TYPE.id
+Ref type_pull_rate_type_fk: TYPE_PULL_RATE.id_slot_pull_type > SLOT_PULL_TYPE.id [delete: cascade]
+Ref type_pull_rate_rarity_fk: TYPE_PULL_RATE.id_rarity > RARITIES.id
 Ref inventory_packs_id_pack_fk: INVENTORY_PACKS.id_pack > PACKS.id
 Ref user_mercy_id_user_fk: USER_MERCY.id_user > USERS.id
 Ref user_mercy_id_pack_fk: USER_MERCY.id_pack > PACKS.id

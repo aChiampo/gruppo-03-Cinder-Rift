@@ -52,11 +52,12 @@ class PackControllerDatabaseTests {
         int cardId = jdbc.sql("SELECT id FROM cards WHERE code = 'CR01-001'").query(Integer.class).single();
         JsonNode preview = json.valueToTree(cards.findById(cardId).orElseThrow());
         int ratesId = jdbc.sql("SELECT id FROM artwork_pull_rates ORDER BY id LIMIT 1").query(Integer.class).single();
+        int slotTypeId = createSlotType("COMMON");
         payload = json.valueToTree(new PackWriteRequest(ratesId, "Package fixture",
                 new PackWriteRequest.Description("Fixture only", 1, 0, "COMMON", "COMMON",
-                        Map.of("card1", preview)), 300, null,
+                        Map.of("card1", preview)), 300, false, null,
                 List.of("SAP"), List.of("CREATURE"), List.of("CR01"), List.of("COMMON"),
-                null, json.createObjectNode()));
+                null, List.of(slotTypeId)));
     }
 
     @Test
@@ -71,9 +72,10 @@ class PackControllerDatabaseTests {
 
     @Test
     void userCanReadButCannotCreateUpdateOrDelete() throws Exception {
+        payload.put("is_acquirable", true);
         int id = createPack();
         mvc.perform(get("/api/packs").header(HttpHeaders.AUTHORIZATION, user.bearer()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].id").value(id));
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(id));
         mvc.perform(get("/api/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, user.bearer()))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.pack_name").value("Package fixture"));
         mvc.perform(post("/api/admin/packs").header(HttpHeaders.AUTHORIZATION, user.bearer())
@@ -98,7 +100,11 @@ class PackControllerDatabaseTests {
                 .andExpect(jsonPath("$.pack_price").value(300))
                 .andExpect(jsonPath("$.allowed_types[0]").value("CREATURE"))
                 .andExpect(jsonPath("$.mercy_threshold").value(10))
-                .andExpect(jsonPath("$.slot_pulls").isMap())
+                .andExpect(jsonPath("$.pack_slots[0]").value(payload.path("pack_slots").get(0).asInt()))
+                .andExpect(jsonPath("$.is_acquirable").value(false))
+                .andExpect(jsonPath("$.slot_pull_types[0].pull_rates[0].rarity_code").value("COMMON"))
+                .andExpect(jsonPath("$.slot_pull_types[0].pull_rates[0].probability").value(100.0))
+                .andExpect(jsonPath("$.slot_pulls").doesNotExist())
                 .andExpect(jsonPath("$.id_artwork_pull_rates").value(payload.path("id_artwork_pull_rates").asInt()))
                 .andExpect(jsonPath("$.artwork_pull_rates.standard").value(81.0))
                 .andExpect(jsonPath("$.artwork_pull_rates.extended_art").value(10.0))
@@ -109,21 +115,27 @@ class PackControllerDatabaseTests {
         assertThat(jdbc.sql("SELECT count(*) FROM user_mercy").query(Integer.class).single()).isZero();
         assertThat(jdbc.sql("SELECT cobalt_shards + rift_cores + scraps FROM inventory WHERE id_user = :id")
                 .param("id", user.id()).query(Integer.class).single()).isZero();
-        assertThat(packs.get(id).definition().slotPulls()).isEqualTo(payload.path("slot_pulls"));
+        assertThat(packs.get(id).definition().packSlots()).containsExactly(payload.path("pack_slots").get(0).asInt());
     }
 
     @Test
-    void paginatesInStableIdOrderAndReturnsEmptyPagePastTheEnd() throws Exception {
-        int first = createPack();
-        int second = createPack();
-        mvc.perform(get("/api/packs").param("size", "1").header(HttpHeaders.AUTHORIZATION, user.bearer()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.totalPages").value(2)).andExpect(jsonPath("$.items[0].id").value(first));
-        mvc.perform(get("/api/packs").param("size", "1").param("page", "1")
-                .header(HttpHeaders.AUTHORIZATION, user.bearer()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].id").value(second));
-        mvc.perform(get("/api/packs").param("page", "2").header(HttpHeaders.AUTHORIZATION, user.bearer()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
+    void listsTheEntireCatalogInIdOrderAndIgnoresObsoletePaginationParameters() throws Exception {
+        mvc.perform(get("/api/packs").header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isOk()).andExpect(content().json("[]"));
+        payload.put("is_acquirable", true);
+        var ids = new java.util.ArrayList<Integer>();
+        for (int index = 0; index < 23; index++) ids.add(createPack());
+        for (Session caller : List.of(user, admin)) {
+            String response = mvc.perform(get("/api/packs").param("size", "1").param("page", "99")
+                    .header(HttpHeaders.AUTHORIZATION, caller.bearer()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
+                    .andReturn().getResponse().getContentAsString();
+            JsonNode result = json.readTree(response);
+            assertThat(result.size()).isEqualTo(ids.size());
+            for (int index = 0; index < ids.size(); index++) {
+                assertThat(result.get(index).path("id").asInt()).isEqualTo(ids.get(index));
+            }
+        }
     }
 
     @Test
@@ -132,17 +144,23 @@ class PackControllerDatabaseTests {
         payload.put("pack_name", "Replaced");
         payload.put("pack_price", 0);
         payload.put("mercy_threshold", 2);
-        payload.set("slot_pulls", json.createArrayNode());
+        int replacementType = createSlotType("RARE");
+        payload.set("pack_slots", json.createArrayNode().add(replacementType));
+        payload.put("is_acquirable", true);
         mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.pack_name").value("Replaced"))
-                .andExpect(jsonPath("$.pack_price").value(0)).andExpect(jsonPath("$.slot_pulls").isArray());
+                .andExpect(jsonPath("$.pack_price").value(0))
+                .andExpect(jsonPath("$.pack_slots[0]").value(replacementType))
+                .andExpect(jsonPath("$.is_acquirable").value(true));
         assertThat(packs.get(id).definition().mercyThreshold()).isEqualTo(2);
         mvc.perform(delete("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
                 .andExpect(status().isNoContent());
         mvc.perform(get("/api/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, user.bearer()))
                 .andExpect(status().isNotFound());
+        assertThat(jdbc.sql("SELECT count(*) FROM pack_slots WHERE id_pack = :id")
+                .param("id", id).query(Integer.class).single()).isZero();
     }
 
     @Test
@@ -158,13 +176,7 @@ class PackControllerDatabaseTests {
     }
 
     @Test
-    void rejectsInvalidPaginationAndIdentifiers() throws Exception {
-        for (String size : List.of("0", "101", "invalid")) {
-            mvc.perform(get("/api/packs").param("size", size).header(HttpHeaders.AUTHORIZATION, user.bearer()))
-                    .andExpect(status().isBadRequest());
-        }
-        mvc.perform(get("/api/packs").param("page", "-1").header(HttpHeaders.AUTHORIZATION, user.bearer()))
-                .andExpect(status().isBadRequest());
+    void rejectsInvalidIdentifiers() throws Exception {
         mvc.perform(get("/api/packs/0").header(HttpHeaders.AUTHORIZATION, user.bearer()))
                 .andExpect(status().isBadRequest());
         mvc.perform(put("/api/admin/packs/0").header(HttpHeaders.AUTHORIZATION, admin.bearer())
@@ -180,6 +192,12 @@ class PackControllerDatabaseTests {
                 .andReturn().getResponse().getContentAsString();
         JsonNode paths = json.readTree(response).path("paths");
         assertThat(paths.path("/api/packs").has("get")).isTrue();
+        assertThat(paths.path("/api/packs").path("get").path("parameters").isMissingNode()).isTrue();
+        JsonNode catalogContent = paths.path("/api/packs").path("get").path("responses").path("200").path("content");
+        assertThat(catalogContent.size()).isPositive();
+        for (JsonNode media : catalogContent) {
+            assertThat(media.path("schema").path("type").asText()).isEqualTo("array");
+        }
         assertThat(paths.path("/api/packs/{packId}").has("get")).isTrue();
         assertThat(paths.path("/api/admin/packs").has("post")).isTrue();
         assertThat(paths.path("/api/admin/packs/{packId}").has("put")).isTrue();
@@ -189,7 +207,7 @@ class PackControllerDatabaseTests {
     @Test
     void rejectsMissingRequiredFieldsAndInvalidNumbersWithoutInserts() throws Exception {
         for (String field : List.of("pack_name", "pack_description", "pack_price", "allowed_factions",
-                "allowed_types", "allowed_expansions", "allowed_rarities", "slot_pulls", "id_artwork_pull_rates")) {
+                "allowed_types", "allowed_expansions", "allowed_rarities", "pack_slots", "is_acquirable", "id_artwork_pull_rates")) {
             ObjectNode invalid = payload.deepCopy();
             invalid.remove(field);
             submit(invalid).andExpect(status().isBadRequest());
@@ -257,7 +275,7 @@ class PackControllerDatabaseTests {
         invalid = payload.deepCopy();
         ((ObjectNode) invalid.get("pack_description")).put("granted_rarity", "UNKNOWN");
         submit(invalid).andExpect(status().isBadRequest());
-        payload.put("slot_pulls", "not a configuration");
+        payload.put("pack_slots", "not a configuration");
         submit(payload).andExpect(status().isBadRequest());
     }
 
@@ -291,40 +309,205 @@ class PackControllerDatabaseTests {
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest());
         assertThat(packs.get(id).definition().name()).isEqualTo("Package fixture");
+        assertThat(packs.get(id).definition().packSlots()).containsExactly(payload.path("pack_slots").get(0).asInt());
     }
 
     @Test
-    void protectsOwnedPackagesFromChangesAndDeletion() throws Exception {
+    void preservesSlotOrderAndRepeatedTypesWithAnAdditionalRarity() throws Exception {
+        jdbc.sql("INSERT INTO rarities (code, name, order_index) VALUES ('MYTHIC', 'Mythic', 5)").update();
+        int first = payload.path("pack_slots").get(0).asInt();
+        int second = createSlotType("MYTHIC");
+        payload.set("pack_slots", json.createArrayNode().add(second).add(first).add(second));
+        ObjectNode description = (ObjectNode) payload.path("pack_description");
+        description.put("card_number", 3);
+        ObjectNode examples = (ObjectNode) description.path("example_pull");
+        examples.set("card2", examples.get("card1").deepCopy());
+        examples.set("card3", examples.get("card1").deepCopy());
         int id = createPack();
-        jdbc.sql("""
-                INSERT INTO inventory_packs (id_inventory, id_pack, item_quantity)
-                SELECT id, :packId, 1 FROM inventory WHERE id_user = :userId
-                """).param("packId", id).param("userId", user.id()).update();
-        assertProtected(id);
-        assertThat(jdbc.sql("SELECT item_quantity FROM inventory_packs WHERE id_pack = :id")
-                .param("id", id).query(Integer.class).single()).isEqualTo(1);
+        assertThat(packs.get(id).definition().packSlots()).containsExactly(second, first, second);
+        assertThat(packs.get(id).slotPullTypes()).hasSize(2);
+        assertThat(jdbc.sql("SELECT id_slot_pull_type FROM pack_slots WHERE id_pack = :id ORDER BY slot_position")
+                .param("id", id).query(Integer.class).list()).containsExactly(second, first, second);
+        mvc.perform(get("/api/packs").header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pack_slots[0]").value(second))
+                .andExpect(jsonPath("$[0].slot_pull_types[1].pull_rates[0].rarity_code").value("MYTHIC"));
     }
 
     @Test
-    void protectsMercyProgressEvenWithoutOwnedPackages() throws Exception {
+    void rejectsInvalidSlotTypesCountsAndDeletedRaritiesWithoutChangingStoredSlots() throws Exception {
         int id = createPack();
-        jdbc.sql("""
-                INSERT INTO user_mercy (id_user, id_pack, mercy_counter, mercy_rarity)
-                VALUES (:userId, :packId, 0, (SELECT id FROM rarities WHERE code = 'EPIC'))
-                """).param("packId", id).param("userId", user.id()).update();
-        assertProtected(id);
-        assertThat(jdbc.sql("SELECT mercy_counter FROM user_mercy WHERE id_pack = :id")
-                .param("id", id).query(Integer.class).single()).isZero();
+        int original = payload.path("pack_slots").get(0).asInt();
+        for (JsonNode invalid : List.of(json.createArrayNode(), json.createArrayNode().add(0),
+                json.createArrayNode().add(-1), json.createArrayNode().addNull(),
+                json.createArrayNode().add(Integer.MAX_VALUE), json.createArrayNode().add(original).add(original))) {
+            ObjectNode request = payload.deepCopy();
+            request.set("pack_slots", invalid);
+            submit(request).andExpect(status().isBadRequest());
+            mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                    .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
+        jdbc.sql("UPDATE rarities SET is_deleted = true WHERE code = 'COMMON'").update();
+        submit(payload).andExpect(status().isBadRequest());
+        assertThat(packs.get(id).definition().packSlots()).containsExactly(original);
     }
 
-    private void assertProtected(int id) throws Exception {
-        payload.put("pack_name", "Forbidden update");
+    private int createSlotType(String rarity) {
+        int id = jdbc.sql("INSERT INTO slot_pull_type (description) VALUES ('Test distribution') RETURNING id")
+                .query(Integer.class).single();
+        jdbc.sql("INSERT INTO type_pull_rate (id_slot_pull_type, id_rarity, probability) "
+                + "SELECT :id, id, 100.0000 FROM rarities WHERE code = :rarity")
+                .param("id", id).param("rarity", rarity).update();
+        return id;
+    }
+
+    @Test
+    void hidesUnavailablePacksFromUsersButPreservesOwnership() throws Exception {
+        int hidden = createPack();
+        payload.put("is_acquirable", true);
+        int visible = createPack();
+        own(user, hidden, 2);
+        mvc.perform(get("/api/packs").header(HttpHeaders.AUTHORIZATION, user.bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(visible));
+        mvc.perform(get("/api/packs/{id}", hidden).header(HttpHeaders.AUTHORIZATION, user.bearer()))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/packs").header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(hidden)).andExpect(jsonPath("$[1].id").value(visible));
+        mvc.perform(get("/api/packs/{id}", hidden).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.is_acquirable").value(false));
+        assertThat(ownedQuantity(user, hidden)).isEqualTo(2);
+    }
+
+    @Test
+    void replacesOwnedPackWithoutRevokingOwnershipOrChangingBalancesAndClearsMercy() throws Exception {
+        payload.put("is_acquirable", true);
+        int id = createPack();
+        own(user, id, 2);
+        mercy(user, id);
+        payload.put("pack_name", "Updated owned pack");
+        payload.put("pack_price", 450);
+        payload.put("is_acquirable", false);
+        payload.put("mercy_threshold", 5);
         mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.pack_name").value("Updated owned pack"));
+        assertThat(ownedQuantity(user, id)).isEqualTo(2);
+        assertThat(balance(user)).isZero();
+        assertThat(mercyRows(id)).isZero();
+        mvc.perform(get("/api/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, user.bearer()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void refundsAllOwnersAtCurrentPriceAndDeletesOnlyRelatedResourcesOnce() throws Exception {
+        int id = createPack();
+        int other = createPack();
+        own(user, id, 3);
+        own(admin, id, 2);
+        own(user, other, 4);
+        mercy(user, id);
+        mercy(admin, id);
+        mercy(user, other);
+        jdbc.sql("UPDATE inventory SET cobalt_shards = 70, rift_cores = 11, scraps = 13 WHERE id_user = :id")
+                .param("id", user.id()).update();
+        payload.put("pack_price", 450);
+        mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
+                .andExpect(status().isOk());
+        mercy(user, id);
+        mercy(admin, id);
         mvc.perform(delete("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNoContent());
+        assertThat(balance(user)).isEqualTo(1420);
+        assertThat(balance(admin)).isEqualTo(900);
+        assertThat(jdbc.sql("SELECT rift_cores + scraps FROM inventory WHERE id_user = :id")
+                .param("id", user.id()).query(Integer.class).single()).isEqualTo(24);
+        assertThat(jdbc.sql("SELECT count(*) FROM inventory_packs WHERE id_pack = :id")
+                .param("id", id).query(Integer.class).single()).isZero();
+        assertThat(mercyRows(id)).isZero();
+        assertThat(ownedQuantity(user, other)).isEqualTo(4);
+        assertThat(mercyRows(other)).isEqualTo(1);
+        assertThat(packs.get(other).id()).isEqualTo(other);
+        assertThat(jdbc.sql("SELECT count(*) FROM pack_slots WHERE id_pack = :id")
+                .param("id", id).query(Integer.class).single()).isZero();
+        mvc.perform(delete("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isNotFound());
+        assertThat(balance(user)).isEqualTo(1420);
+        assertThat(balance(admin)).isEqualTo(900);
+    }
+
+    @Test
+    void replacesAndDeletesMercyOnlyPack() throws Exception {
+        int id = createPack();
+        mercy(user, id);
+        mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
+                .andExpect(status().isOk());
+        assertThat(mercyRows(id)).isZero();
+        mercy(user, id);
+        mvc.perform(delete("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isNoContent());
+        assertThat(mercyRows(id)).isZero();
+        assertThat(balance(user)).isZero();
+    }
+
+    @Test
+    void invalidReplacementPreservesOwnedPacksMercyAndDefinition() throws Exception {
+        int id = createPack();
+        own(user, id, 2);
+        mercy(user, id);
+        payload.set("pack_slots", json.createArrayNode().add(Integer.MAX_VALUE));
+        mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest());
         assertThat(packs.get(id).definition().name()).isEqualTo("Package fixture");
+        assertThat(ownedQuantity(user, id)).isEqualTo(2);
+        assertThat(mercyRows(id)).isEqualTo(1);
+        assertThat(balance(user)).isZero();
+    }
+
+    @Test
+    void deletesFreeOwnedPackWithoutChangingBalance() throws Exception {
+        payload.put("pack_price", 0);
+        int id = createPack();
+        own(user, id, 3);
+        mvc.perform(delete("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isNoContent());
+        assertThat(balance(user)).isZero();
+    }
+
+    private void own(Session owner, int packId, int quantity) {
+        jdbc.sql("""
+                INSERT INTO inventory_packs (id_inventory, id_pack, item_quantity)
+                SELECT id, :packId, :quantity FROM inventory WHERE id_user = :userId
+                """).param("packId", packId).param("userId", owner.id()).param("quantity", quantity).update();
+    }
+
+    private void mercy(Session owner, int packId) {
+        jdbc.sql("""
+                INSERT INTO user_mercy (id_user, id_pack, mercy_counter, mercy_rarity)
+                VALUES (:userId, :packId, 3, (SELECT id FROM rarities WHERE code = 'EPIC'))
+                """).param("packId", packId).param("userId", owner.id()).update();
+    }
+
+    private int ownedQuantity(Session owner, int packId) {
+        return jdbc.sql("""
+                SELECT ip.item_quantity FROM inventory_packs ip JOIN inventory i ON i.id = ip.id_inventory
+                WHERE i.id_user = :userId AND ip.id_pack = :packId
+                """).param("packId", packId).param("userId", owner.id()).query(Integer.class).single();
+    }
+
+    private int balance(Session owner) {
+        return jdbc.sql("SELECT cobalt_shards FROM inventory WHERE id_user = :id")
+                .param("id", owner.id()).query(Integer.class).single();
+    }
+
+    private int mercyRows(int packId) {
+        return jdbc.sql("SELECT count(*) FROM user_mercy WHERE id_pack = :id")
+                .param("id", packId).query(Integer.class).single();
     }
 
     private static ObjectNode preview(ObjectNode body) {

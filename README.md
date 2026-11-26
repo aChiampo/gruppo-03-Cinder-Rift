@@ -1,5 +1,11 @@
 # Gioco di carte collezionabili digitale
 
+Aggiornamento F03 del **2026-11-26**: catalogo per ruolo senza paginazione, PUT con possesso conservato e pulizia mercy, DELETE con rimborso in Scaglie al prezzo corrente. **257 test backend superati** e JAR prodotto su database isolato; [contratto, verifiche e limiti](docs/BackEnd/acquisto-pacchetti.md#verifiche-catalogo-e-riconciliazione-del-2026-11-26).
+
+Verifica F03 del **2026-11-25**: **251 test backend superati** e JAR prodotto su JDK 21.0.11/PostgreSQL 18.6 isolato. [Ambito e limiti](docs/BackEnd/acquisto-pacchetti.md#verifiche-slot-del-2026-11-25).
+
+Aggiornamento F03 del **2026-11-25**: V11 introduce slot ordinati, tipi riutilizzabili e probabilità per rarità configurabili; percentuali esatte `decimal(7,4)` anche per gli artwork e flag `is_acquirable`. [Contratto e migrazione](docs/BackEnd/acquisto-pacchetti.md#slot-e-probabilità-per-rarità). Acquisto e apertura restano rinviati.
+
 Aggiornamento F03 del **2026-11-24**: branch `feature/f03-packages` creato da `dev` (`fa95b6c`), migrazione V10 e [CRUD del catalogo pacchetti](docs/BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Nessun seed dei pacchetti; acquisto e apertura rinviati. Artwork: Standard 81%, Extended Art 10%, Full Art 7,5%, Alternate Art 1,5%, configurati in `artwork_pull_rates` con FK diretta da `packs`; Showcase ed effetti speciali esclusi.
 
 Importazione parziale del **2026-11-22** da `test-connessione`: API F04/F10, test e mescolamento ordinario del tutorial F07. A quella data migrazioni ferme a V9; V10 delle immagini, modifica al relativo test di migrazione e modifiche frontend escluse. Le verifiche del branch sorgente riportate sotto sono evidenze storiche, non nuove esecuzioni.

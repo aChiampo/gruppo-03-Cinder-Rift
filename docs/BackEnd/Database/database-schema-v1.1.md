@@ -1,6 +1,6 @@
 # Specifica della base di dati — v1.1
 
-**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-24. Migrazione V10 F03 e CRUD del catalogo pacchetti implementati su richiesta dell’utente; apertura rinviata e seed dei pacchetti escluso. Tipi di artwork e probabilità confermati: `STANDARD` 81%, `EXTENDED_ART` 10%, `FULL_ART` 7,5%, `ALTERNATE_ART` 1,5%; FK diretta `PACKS.id_artwork_pull_rates` e nessun livello di effetti speciali. Revisione F03 richiesta dall’utente: `PACKS.pack_description` diventa JSONB strutturato con anteprime nel formato del catalogo carte; aggiunto `pack_price int`. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
+**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-26. Catalogo per ruolo, possesso conservato su PUT e rimborso in Scaglie al prezzo corrente su DELETE; pulizia mercy amministrativa, senza nuove migrazioni. V11 normalizza gli slot per rarità, estende le percentuali a decimal(7,4) e aggiunge is_acquirable. Migrazione V10 F03 e CRUD del catalogo pacchetti implementati su richiesta dell’utente; apertura rinviata e seed dei pacchetti escluso. Tipi di artwork e probabilità confermati: `STANDARD` 81%, `EXTENDED_ART` 10%, `FULL_ART` 7,5%, `ALTERNATE_ART` 1,5%; FK diretta `PACKS.id_artwork_pull_rates` e nessun livello di effetti speciali. Revisione F03 richiesta dall’utente: `PACKS.pack_description` diventa JSONB strutturato con anteprime nel formato del catalogo carte; aggiunto `pack_price int`. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
 
 Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
@@ -17,6 +17,8 @@ Allineamento documentale F13/F01/F06 del **2026-11-18**, su decisioni dell'utent
 ### Perimetro SQL implementato
 
 Stato F03 del **2026-11-24**: V10 crea `ARTWORK_PULL_RATES`, `PACKS`, `INVENTORY_PACKS` e `USER_MERCY`, inizializza solo la configurazione artwork approvata e normalizza `CARDS_ARTS.art_code`, senza seed dei pacchetti. Sono disponibili catalogo e CRUD; apertura, acquisto e aggiornamento mercy non sono implementati. [Verifiche F03/artwork: 244 test backend e JAR](../acquisto-pacchetti.md#verifiche-artwork).
+
+Aggiornamento F03 del **2026-11-25**: V11 conserva V1–V10 e amplia la precisione artwork senza cambiare le percentuali. Non inserisce tipi o pacchetti. Il flag di acquisizione parte da false anche per i record esistenti. Gli slot legacy vuoti diventano assenza di slot; JSON legacy non vuoti bloccano e annullano la migrazione, richiedendo una mappatura esplicita prima di riprovare. Precisione SQL 7, scala 4: tre cifre intere e quattro decimali. Le verifiche storiche V10 sopra non verificano V11; risultati correnti nel [contratto F03](../acquisto-pacchetti.md#slot-e-probabilità-per-rarità).
 
 Aggiornamento F07 del **2026-11-20**, su decisione dell'utente: V9 corregge soltanto fazioni mancanti delle 25 creature CR01 note e assegna energia 0 ai cinque equipaggiamenti iniziali se nulla, conservando valori non nulli, ID e possesso. Non aggiunge tabelle, colonne o vincoli e non cambia il DBML. L'orchestrazione usa advisory lock di sessione PostgreSQL per utente e una transazione breve `REPEATABLE READ` per validazione/snapshot, conclusa prima della chiamata remota. Non crea `BATTLE_HISTORY` né il guard catalogo comune. [Verifica corrente: 212 test applicativi, 49 del motore e flusso reale fra JAR](../../report/2026-11-20-orchestrazione-pve.md).
 
@@ -166,10 +168,10 @@ erDiagram
     }
     ARTWORK_PULL_RATES {
         int id PK "NOT NULL; auto-incremento"
-        numeric standard "NOT NULL; default 81.00"
-        numeric extended_art "NOT NULL; default 10.00"
-        numeric full_art "NOT NULL; default 7.50"
-        numeric alternate_art "NOT NULL; default 1.50"
+        decimal standard "precisione 7, scala 4; NOT NULL; default 81.00"
+        decimal extended_art "precisione 7, scala 4; NOT NULL; default 10.00"
+        decimal full_art "precisione 7, scala 4; NOT NULL; default 7.50"
+        decimal alternate_art "precisione 7, scala 4; NOT NULL; default 1.50"
     }
     PACKS {
         int id PK "NOT NULL; auto-incremento"
@@ -183,7 +185,21 @@ erDiagram
         jsonb allowed_expansions "NOT NULL"
         jsonb allowed_rarities "NOT NULL"
         int mercy_threshold "NULL ammesso"
-        jsonb slot_pulls "NOT NULL"
+        boolean is_acquirable "NOT NULL; default false"
+    }
+    SLOT_PULL_TYPE {
+        int id PK "NOT NULL; auto-incremento"
+        varchar description "NOT NULL"
+    }
+    TYPE_PULL_RATE {
+        int id_slot_pull_type PK,FK "NOT NULL"
+        int id_rarity PK,FK "NOT NULL"
+        decimal probability "precisione 7, scala 4; NOT NULL; 0..100"
+    }
+    PACK_SLOTS {
+        int id_pack PK,FK "NOT NULL"
+        int slot_position PK "NOT NULL; maggiore di zero"
+        int id_slot_pull_type FK "NOT NULL"
     }
     USER_MERCY {
         int id_user PK,FK "NOT NULL"
@@ -338,6 +354,10 @@ erDiagram
     USERS ||..o| INVENTORY : "id_user -> id"
     INVENTORY ||--o{ INVENTORY_PACKS : "id_inventory -> id"
     ARTWORK_PULL_RATES ||..o{ PACKS : "id_artwork_pull_rates -> id"
+    PACKS ||--o{ PACK_SLOTS : "id_pack -> id; cascade"
+    SLOT_PULL_TYPE ||..o{ PACK_SLOTS : "id_slot_pull_type -> id"
+    SLOT_PULL_TYPE ||--o{ TYPE_PULL_RATE : "id_slot_pull_type -> id; cascade"
+    RARITIES ||--o{ TYPE_PULL_RATE : "id_rarity -> id"
     PACKS ||--o{ INVENTORY_PACKS : "id_pack -> id"
     USERS ||--o{ USER_MERCY : "id_user -> id"
     PACKS ||--o{ USER_MERCY : "id_pack -> id"
@@ -606,10 +626,10 @@ erDiagram
     }
     ARTWORK_PULL_RATES {
         int id PK "NOT NULL; auto-incremento"
-        numeric standard "NOT NULL; default 81.00"
-        numeric extended_art "NOT NULL; default 10.00"
-        numeric full_art "NOT NULL; default 7.50"
-        numeric alternate_art "NOT NULL; default 1.50"
+        decimal standard "precisione 7, scala 4; NOT NULL; default 81.00"
+        decimal extended_art "precisione 7, scala 4; NOT NULL; default 10.00"
+        decimal full_art "precisione 7, scala 4; NOT NULL; default 7.50"
+        decimal alternate_art "precisione 7, scala 4; NOT NULL; default 1.50"
     }
     PACKS {
         int id PK "NOT NULL; auto-incremento"
@@ -623,7 +643,21 @@ erDiagram
         jsonb allowed_expansions "NOT NULL"
         jsonb allowed_rarities "NOT NULL"
         int mercy_threshold "NULL ammesso"
-        jsonb slot_pulls "NOT NULL"
+        boolean is_acquirable "NOT NULL; default false"
+    }
+    SLOT_PULL_TYPE {
+        int id PK "NOT NULL; auto-incremento"
+        varchar description "NOT NULL"
+    }
+    TYPE_PULL_RATE {
+        int id_slot_pull_type PK,FK "NOT NULL"
+        int id_rarity PK,FK "NOT NULL"
+        decimal probability "precisione 7, scala 4; NOT NULL; 0..100"
+    }
+    PACK_SLOTS {
+        int id_pack PK,FK "NOT NULL"
+        int slot_position PK "NOT NULL; maggiore di zero"
+        int id_slot_pull_type FK "NOT NULL"
     }
     USER_MERCY {
         int id_user PK,FK "NOT NULL"
@@ -640,6 +674,10 @@ erDiagram
     PACKS ||--o{ INVENTORY_PACKS : "id_pack -> id"
     PACKS ||--o{ USER_MERCY : "id_pack -> id"
     ARTWORK_PULL_RATES ||..o{ PACKS : "id_artwork_pull_rates -> id"
+    PACKS ||--o{ PACK_SLOTS : "id_pack -> id; cascade"
+    SLOT_PULL_TYPE ||..o{ PACK_SLOTS : "id_slot_pull_type -> id"
+    SLOT_PULL_TYPE ||--o{ TYPE_PULL_RATE : "id_slot_pull_type -> id; cascade"
+    RARITIES ||--o{ TYPE_PULL_RATE : "id_rarity -> id"
 ```
 
 **Risorse economiche.** Le Scaglie sono la risorsa guadagnata nel mondo di gioco; i Nuclei Rift sono la riserva premium acquistabile; i Rotami sono residui recuperabili dai doppioni. Queste definizioni, confermate il 2026-11-09, distinguono tre concetti e non implicano equivalenza, conversione o trasferibilità fra le risorse. Il recupero dai doppioni non determina da solo la risorsa prodotta dalla cancellazione di una carta dal catalogo.
@@ -648,7 +686,7 @@ erDiagram
 
 **Disponibilità e corrispondenze aperte.** Ogni addebito identifica la risorsa e aggiorna il relativo saldo sotto i guard comuni. I campi `*_token_offer`, `TRADE_TOKEN_RESERVATIONS.token_amount` e `reward_token_quantity` restano nello schema con i nomi e tipi attuali, ma non indicano quale delle tre risorse rappresentino. La tabella degli hold monetari non ha un discriminatore di risorsa: la FK al proprietario non risolve questa corrispondenza. Occorre definire una risorsa unica per il contratto monetario oppure estenderne la rappresentazione per distinguere le risorse; trasferibilità, prezzi, conversioni e risorsa dei premi restano **DA DEFINIRE**. Nessun campo generico è attribuito implicitamente alle Scaglie, ai Nuclei Rift o ai Rotami. Non sono aggiunti un registro dei movimenti o contatori duplicati di riservato.
 
-**Pacchetti.** `PACKS` ha ID auto-incrementale, nome obbligatorio, `pack_description jsonb` obbligatorio, `pack_price int` obbligatorio senza default e immagine facoltativa. Restano obbligatori i JSONB `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`, `slot_pulls`. I filtri usano codici dei rispettivi cataloghi, senza FK interne al JSON. Gli slot possono indicare probabilità per rarità o carte fisse identificate da interi; struttura definitiva, probabilità per rarità, significato dei filtri vuoti e applicazione degli slot restano da definire. Le probabilità artwork sono nella configurazione separata descritta sotto. Il backend verifica configurazione, codici e risultati prima di aggiornare il possesso.
+**Pacchetti.** `PACKS` ha ID auto-incrementale, nome obbligatorio, `pack_description jsonb` obbligatorio, `pack_price int` obbligatorio senza default e immagine facoltativa. Sono obbligatori `is_acquirable boolean DEFAULT false` e i JSONB `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`. I filtri usano codici dei rispettivi cataloghi, senza FK interne al JSON. V11 sostituisce gli slot JSON con `PACK_SLOTS`: PK `(id_pack, slot_position)`, posizione positiva e FK a `SLOT_PULL_TYPE`. Il tipo ha ID e descrizione; `TYPE_PULL_RATE` associa il tipo a `RARITIES.id` con PK `(id_slot_pull_type, id_rarity)` e percentuale `decimal(7,4)` fra 0 e 100. I trigger differibili impongono somma 100 anche per tipi nuovi/vuoti; i tipi referenziati non possono cambiare probabilità. Le rarità omesse valgono zero. La cancellazione del pacchetto elimina gli slot; quella di un tipo non referenziato elimina le sue probabilità. API: array ordinato di ID `pack_slots`, duplicati ammessi, lungo `card_number`; `slot_pull_types` espande i tipi distinti in risposta. `is_acquirable` abilita nuove acquisizioni e filtra il catalogo USER; ADMIN vede tutti i pacchetti. Il possesso resta invariato quando il flag viene disabilitato. PUT elimina i progressi mercy; DELETE rimborsa il possesso in `cobalt_shards` al prezzo corrente ed elimina i riferimenti, secondo il [contratto F03](../acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Acquisto e apertura restano assenti. Il significato dei filtri vuoti e la loro interazione con le probabilità restano da definire. Le probabilità artwork sono nella configurazione separata descritta sotto. Il backend verifica configurazione, codici e risultati prima di aggiornare il possesso.
 
 **Descrizione strutturata del pacchetto.** Decisione dell’utente del **2026-11-23**: il valore di `PACKS.pack_description` è un oggetto JSON, con le seguenti proprietà obbligatorie. `varchar` nello schema proposto corrisponde a una stringa JSON, `int` a un numero intero JSON. I nomi corretti sono `card_number` e `best_pull_rarity`.
 
@@ -673,11 +711,11 @@ Ogni valore di `example_pull` è un oggetto carta completo. Tutte le proprietà 
 
 Si conservano nomi camelCase e tutte le varianti grafiche, senza ridurre la carta a un ID o a un oggetto della collezione. Non sono previste proprietà aggiuntive negli oggetti carta, riferimento e variante. La definizione formale autonoma, con tipi annidati, proprietà obbligatorie e nullabilità espliciti, è lo [schema JSON completo della carta in F03](../acquisto-pacchetti.md#schema-json-completo-di-una-carta); l’[esempio completo del pacchetto](../acquisto-pacchetti.md#esempio-di-descrizione-e-prezzo) ne mostra l’utilizzo.
 
-Questi dati sono un’anteprima descrittiva: non assegnano carte alla collezione e non sostituiscono filtri, `slot_pulls` o progresso mercy. La validazione applicativa deve controllare forma, tipi, riferimenti e coerenza della descrizione con la configurazione di estrazione; JSONB da solo non impone questo contratto e non crea FK annidate. I valori numerici, i codici effettivi e le policy di aggiornamento delle anteprime dopo modifiche al catalogo restano da definire. Non sono aggiunti nuovi `CHECK` SQL per descrizione o prezzo.
+Questi dati sono un’anteprima descrittiva: non assegnano carte alla collezione e non sostituiscono filtri, slot relazionali o progresso mercy. La validazione applicativa deve controllare forma, tipi, riferimenti e coerenza della descrizione con la configurazione di estrazione; JSONB da solo non impone questo contratto e non crea FK annidate. I valori numerici, i codici effettivi e le policy di aggiornamento delle anteprime dopo modifiche al catalogo restano da definire. Non sono aggiunti nuovi `CHECK` SQL per descrizione o prezzo.
 
 La migrazione V10 del branch `feature/f03-packages`, basato su `dev` a V9, crea `ARTWORK_PULL_RATES`, `PACKS`, `INVENTORY_PACKS` e `USER_MERCY` con i vincoli descritti, senza inserire dati di pacchetti. Il CRUD è descritto nel [contratto F03](../acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api); apertura e progressione mercy non sono implementate. Non è stata eseguita una conversione di dati esistenti; un’eventuale descrizione testuale preesistente richiede la costruzione dell’oggetto completo e la valorizzazione del prezzo, non un semplice cast a JSONB.
 
-**Probabilità artwork.** Decisione dell’utente del **2026-11-24**: `ARTWORK_PULL_RATES` ha ID intero generato e quattro colonne `numeric(5,2)` obbligatorie: `standard` 81,00, `extended_art` 10,00, `full_art` 7,50 e `alternate_art` 1,50. Sono percentuali, non frazioni; ogni valore è fra 0 e 100 e la somma deve essere 100 tramite i due `CHECK` SQL. V10 inizializza una sola configurazione con questi valori. `PACKS.id_artwork_pull_rates` è una FK obbligatoria senza default verso questa tabella; una configurazione può essere riutilizzata da più pacchetti, senza tabella di relazione. La FK impedisce di eliminare una configurazione referenziata. Il CRUD configura soltanto l’ID; non espone scritture delle probabilità. Le configurazioni sono gestite a livello database. Le percentuali valgono per una singola estrazione del tipo di artwork; numero e posizione degli slot, interazione con i filtri e comportamento se manca una variante restano da definire prima dell’apertura. Non sono probabilità della rarità di gioco.
+**Probabilità artwork.** Decisione dell’utente del **2026-11-24**: `ARTWORK_PULL_RATES` ha ID intero generato e quattro colonne `decimal(7,4)` obbligatorie dopo V11: `standard` 81,00, `extended_art` 10,00, `full_art` 7,50 e `alternate_art` 1,50. Sono percentuali, non frazioni; ogni valore è fra 0 e 100 e la somma deve essere 100 tramite i due `CHECK` SQL. V10 inizializza una sola configurazione con questi valori. `PACKS.id_artwork_pull_rates` è una FK obbligatoria senza default verso questa tabella; una configurazione può essere riutilizzata da più pacchetti, senza tabella di relazione. La FK impedisce di eliminare una configurazione referenziata. Il CRUD configura soltanto l’ID; non espone scritture delle probabilità. Le configurazioni sono gestite a livello database. Le percentuali valgono per una singola estrazione del tipo di artwork; numero e posizione degli slot, interazione con i filtri e comportamento se manca una variante restano da definire prima dell’apertura. Non sono probabilità della rarità di gioco.
 
 V10 converte gli alias legacy `default` → `STANDARD`, `EXTENDED` → `EXTENDED_ART`, `FULL` → `FULL_ART`, `ALTERNATE` → `ALTERNATE_ART`, conservando `id_art`, URL, sorgenti e riferimenti di collezione/mazzi. Codici diversi o collisioni con un tipo già presente devono essere riconciliati esplicitamente prima della migrazione: non si eliminano varianti per far passare il vincolo.
 

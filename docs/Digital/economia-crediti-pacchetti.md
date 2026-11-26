@@ -1,9 +1,11 @@
 # Economia delle risorse e dei pacchetti
 
+Aggiornamento F03 del **2026-11-26**, su decisione dell’utente: la cancellazione amministrativa di un pacchetto rimborsa le quantità ancora possedute in Scaglie (`cobalt_shards`) al `pack_price` corrente. Il prezzo originario non è registrato. Disabilitare l’acquisizione conserva il possesso; PUT e DELETE eliminano i progressi mercy relativi. [Contratto e limiti](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Restano configurabili distribuzioni per rarità e disponibilità, senza nuovi prezzi commerciali o regole di apertura; la risorsa di un futuro acquisto resta da definire.
+
 ID: D03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Digital Strategist).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: **2026-11-24**, probabilità artwork confermate dall’utente; terminologia delle risorse e garanzia mercy confermate il 2026-11-09. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-26**, rimborso amministrativo in Scaglie al prezzo corrente confermato dall’utente; probabilità artwork confermate il 2026-11-24; terminologia delle risorse e garanzia mercy confermate il 2026-11-09. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 

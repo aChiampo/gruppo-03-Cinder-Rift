@@ -39,13 +39,13 @@ public class PackManagementController {
     }
 
     @PutMapping("/{packId}")
-    @Operation(summary = "Replace an unused package definition")
+    @Operation(summary = "Replace a package definition, preserving ownership and clearing mercy progress")
     public PackView replace(@PathVariable @Positive int packId, @Valid @RequestBody PackWriteRequest request) {
         return packs.replace(packId, request);
     }
 
     @DeleteMapping("/{packId}")
-    @Operation(summary = "Delete an unused package definition")
+    @Operation(summary = "Delete a package definition, refund owned quantities and remove mercy progress")
     public ResponseEntity<Void> delete(@PathVariable @Positive int packId) {
         packs.delete(packId);
         return ResponseEntity.noContent().build();

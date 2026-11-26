@@ -1,9 +1,11 @@
 # Negozio delle offerte di pacchetti
 
+Aggiornamento del **2026-11-26**: seguire il [contratto F03 aggiornato](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Il catalogo restituisce un array completo senza paginazione; USER vede solo pacchetti acquisibili e ADMIN tutti. Disabilitare l’acquisizione conserva il possesso. Dopo PUT amministrativo rileggere i dati del pacchetto; dopo DELETE riallineare inventario e saldo, secondo il rimborso e la pulizia mercy definiti dal backend. Slot e probabilità restano dati autorevoli; le probabilità non vanno stimate dalle anteprime. Interfaccia e flusso di acquisto non implementati in questa attività.
+
 ID: F03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: **2026-11-24**, allineamento al catalogo e CRUD backend; risorse economiche e sistema mercy del 2026-11-09 restano descritti nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md). Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-26**, catalogo per ruolo senza paginazione e riconciliazione del CRUD backend; risorse economiche e sistema mercy del 2026-11-09 restano descritti nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md). Verifiche applicative: non eseguite.
 
 Aggiornamento backend del **2026-11-24**: disponibili [catalogo e CRUD amministrativo F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), con migrazione senza seed dei pacchetti e configurazione artwork iniziale. Il client deve seguire quel contratto; negozio integrato, acquisto e apertura restano da realizzare. Apertura e assegnazione agli slot rinviate su indicazione dell’utente; tipi e percentuali artwork confermati nel contratto.
 

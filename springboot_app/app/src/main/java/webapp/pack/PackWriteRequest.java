@@ -17,13 +17,14 @@ public record PackWriteRequest(
         @JsonProperty("pack_name") @NotBlank String name,
         @JsonProperty("pack_description") @NotNull @Valid Description description,
         @JsonProperty("pack_price") @NotNull @PositiveOrZero Integer price,
+        @JsonProperty("is_acquirable") @NotNull Boolean acquirable,
         @JsonProperty("pack_image_url") String imageUrl,
         @JsonProperty("allowed_factions") @NotNull List<@NotBlank String> allowedFactions,
         @JsonProperty("allowed_types") @NotNull List<@NotBlank String> allowedTypes,
         @JsonProperty("allowed_expansions") @NotNull List<@NotBlank String> allowedExpansions,
         @JsonProperty("allowed_rarities") @NotNull List<@NotBlank String> allowedRarities,
         @JsonProperty("mercy_threshold") @Positive Integer mercyThreshold,
-        @JsonProperty("slot_pulls") @NotNull JsonNode slotPulls) {
+        @JsonProperty("pack_slots") @NotNull List<@NotNull @Positive Integer> packSlots) {
 
     /** Preview cards use the exact complete F04 representation, including explicit nullable fields. */
     public record Description(

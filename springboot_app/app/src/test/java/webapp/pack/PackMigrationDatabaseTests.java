@@ -169,6 +169,161 @@ class PackMigrationDatabaseTests {
                 """).param("id", packId).update()).hasMessageContaining("user_mercy_pkey");
     }
 
+    @Test
+    void upgradesV10PreservingPacksAndArtworkRatesWithFourDecimalPlaces() {
+        target("10").migrate();
+        int id = createPack();
+        String before = snapshot();
+        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(snapshot()).isEqualTo(before);
+        assertThat(target("11").migrate().migrationsExecuted).isZero();
+        assertThat(jdbc.sql("SELECT is_acquirable FROM packs WHERE id = :id")
+                .param("id", id).query(Boolean.class).single()).isFalse();
+        assertThat(jdbc.sql("SELECT pack_price FROM packs WHERE id = :id")
+                .param("id", id).query(Integer.class).single()).isEqualTo(37);
+        assertThat(jdbc.sql("SELECT standard FROM artwork_pull_rates")
+                .query(java.math.BigDecimal.class).single()).isEqualByComparingTo("81.0000");
+        assertThat(jdbc.sql("SELECT count(*) FROM information_schema.columns WHERE table_schema = :schema "
+                + "AND table_name = 'packs' AND column_name = 'slot_pulls'")
+                .param("schema", schema).query(Integer.class).single()).isZero();
+        assertThat(jdbc.sql("SELECT numeric_precision || ',' || numeric_scale FROM information_schema.columns "
+                + "WHERE table_schema = :schema AND ((table_name = 'artwork_pull_rates' "
+                + "AND column_name IN ('standard', 'extended_art', 'full_art', 'alternate_art')) "
+                + "OR (table_name = 'type_pull_rate' AND column_name = 'probability'))")
+                .param("schema", schema).query(String.class).list()).containsExactly("7,4", "7,4", "7,4", "7,4", "7,4");
+        for (String table : new String[]{"slot_pull_type", "type_pull_rate", "pack_slots"}) {
+            assertThat(jdbc.sql("SELECT count(*) FROM " + table).query(Integer.class).single()).isZero();
+        }
+        jdbc.sql("UPDATE artwork_pull_rates SET standard = 80.9999, alternate_art = 1.5001").update();
+        assertThat(jdbc.sql("SELECT alternate_art FROM artwork_pull_rates")
+                .query(java.math.BigDecimal.class).single()).isEqualByComparingTo("1.5001");
+    }
+
+    @Test
+    void refusesToDiscardNonEmptyLegacySlotsAndRollsBackTheUpgrade() {
+        target("10").migrate();
+        int id = createPack();
+        jdbc.sql("UPDATE packs SET slot_pulls = '{\"legacy\":true}'::jsonb WHERE id = :id")
+                .param("id", id).update();
+        assertThatThrownBy(() -> target("11").migrate()).hasStackTraceContaining("requires an explicit mapping");
+        assertThat(jdbc.sql("SELECT slot_pulls::text FROM packs WHERE id = :id")
+                .param("id", id).query(String.class).single()).isEqualTo("{\"legacy\": true}");
+        assertThat(jdbc.sql("SELECT count(*) FROM information_schema.tables WHERE table_schema = :schema "
+                + "AND table_name = 'slot_pull_type'").param("schema", schema).query(Integer.class).single()).isZero();
+    }
+
+    @Test
+    void validatesCrossRowTotalsAtCommitIncludingEmptyAndReassignedProfiles() throws Exception {
+        target("11").migrate();
+        assertThatThrownBy(() -> transaction(() -> jdbc.sql(
+                "INSERT INTO slot_pull_type (description) VALUES ('Empty') RETURNING id")
+                .query(Integer.class).single())).hasMessageContaining("must total 100.0000");
+        assertThatThrownBy(() -> createType("98.9999", "1.0000"))
+                .hasMessageContaining("must total 100.0000");
+        assertThatThrownBy(() -> createType("0", "0")).hasMessageContaining("must total 100.0000");
+        int first = createType("98.9999", "1.0001");
+        int second = createType("100", "0");
+        assertThatThrownBy(() -> transaction(() -> jdbc.sql(
+                "DELETE FROM type_pull_rate WHERE id_slot_pull_type = :id")
+                .param("id", first).update())).hasMessageContaining("must total 100.0000");
+        assertThatThrownBy(() -> transaction(() -> jdbc.sql("UPDATE type_pull_rate SET probability = 0 "
+                + "WHERE id_slot_pull_type = :id").param("id", first).update()))
+                .hasMessageContaining("must total 100.0000");
+        assertThatThrownBy(() -> transaction(() -> {
+            jdbc.sql("DELETE FROM type_pull_rate WHERE id_slot_pull_type = :id").param("id", second).update();
+            return jdbc.sql("UPDATE type_pull_rate SET id_slot_pull_type = :second WHERE id_slot_pull_type = :first")
+                    .param("first", first).param("second", second).update();
+        })).hasMessageContaining("must total 100.0000");
+        assertThat(jdbc.sql("SELECT sum(probability) FROM type_pull_rate WHERE id_slot_pull_type = :id")
+                .param("id", first).query(java.math.BigDecimal.class).single()).isEqualByComparingTo("100.0000");
+        jdbc.sql("DELETE FROM slot_pull_type WHERE id = :id").param("id", second).update();
+    }
+
+    @Test
+    void enforcesRarityReferencesUniquenessAndProbabilityRanges() throws Exception {
+        target("11").migrate();
+        int id = createType("98.9999", "1.0001");
+        assertThat(jdbc.sql("SELECT probability FROM type_pull_rate t JOIN rarities r ON r.id = t.id_rarity "
+                + "WHERE t.id_slot_pull_type = :id AND r.code = 'RARE'")
+                .param("id", id).query(java.math.BigDecimal.class).single()).isEqualByComparingTo("1.0001");
+        for (String probability : new String[]{"-0.0001", "100.0001"}) {
+            assertThatThrownBy(() -> jdbc.sql("UPDATE type_pull_rate SET probability = :value WHERE id_slot_pull_type = :id")
+                    .param("value", new java.math.BigDecimal(probability)).param("id", id).update())
+                    .hasMessageContaining("type_pull_rate_probability_check");
+        }
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO type_pull_rate VALUES (:id, 2147483647, 0)")
+                .param("id", id).update()).hasMessageContaining("type_pull_rate_rarity_fk");
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO type_pull_rate SELECT :id, id, 0 FROM rarities WHERE code = 'RARE'")
+                .param("id", id).update()).hasMessageContaining("type_pull_rate_pkey");
+        assertThatThrownBy(() -> jdbc.sql("UPDATE type_pull_rate SET probability = NULL WHERE id_slot_pull_type = :id")
+                .param("id", id).update()).hasMessageContaining("null");
+        jdbc.sql("INSERT INTO rarities (code, name, order_index) VALUES ('MYTHIC', 'Mythic', 5)").update();
+        transaction(() -> {
+            int dynamic = jdbc.sql("INSERT INTO slot_pull_type (description) VALUES ('Dynamic') RETURNING id")
+                    .query(Integer.class).single();
+            return jdbc.sql("INSERT INTO type_pull_rate SELECT :id, id, 100 FROM rarities WHERE code = 'MYTHIC'")
+                    .param("id", dynamic).update();
+        });
+    }
+
+    @Test
+    void preservesRepeatedSlotsAndFreezesReferencedDistributions() throws Exception {
+        target("10").migrate();
+        int packId = createPack();
+        target("11").migrate();
+        int type = createType("98.9999", "1.0001");
+        jdbc.sql("INSERT INTO pack_slots VALUES (:pack, 1, :type), (:pack, 2, :type)")
+                .param("pack", packId).param("type", type).update();
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO pack_slots VALUES (:pack, 1, :type)")
+                .param("pack", packId).param("type", type).update()).hasMessageContaining("pack_slots_pkey");
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO pack_slots VALUES (:pack, 0, :type)")
+                .param("pack", packId).param("type", type).update()).hasMessageContaining("pack_slots_position_check");
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO pack_slots VALUES (:pack, 3, 2147483647)")
+                .param("pack", packId).update()).hasMessageContaining("pack_slots_type_fk");
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO pack_slots VALUES (2147483647, 1, :type)")
+                .param("type", type).update()).hasMessageContaining("pack_slots_pack_fk");
+        assertThatThrownBy(() -> jdbc.sql("UPDATE type_pull_rate SET probability = probability WHERE id_slot_pull_type = :id")
+                .param("id", type).update()).hasMessageContaining("Referenced slot pull types are immutable");
+        assertThatThrownBy(() -> jdbc.sql("DELETE FROM type_pull_rate WHERE id_slot_pull_type = :id")
+                .param("id", type).update()).hasMessageContaining("Referenced slot pull types are immutable");
+        assertThatThrownBy(() -> jdbc.sql("INSERT INTO type_pull_rate SELECT :id, id, 0 FROM rarities WHERE code = 'EPIC'")
+                .param("id", type).update()).hasMessageContaining("Referenced slot pull types are immutable");
+        assertThatThrownBy(() -> jdbc.sql("DELETE FROM slot_pull_type WHERE id = :id").param("id", type).update())
+                .hasMessageContaining("Referenced slot pull types are immutable");
+        assertThatThrownBy(() -> jdbc.sql("UPDATE packs SET is_acquirable = NULL WHERE id = :id")
+                .param("id", packId).update()).hasMessageContaining("null");
+        jdbc.sql("DELETE FROM packs WHERE id = :id").param("id", packId).update();
+        assertThat(jdbc.sql("SELECT count(*) FROM pack_slots").query(Integer.class).single()).isZero();
+        assertThat(jdbc.sql("SELECT count(*) FROM slot_pull_type WHERE id = :id")
+                .param("id", type).query(Integer.class).single()).isEqualTo(1);
+    }
+
+    private int createType(String common, String rare) throws Exception {
+        return transaction(() -> {
+            int id = jdbc.sql("INSERT INTO slot_pull_type (description) VALUES ('Test') RETURNING id")
+                    .query(Integer.class).single();
+            jdbc.sql("INSERT INTO type_pull_rate SELECT :id, id, CASE code WHEN 'COMMON' THEN :common ELSE :rare END "
+                    + "FROM rarities WHERE code IN ('COMMON', 'RARE')")
+                    .param("id", id).param("common", new java.math.BigDecimal(common))
+                    .param("rare", new java.math.BigDecimal(rare)).update();
+            return id;
+        });
+    }
+
+    private <T> T transaction(java.util.function.Supplier<T> action) throws Exception {
+        connection.setAutoCommit(false);
+        try {
+            T result = action.get();
+            connection.commit();
+            return result;
+        } catch (Exception error) {
+            connection.rollback();
+            throw error;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
     private int createPack() {
         return jdbc.sql("""
                 INSERT INTO packs (id_artwork_pull_rates, pack_name, pack_description, pack_price, allowed_factions, allowed_types,
