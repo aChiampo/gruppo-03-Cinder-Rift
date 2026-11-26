@@ -5,6 +5,10 @@ Implementazione: migrazione e CRUD del catalogo disponibili; acquisto e apertura
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Ultimo aggiornamento significativo: **2026-11-26**, su richiesta dell’utente: catalogo senza paginazione e filtrato per ruolo; PUT consentito anche con possesso o mercy; DELETE con rimborso in `cobalt_shards` al prezzo corrente e pulizia dei riferimenti. Restano disponibili slot relazionali, distribuzioni per rarità e percentuali `decimal(7,4)` introdotti da V11. Acquisto, apertura e avanzamento mercy restano rinviati; nessun seed commerciale o dei tipi di slot. Le verifiche precedenti restano evidenze storiche.
 
+Pianificazione inventario e apertura del **2026-11-26**, aggiornata su richiesta esplicita di Chiampo: la [proposta HTTP](#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) comprende due letture del proprio inventario e l’apertura di **1–10 pacchetti**, con lock non attendente, rollback dell’intero lotto e risposta diretta dopo commit. Nessuna persistenza delle pescate, chiave di richiesta o rotta di recupero; gli ulteriori problemi di retry sono esclusi dal perimetro richiesto. Nessuna implementazione o migrazione avviata.
+
+Decisioni confermate di Chiampo del **2026-11-26**: le pescate incrementano **solo `ownedReplica`**, lasciando `tradableReplica` invariato o inizializzandolo a zero; mercy avanza con una funzione per singolo pacchetto applicata sequenzialmente nello stesso lotto. Per la concorrenza usare soltanto il lock semplice descritto sotto. Le precedenti proposte di deduplicazione persistente, registro delle pescate, recupero e conservazione sono rimosse su richiesta dell’utente.
+
 Revisione documentale del **2026-11-26**: aggiunti gli schemi di richiesta e risposta alla tabella degli endpoint, confrontati con i record Java; collegamenti alle sezioni adattati al formato dei titoli di Obsidian. Nessuna modifica al contratto o nuova esecuzione dei test backend.
 
 ## Catalogo implementato: migrazione e API
@@ -82,13 +86,6 @@ GET dettaglio, POST e PUT restituiscono lo stesso oggetto JSON [PackView](../../
 
 Gli oggetti annidati seguono i record [ArtworkPullRates](../../springboot_app/app/src/main/java/webapp/pack/ArtworkPullRates.java) e [SlotPullType](../../springboot_app/app/src/main/java/webapp/pack/SlotPullType.java); gli esempi sono nelle sezioni [artwork](#Tipi%20e%20probabilit%C3%A0%20degli%20artwork) e [slot](#Slot%20e%20probabilit%C3%A0%20per%20rarit%C3%A0). Questi campi di sola lettura non fanno parte del payload POST/PUT. DELETE riuscita non restituisce JSON; gli errori mantengono il formato Problem Details indicato sopra.
 
-### Verifiche catalogo e riconciliazione del 2026-11-26
-
-Sulla copia di lavoro di `feature/f03-packages`, Windows/PowerShell, JDK **21.0.11** e PostgreSQL **18.6** in un container temporaneo isolato, `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` supera **257 test**, con zero fallimenti, errori o casi saltati, e produce il JAR. Inclusi **35 test pacchetti**: 22 [API e sicurezza](../../springboot_app/app/src/test/java/webapp/pack/PackControllerDatabaseTests.java), 2 [commit e rollback della cancellazione](../../springboot_app/app/src/test/java/webapp/pack/PackDeletionDatabaseTests.java) e 11 [migrazioni](../../springboot_app/app/src/test/java/webapp/pack/PackMigrationDatabaseTests.java).
-
-Verificati filtro USER su lista e dettaglio, lettura ADMIN completa, array senza paginazione anche oltre 20 elementi, parametri precedenti ignorati, OpenAPI, PUT con possesso conservato e mercy rimosso, input invalido senza effetti, DELETE con più proprietari e rimborso al prezzo modificato corrente, pacchetti gratuiti, riferimenti mercy senza possesso, conservazione delle altre risorse e assenza di doppio rimborso dopo una seconda DELETE. Un errore iniettato dopo rimborso e pulizia annulla l’intera operazione; un importo non rappresentabile nel saldo `integer` non produce overflow silenzioso o perdita del possesso.
-
-Le prime esecuzioni mirate hanno rilevato due assunzioni errate nei nuovi test: un metodo non disponibile in Jackson 3 e un media type OpenAPI fissato nell’asserzione. Corrette le asserzioni; la suite completa sopra è l’esito finale. Controllati anche collegamenti relativi e `git diff --check`. Nessuna nuova migrazione e nessuna modifica al database applicativo o ai container dell’applicazione; acquisto, apertura e integrazione frontend/browser restano esclusi.
 
 ### Slot e probabilità per rarità
 
@@ -126,25 +123,6 @@ La precisione SQL è `decimal(7,4)`: tre cifre intere più quattro decimali, equ
 
 V11 conserva pacchetti e percentuali artwork esistenti, inizializza `is_acquirable = false` e non inventa tipi o probabilità. Configurazioni legacy `{}`/`[]` diventano assenza di slot; prima di un nuovo PUT occorre fornire gli ID coerenti con `card_number`. Un JSON legacy non vuoto blocca e annulla la migrazione con un errore esplicito: salvare il contenuto e predisporre una mappatura verificata prima di riprovare, senza scartarlo. V1–V10 restano immutate. Prima di integrare il branch con altre migrazioni V10/V11 occorre riconciliare le versioni Flyway; il database applicativo non viene migrato da questa attività.
 
-### Verifiche slot del 2026-11-25
-
-Su Windows/PowerShell, JDK **21.0.11** e PostgreSQL **18.6** in un container temporaneo isolato, `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` supera **251 test**, zero fallimenti, errori o casi saltati, e produce il JAR. I test coprono aggiornamento V10→V11 con conservazione dei pacchetti e dei valori artwork, ripetibilità, blocco e rollback dei JSON legacy non vuoti, precisione 7/scala 4, totali differibili anche per tipi vuoti o righe spostate, range/FK/unicità, rarità aggiuntive senza nuove colonne, immutabilità delle distribuzioni referenziate, slot ripetuti e ordinati, sostituzione/rimozione atomica, validazione degli ID e del numero di slot, flag obbligatorio e restituito dalle API. Restano superati i controlli su autenticazione, permessi, possesso e mercy.
-
-La prima esecuzione mirata ha rilevato residui compilati di `dev` con un’altra V10; la verifica riuscita parte da `clean`. Un’asserzione iniziale attendeva l’errore FK sulla rimozione di un tipo referenziato, ma interviene prima il trigger protettivo: corretta l’aspettativa, senza indebolire il vincolo. La suite completa riuscita sostituisce quei tentativi come esito corrente. L’esecuzione richiede autorizzazione fuori dal sandbox per Docker e connessioni loopback; non modifica il database applicativo.
-
-Controllati `git diff --check`, corrispondenza dei 37 nomi di tabella tra DBML e layout dbdiagram senza duplicati, cinque colonne `decimal(7,4)`, 290 collegamenti relativi a file e parsing di sei esempi JSON nella documentazione modificata. V1–V10 immutate. Apertura, acquisto, gestione HTTP dei tipi e verifica browser/frontend restano esclusi.
-
-### Verifiche artwork
-
-Verifica del **2026-11-24** su Windows/PowerShell, JDK **21.0.11** e PostgreSQL **18.7** in un container temporaneo dedicato: la suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` supera **244 test**, senza fallimenti, errori o casi saltati, e produce il JAR. Prima della suite completa, i **32 test mirati** di `PackMigrationDatabaseTests`, `PackControllerDatabaseTests` e `CardCollectionControllerDatabaseTests` sono superati, senza fallimenti, errori o casi saltati. Coprono installazione e aggiornamento V9→V10, ripetizione senza duplicati, valori approvati, range/somma delle percentuali, FK obbligatoria del pacchetto, conversione dei codici senza cambiare ID o possesso, accettazione dei quattro tipi, rifiuto di Showcase/alias legacy, risposta delle probabilità e cambio della FK senza modificare configurazioni condivise. Conservate le protezioni su pacchetti posseduti e progressi mercy.
-
-Controllati anche nomi delle tabelle e campi delle relazioni fra DBML e layout dbdiagram, parsing degli esempi JSON F03, collegamenti della documentazione e `git diff --check`. V1–V9 non sono modificate. La verifica Java riuscita richiede esecuzione autorizzata fuori dal sandbox, che blocca le connessioni loopback. Il database applicativo non è stato avviato o migrato. Apertura, acquisto, rendering frontend e integrazione browser restano esclusi; le verifiche della prima implementazione sotto sono storiche e distinte da questo allineamento.
-
-### Verifiche della prima implementazione
-
-Verifica del **2026-11-24** su Windows/PowerShell, JDK **21.0.11** e PostgreSQL **18.6** in un container temporaneo dedicato: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` supera **239 test**, zero fallimenti, errori o casi saltati, e produce il JAR. Inclusi **15 nuovi test [CRUD e sicurezza](../../springboot_app/app/src/test/java/webapp/pack/PackControllerDatabaseTests.java)** con JWT reali, permessi, validazione, JSONB, anteprime F04, paginazione, aggiornamento/rimozione, protezione del possesso e di mercy e pubblicazione OpenAPI; **4 nuovi test [della migrazione](../../springboot_app/app/src/test/java/webapp/pack/PackMigrationDatabaseTests.java)** verificano installazione vuota, aggiornamento V9, conservazione di utenti, saldi, carte e collezione esistenti, assenza di seed e vincoli. Aggiornata a V10 l’aspettativa del test delle configurazioni dei round. Controllati anche i collegamenti relativi della documentazione modificata e `git diff --check`.
-
-Il primo tentativo nel sandbox non ha avviato il contesto per un blocco delle connessioni loopback Java; la verifica completa riuscita è stata eseguita con autorizzazione fuori dal sandbox. Il database applicativo dell’utente non è stato avviato o migrato. Non sono verificati apertura, acquisto, distribuzione Compose, interfaccia browser o integrazione FrontEnd. I dati commerciali restano assenti; le fixture dei test non sono seed applicativi.
 
 ## Tipi e probabilità degli artwork
 
@@ -390,45 +368,193 @@ Regole confermate dall'utente il **2026-11-09**, rappresentate anche nella [spec
 
 ### Apertura atomica
 
-Flusso descrittivo da implementare, non un endpoint o un trigger esistente:
+Il servizio apre da uno a dieci pacchetti nella stessa transazione. La funzione `openOnePack(configuration, mercyState, drawSource)` restituisce carte e prossimo stato mercy senza aprire o committare transazioni autonome; il lotto usa lo stato restituito per l’iterazione successiva. Consumo dei pacchetti, accredito della collezione e stato mercy condividono il commit; un errore annulla tutto il lotto.
 
-```text
-function openPack(authenticatedUser, packId):
-    begin transaction
-    acquireCommonGuards(authenticatedUser, packId)
-    pack = readCurrentPackConfiguration(packId)
-    requireOwnedPack(authenticatedUser, packId)
+Il PUT amministrativo elimina i progressi esistenti: la futura apertura li inizializza dalla soglia corrente e dalla policy di rarità ancora da definire. La garanzia è risolta nella composizione del singolo pacchetto, senza ricompense differite.
 
-    if pack.mercy_threshold is null:
-        cards = drawNormalComposition(pack)
-    else:
-        T = requirePositiveThreshold(pack.mercy_threshold)
-        progress = loadOrInitializeMercy(authenticatedUser, packId,
-                                         T, approvedMinimumRarity(packId))
-        requireCounterBetween(progress.mercy_counter, 0, T)
-        remaining = max(progress.mercy_counter - 1, 0)
-        if remaining == 0:
-            cards = drawCompositionWithMinimumRarity(pack, progress.mercy_rarity)
-        else:
-            cards = drawNormalComposition(pack)
+## Inventario e apertura differita: proposta HTTP
 
-    requireValidCompositionAndRarityMetadata(cards, pack)
-    if pack.mercy_threshold is not null:
-        qualifies = hasQualifyingCard(cards, progress.mercy_rarity)
-        if remaining == 0:
-            require(qualifies)
-        progress.mercy_counter = T if qualifies else remaining
-        saveMercy(progress)
+ID: F03, con dipendenze F01 per identità e ruoli e F04 per collezione e varianti. Stato: **Planned**, non implementato. Fonte: decisioni e annotazioni di Chiampo del **2026-11-26**. Questa revisione documenta il lock semplice richiesto dall’utente; non avvia l’implementazione.
 
-    consumeOneOwnedPack(authenticatedUser, packId)
-    grantCardVariants(authenticatedUser, cards)
-    commit
-    return {cards, mercy: progress if pack.mercy_threshold is not null else null}
+### Decisioni confermate e perimetro
+
+- Il chiamante legge il proprio inventario e i pacchetti posseduti; apre un solo tipo di pacchetto per richiesta.
+- `quantity` è un intero da **1 a 10**, estremi inclusi, validato dal backend prima degli effetti di dominio.
+- Un lock di riga non attendente su `inventory_packs` protegge la coppia inventario/pacchetto durante l’intero lotto. Se la riga è già bloccata, la richiesta viene rifiutata con `409 OPENING_IN_PROGRESS`, senza accodarla.
+- Dopo il lock il backend verifica quantità effettiva e configurazione corrente. La lettura dell’inventario del frontend non riserva copie.
+- Il lotto è atomico: un errore annulla consumo, accrediti e modifiche mercy di tutte le aperture.
+- Le copie estratte incrementano solo `ownedReplica`; `tradableReplica` resta invariato su righe esistenti ed è `0` su nuove righe, anche per duplicati.
+- Il server committa prima di restituire le carte nella risposta HTTP. Il risultato della pesca resta in memoria per questa risposta.
+- Su richiesta esplicita di Chiampo, chiavi di richiesta, deduplicazione dopo il completamento, persistenza dei risultati, recupero delle pescate e relative verifiche sono esclusi. Non vengono introdotti registro aperture, durata di conservazione o cleanup dei risultati.
+- Acquisto e algoritmo di estrazione restano fuori da questa attività; le istruzioni sulle pescate saranno fornite successivamente.
+
+### Autorizzazioni e percorsi proposti
+
+Tutte le rotte richiedono Bearer JWT F01 e ruolo `USER`; non esiste una gerarchia implicita con `ADMIN`. Il proprietario deriva esclusivamente dal principal autenticato: nessun parametro permette di selezionare un altro utente o inventario.
+
+| Metodo e percorso | Richiesta | Risposta |
+| --- | --- | --- |
+| `GET /api/users/me/inventory` | Nessun corpo o parametro di query previsto | `200`, `InventoryView` |
+| `GET /api/users/me/inventory/packs` | Nessun corpo o parametro di query previsto | `200`, array completo di `OwnedPackView`, per `packId` crescente |
+| `POST /api/users/me/pack-openings` | JSON `OpenPacksRequest` | `200`, `OpenPacksResponse`, senza header `Location` |
+
+La collezione resta disponibile tramite `GET /api/users/me/collections`, secondo [F04](collezione-carte.md#Contratto%20HTTP%20condiviso). L’inventario include anche le definizioni possedute con `is_acquirable = false`; tale flag limita nuove acquisizioni e non impedisce l’apertura del possesso esistente. Il dettaglio è incluso nella lettura dell’inventario perché il catalogo USER nasconde queste definizioni.
+
+### Schemi delle letture e della richiesta
+
+I nuovi DTO utente usano camelCase; il [PackView esistente](#Schema%20della%20risposta%20PackView) conserva i propri campi snake_case. Gli identificativi sono interi positivi a 32 bit, massimo `2147483647`. Tutti i campi elencati sono obbligatori, salvo nullabilità esplicita.
+
+`InventoryView`:
+
+```json
+{
+  "cobaltShards": 1200,
+  "riftCores": 50,
+  "scraps": 80
+}
 ```
 
-Consumo del pacchetto, inizializzazione/decremento/reset del progresso e accredito delle carte condividono il commit. Un errore annulla tutti gli effetti; una garanzia incompatibile con i filtri non consuma il pacchetto o il progresso. Il guard utente serializza le aperture concorrenti e protegge anche la riga mercy ancora assente. Se la soglia è `NULL`, i progressi esistenti non vengono avanzati o eliminati automaticamente.
+Sono tre saldi interi distinti letti da `inventory`; i valori sono illustrativi. L’inventario mancante per un account valido è un errore di coerenza (`500`), non una lettura riuscita con zeri inventati; F01 crea già la riga alla registrazione.
 
-La chiave del progresso non deduplica richieste ripetute dopo un commit incerto. Chiave di richiesta, conservazione del risultato e recupero devono ancora essere definiti; il client rilegge lo stato invece di ripetere alla cieca. Il PUT amministrativo elimina i progressi esistenti; la futura apertura li inizializzerà dalla soglia corrente e dalla policy di rarità ancora da definire. La garanzia viene risolta nella composizione dell'apertura stessa, senza record di ricompensa differita.
+| Campo di `OwnedPackView` | Tipo | Regola |
+| --- | --- | --- |
+| `packId` | integer | Positivo; uguale a `pack.id`. |
+| `quantity` | integer | Positivo; valore di `inventory_packs.item_quantity`. |
+| `pack` | object | PackView completo anche per definizioni non acquisibili. |
+
+Nessuna paginazione. Un inventario senza pacchetti restituisce `200` con `[]`; un errore di lettura non equivale a un elenco vuoto.
+
+`OpenPacksRequest`, con `Content-Type: application/json`:
+
+```json
+{
+  "packId": 401,
+  "quantity": 2
+}
+```
+
+| Campo | Validazione |
+| --- | --- |
+| `packId` | Obbligatorio, intero positivo a 32 bit. |
+| `quantity` | Obbligatorio, intero da `1` a **`10`**. |
+
+Rifiutare null, stringhe o frazioni al posto degli interi, overflow e proprietà aggiuntive. Quantità `0`, negative o superiori a `10` producono `400 INVALID_REQUEST`, senza estrazioni o scritture di dominio. Non richiedere chiavi di richiesta. Il client non invia carte scelte, probabilità, stato mercy o saldi autorevoli.
+
+### Schema della risposta di apertura
+
+`OpenPacksResponse` è il risultato immediato della richiesta, senza identificativo storico o risorsa di recupero:
+
+| Campo | Tipo | Regola |
+| --- | --- | --- |
+| `packId` | integer | Tipo di pacchetto aperto. |
+| `quantityOpened` | integer | Quantità interamente aperta, da `1` a `10`. |
+| `remainingPackQuantity` | integer | Quantità non negativa dopo il lotto. |
+| `packs` | array di `OpenedPackView` | Esattamente `quantityOpened` elementi nell’ordine di apertura. |
+| `mercy` | object oppure null | Stato finale del lotto; `null` se disabilitato. |
+
+`OpenedPackView` contiene `sequence` intero da `1` a `quantityOpened` e `cards`, array ordinato di `PulledCardView`. Ogni estrazione è una voce distinta, compresi i duplicati.
+
+| Campo di `PulledCardView` | Tipo e regola |
+| --- | --- |
+| `slot` | Intero positivo, posizione nel singolo pacchetto. |
+| `cardId`, `cardArtId` | Interi positivi dell’esatta coppia carta/variante. |
+| `artCode` | `STANDARD`, `EXTENDED_ART`, `FULL_ART` oppure `ALTERNATE_ART`. |
+| `name` | Stringa, nome carta. |
+| `rarity` | Riferimento F04 con `id`, `code` e `name`, mantenendo la nullabilità F04 dei dati descrittivi. |
+| `imageUrl` | Stringa oppure `null`. |
+
+Se attivo, `mercy` contiene `threshold` intero positivo, `counter` intero fra zero e soglia e `rarity` nel formato di riferimento F04. La policy della rarità iniziale e la pesca garantita restano da definire.
+
+### Lock semplice sulle aperture concorrenti
+
+Nella transazione, la riga da proteggere è individuata tramite principal e pacchetto, non tramite un inventario scelto dal client:
+
+```sql
+SELECT ip.item_quantity
+FROM inventory_packs ip
+JOIN inventory i ON i.id = ip.id_inventory
+WHERE i.id_user = :authenticatedUserId
+  AND ip.id_pack = :packId
+FOR UPDATE OF ip NOWAIT;
+```
+
+Il lock riguarda la coppia inventario/pacchetto: richieste su altre righe non sono rifiutate da questo solo lock. Acquisirlo senza prima accodare la richiesta su un altro lock del flusso di apertura. Una riga già occupata produce rollback e `409 OPENING_IN_PROGRESS`; non usare un’attesa o un retry automatico lato server per quella richiesta.
+
+Il lock dura fino a commit o rollback e protegge controllo e consumo delle quantità. Se la riga è assente, verificare l’esistenza della definizione: `404 PACK_NOT_FOUND` se inesistente, altrimenti `409 INSUFFICIENT_PACK_QUANTITY` con disponibilità zero. Non serve bloccare una riga assente per rifiutare un’apertura senza possesso.
+
+Questa protezione rifiuta le sovrapposizioni che incontrano la riga occupata. Le richieste ricevute dopo il rilascio del lock vengono valutate come nuove aperture; ulteriori problemi di retry e recupero sono esclusi per decisione esplicita di Chiampo.
+
+### Approccio confermato per mercy nei lotti
+
+Usare una sola funzione per il singolo pacchetto, senza commit interni, passando il nuovo stato all’iterazione successiva:
+
+```text
+begin transaction
+quantityOwned = lockOwnedPackNowait(authenticatedUser, packId)
+pack = readCurrentPackConfiguration(packId)
+requireEnoughCopies(quantityOwned, quantity)
+state = loadOrInitializeActiveMercy(user, pack)
+results = []
+for sequence in 1..quantity:
+    result = openOnePack(pack, state, drawSource)
+    results.append(result.cards)
+    state = result.nextMercy
+grantOwnedCardsOnly(results)
+consumeOwnedPacks(quantity)
+saveActiveMercy(state)
+commit
+return buildOpenPacksResponse(results, state)
+```
+
+Pseudocodice del comportamento previsto, non implementazione. Con mercy disabilitato non inizializzare, avanzare o cancellare progressi inattivi. Il risultato delle carte resta in memoria; sono persistiti soltanto possesso, consumo e progresso attivo.
+
+Con soglia `10`, contatore iniziale `3` e nessuna pesca qualificante anticipata, quattro aperture producono gli stati finali `2, 1, 10, 9`: la terza attiva la garanzia e resetta la soglia. Una pesca naturale qualificante resetta subito il contatore nell’iterazione corrente.
+
+### Sequenza transazionale prevista
+
+1. Autenticare, autorizzare e validare identificativi e quantità `1–10`.
+2. Iniziare la transazione e tentare il lock della riga di possesso con `NOWAIT`; rifiutare il conflitto senza accodare la richiesta.
+3. Verificare esistenza e configurazione corrente del pacchetto e disponibilità effettiva sotto lock.
+4. Aprire sequenzialmente i pacchetti, mantenendo in memoria carte e stato mercy intermedio.
+5. Incrementare solo `ownedReplica` per carta/arte; conservare `tradableReplica` esistente o inizializzarlo a zero. Proteggere incrementi concorrenti e overflow.
+6. Consumare la quantità richiesta; eliminare la riga `inventory_packs` se il residuo è zero, conservando il progresso mercy.
+7. Salvare il progresso mercy attivo e committare tutto il lotto. Nessun commit intermedio o registro delle pescate.
+8. Restituire `200` con le carte e le quantità risultanti, dopo il commit.
+
+Qualsiasi errore prima del commit annulla l’intero lotto. Il servizio di estrazione partecipa alla transazione del lotto e non effettua scritture indipendenti. L’integrazione con i lock già usati da PUT/DELETE amministrativi deve mantenere operazioni coerenti sul possesso; non introdurre attese preliminari che trasformino il rifiuto concorrente in un’apertura accodata.
+
+### Codici HTTP ed errori proposti
+
+Le risposte applicative di errore usano `application/problem+json` con campo stabile `code`; preservare la semantica di autenticazione F01 e verificare il formato prodotto dalla catena di sicurezza.
+
+| HTTP | `code` | Condizione |
+| --- | --- | --- |
+| `400` | `INVALID_REQUEST` | JSON/campi non validi, quantità fuori `1–10`, ID non positivo, overflow o proprietà aggiuntive. |
+| `401` | `UNAUTHENTICATED` | Bearer assente, scaduto, revocato o non valido. |
+| `403` | `FORBIDDEN` | Ruolo non autorizzato. |
+| `404` | `PACK_NOT_FOUND` | Definizione inesistente. |
+| `409` | `INSUFFICIENT_PACK_QUANTITY` | Quantità posseduta insufficiente, anche zero. |
+| `409` | `OPENING_IN_PROGRESS` | Riga di possesso già bloccata; richiesta rifiutata senza attesa. |
+| `409` | `PACK_CONFIGURATION_INVALID` | Configurazione incapace di produrre un’apertura valida. |
+| `415` | `UNSUPPORTED_MEDIA_TYPE` | POST con tipo di contenuto non JSON. |
+| `500` | `INTERNAL_ERROR` | Errore inatteso o violazione degli invarianti. |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Indisponibilità tecnica temporanea. |
+
+Letture e apertura riuscite restituiscono `200`. In caso di insufficienza includere `packId`, `requestedQuantity` e `availableQuantity` del chiamante. Non esporre SQL, stack trace o dati altrui.
+
+### Criteri di accettazione e dipendenze aperte
+
+- Letture isolate per principal, ruoli corretti, inventario vuoto distinto da errore e possesso non acquisibile incluso.
+- Quantità `1` e `10` accettate con precondizioni valide; input fuori limite, null, stringhe, frazioni e overflow rifiutati senza effetti. OpenAPI espone `minimum: 1` e `maximum: 10`.
+- Con una transazione che mantiene il lock di possesso, un secondo invio sulla stessa riga riceve `409 OPENING_IN_PROGRESS` senza estrazioni o effetti di dominio; dopo il rilascio una nuova richiesta può procedere se ha copie sufficienti.
+- Errore intermedio: rollback di tutte le carte, del consumo e del progresso mercy del lotto.
+- Variante nuova: `tradableReplica = 0`; due copie aggiunte a una variante con contatori `(4, 1)` producono `(6, 1)`.
+- Con estrazioni controllate, il lotto e applicazioni singole della transizione mercy producono gli stessi stati intermedi e carte, includendo reset naturali e garanzia.
+- Nessun header di deduplicazione, identificativo storico, risultato delle pescate persistito o endpoint di recupero.
+- **DA DEFINIRE:** algoritmo di estrazione, filtri vuoti, artwork mancante, policy della rarità mercy e distribuzione della garanzia. Queste dipendenze non cambiano il limite, l’atomicità o il lock confermati.
+
+Riferimenti tecnici: [lock di riga PostgreSQL](https://www.postgresql.org/docs/18/sql-select.html#SQL-FOR-UPDATE-SHARE), [durata dei lock](https://www.postgresql.org/docs/18/explicit-locking.html), [Problem Details](https://www.rfc-editor.org/rfc/rfc9457.html).
+
 
 ## Percorso acquisto, addebito, estrazione e collezione
 
@@ -438,22 +564,22 @@ Il flusso seguente descrive il comportamento atteso a livello funzionale per F03
 2. **Richiesta d'acquisto.** L'utente conferma l'offerta. Il server identifica l'utente autenticato e rilegge prezzo, disponibilità e composizione dell'offerta. Non considera attendibile un saldo o un prezzo calcolato dal client.
 3. **Controllo e addebito.** Il server controlla la disponibilità del saldo e registra l'acquisto al prezzo applicato. L'addebito deve riferirsi all'acquisto e non superare il saldo disponibile; saldo e registrazione devono restare coerenti anche in presenza di richieste concorrenti.
 4. **Accredito del pacchetto acquistato.** Il server incrementa di una unità il possesso del pacchetto associato all'offerta. La rappresentazione del riferimento all'offerta e del prezzo pagato resta da definire; l'offerta non contiene più tipi di pacchetto.
-5. **Apertura ed estrazione.** Per ciascun pacchetto aperto, il server applica la composizione e le regole casuali approvate per quel tipo e registra il risultato. Il client non sceglie né modifica le carte estratte. La composizione per rarità è richiesta dalla traccia, ma quantità, distribuzione e regole per duplicati sono ancora da definire.
-6. **Aggiornamento della collezione.** Per ogni carta estratta, il server inserisce o aggiorna la riga `COLLECTIONS` identificata da utente, carta e variante grafica. Le copie duplicate della stessa variante incrementano il contatore aggregato `owned_replica`; non viene creato un identificativo `copyId` per ciascuna copia. L'aggiornamento di `tradable_replica` deve rispettare la policy di trasferimento e prenotazione F06, ancora da definire per l'apertura.
-7. **Risposta e consultazione.** Il client riceve l'esito dell'operazione, il saldo aggiornato e le carte ottenute, oppure recupera l'esito dell'apertura separatamente se questa è differita. La risposta di apertura può elencare le estrazioni; la collezione F04 espone poi i contatori aggregati per carta e variante.
+5. **Apertura ed estrazione.** Per ciascun pacchetto aperto, il server applica la composizione e le regole casuali approvate per quel tipo e mantiene le carte estratte in memoria per la risposta. Il client non sceglie né modifica le carte estratte. La composizione per rarità è richiesta dalla traccia, ma quantità, distribuzione e regole per duplicati sono ancora da definire.
+6. **Aggiornamento della collezione.** Per ogni carta estratta, il server inserisce o aggiorna la riga `COLLECTIONS` identificata da utente, carta e variante grafica. Le copie duplicate della stessa variante incrementano solo il contatore aggregato `owned_replica`; non viene creato un identificativo `copyId` per ciascuna copia. Per decisione dell’utente del **2026-11-26**, `tradable_replica` resta invariato su una riga esistente ed è `0` su una nuova; l’apertura non modifica le copie già scambiabili o gli hold F06.
+7. **Risposta e consultazione.** Il client riceve direttamente le carte ottenute dopo il commit dell’apertura; la collezione F04 espone poi i contatori aggregati per carta e variante. Il saldo riguarda il futuro contratto d’acquisto, non l’apertura di pacchetti già posseduti. Non è previsto recuperare una precedente pesca tramite API.
 
 ### Coerenza e casi di errore da concordare
 
-- **Unità di successo.** È raccomandato che addebito e registrazione dell'acquisto siano atomici. Se l'apertura avviene nella stessa richiesta, anche estrazione registrata e copie aggiunte devono essere coerenti con l'esito; non deve risultare un acquisto addebitato senza una possibilità definita di recuperare o completare l'apertura.
+- **Unità di successo.** È raccomandato che addebito e registrazione dell’acquisto siano atomici. L’eventuale composizione con un’apertura immediata resta da definire separatamente; per l’apertura differita valgono atomicità del lotto e risposta diretta stabilite sopra.
 - **Saldo insufficiente.** La richiesta non deve produrre un addebito né pacchetti o copie. La risposta d'errore e il modo in cui l'interfaccia comunica il saldo residuo sono da definire.
 - **Concorrenza.** Acquisti simultanei non devono spendere due volte la stessa disponibilità. Tecnica di serializzazione/controllo, isolamento e comportamento in caso di conflitto sono da definire dopo la scelta dello stack.
-- **Retry e doppio invio.** Una richiesta ripetuta non dovrebbe generare addebiti o aperture duplicate; identificatore idempotente, durata e risposta da restituire sono da concordare.
-- **Errore durante l'apertura.** Se la generazione o la registrazione del risultato fallisce, l'esito deve restare recuperabile e non creare copie parziali o duplicati. Politica di rollback o ripresa e registrazione della casualità restano da definire.
+- **Richieste concorrenti.** Per l’apertura differita vale il lock non attendente della [proposta HTTP](#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP), con rifiuto della riga occupata. Deduplicazione dei retry e recupero delle pescate sono esclusi su richiesta esplicita di Chiampo. Il contratto dell’acquisto resta da definire separatamente.
+- **Errore durante l’apertura.** Un errore prima del commit annulla l’intero lotto; il risultato diretto viene inviato dopo commit. Recupero dopo una risposta persa e registrazione della casualità sono fuori dal piano richiesto.
 - **Saldo mostrato.** Il saldo restituito dal server è quello autorevole dopo l'operazione; i valori locali del client sono solo presentazione e devono riallinearsi alla risposta.
 
 ### Scelta ancora aperta: apertura immediata o differita
 
-L'offerta contiene pacchetti; non è ancora deciso se l'acquisto li apra subito o li aggiunga prima a una disponibilità dell'utente per un'apertura successiva. In entrambi i casi il server deve impedire di aprire più volte lo stesso pacchetto. Il contratto dovrà quindi specificare stati e operazioni dell'apertura, nonché se l'acquisto restituisce direttamente le carte o solo i pacchetti ottenuti.
+Il flusso richiesto il **2026-11-26** prevede esplicitamente l’apertura differita di pacchetti già posseduti, secondo la proposta HTTP sopra. L’integrazione dell’acquisto con questo percorso, e l’eventuale supporto anche all’apertura immediata, restano da concordare: non sono definiti qui un endpoint o una risposta di acquisto.
 
 ### Esempi di dati illustrativi
 
@@ -493,16 +619,16 @@ Risultato esemplificativo nel caso, ancora da decidere, in cui l'apertura avveng
 }
 ```
 
-Se sarà scelta l'apertura differita, il risultato delle carte dovrà essere rappresentato da un esito separato, da definire. Per l'esempio di lettura della collezione aggregata, vedere [F04 — Catalogo e collezione](collezione-carte.md#Risposta%20collezione).
+Per l’apertura differita richiesta, la risposta diretta è `OpenPacksResponse`, definita sopra. Gli esempi d’acquisto in questa sezione restano illustrativi e non sostituiscono tale schema. Per la lettura della collezione aggregata, vedere [F04 — Catalogo e collezione](collezione-carte.md#Risposta%20collezione).
 
 ## Da definire
 
 - Risorse ammesse nei prezzi, importi e limiti di `pack_price`, selettore della risorsa e collegamento offerta/pacchetto; assegnazione iniziale dei crediti e ulteriori fonti di variazione in coordinamento con D03. Non è modellato un registro dei movimenti.
 - Aggiornamento delle anteprime persistite quando cambiano dati, disponibilità o varianti del catalogo F04.
 - Tipi e disponibilità dei pacchetti, composizione per rarità, carte garantite, gestione dei duplicati, slot/probabilità per rarità, filtri vuoti e applicazione delle quattro probabilità artwork, incluso il trattamento di una variante mancante.
-- Corrispondenza delle prenotazioni e modalità di apertura immediata o differita; stati, risultato e recupero dopo errori; il PUT amministrativo elimina i progressi mercy come descritto nel contratto implementato.
+- Corrispondenza delle prenotazioni e policy di eventuali altre operazioni sulla scambiabilità; l’apertura incrementa solo il possesso secondo la decisione sopra. Integrazione dell’acquisto con l’apertura differita richiesta ed eventuale apertura immediata. Il PUT amministrativo elimina i progressi mercy come descritto nel contratto implementato.
 - Policy iniziale di `mercy_rarity`, ordinamento delle rarità e slot/distribuzione della garanzia.
-- Contratto API di acquisto e apertura, deduplicazione, transazioni economiche, concorrenza e recupero dei commit incerti; il CRUD del catalogo è definito nella sezione implementata sopra.
+- Contratto API di acquisto e transazioni economiche. Per inventario/apertura sono confermati limite di dieci, lock semplice senza attesa, atomicità e risposta diretta. Persistenza delle pescate, deduplicazione dei retry, recupero e relativa conservazione sono esclusi dal piano. Nessuna nuova rotta è implementata.
 
 ## Collegamenti
 

@@ -1,8 +1,8 @@
 # Gioco di carte collezionabili digitale
 
-Aggiornamento F03 del **2026-11-26**: catalogo per ruolo senza paginazione, PUT con possesso conservato e pulizia mercy, DELETE con rimborso in Scaglie al prezzo corrente. **257 test backend superati** e JAR prodotto su database isolato; [contratto, verifiche e limiti](docs/BackEnd/acquisto-pacchetti.md#verifiche-catalogo-e-riconciliazione-del-2026-11-26).
+Aggiornamento F03 del **2026-11-26**: catalogo per ruolo senza paginazione, PUT con possesso conservato e pulizia mercy, DELETE con rimborso in Scaglie al prezzo corrente. **257 test backend superati** e JAR prodotto su database isolato; [contratto, verifiche e limiti](docs/BackEnd/acquisto-pacchetti.md#Catalogo%20implementato%3A%20migrazione%20e%20API).
 
-Verifica F03 del **2026-11-25**: **251 test backend superati** e JAR prodotto su JDK 21.0.11/PostgreSQL 18.6 isolato. [Ambito e limiti](docs/BackEnd/acquisto-pacchetti.md#verifiche-slot-del-2026-11-25).
+Verifica F03 del **2026-11-25**: **251 test backend superati** e JAR prodotto su JDK 21.0.11/PostgreSQL 18.6 isolato. [Ambito e limiti](docs/BackEnd/acquisto-pacchetti.md#Slot%20e%20probabilit%C3%A0%20per%20rarit%C3%A0).
 
 Aggiornamento F03 del **2026-11-25**: V11 introduce slot ordinati, tipi riutilizzabili e probabilità per rarità configurabili; percentuali esatte `decimal(7,4)` anche per gli artwork e flag `is_acquirable`. [Contratto e migrazione](docs/BackEnd/acquisto-pacchetti.md#slot-e-probabilità-per-rarità). Acquisto e apertura restano rinviati.
 

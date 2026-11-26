@@ -5,7 +5,7 @@ Aggiornamento F03 del **2026-11-26**, su decisione dell’utente: la cancellazio
 ID: D03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Digital Strategist).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: **2026-11-26**, rimborso amministrativo in Scaglie al prezzo corrente confermato dall’utente; probabilità artwork confermate il 2026-11-24; terminologia delle risorse e garanzia mercy confermate il 2026-11-09. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-26**, confermati dall’utente rimborso amministrativo in Scaglie al prezzo corrente e accredito delle carte estratte al solo possesso, senza incremento delle copie scambiabili; probabilità artwork confermate il 2026-11-24; terminologia delle risorse e garanzia mercy confermate il 2026-11-09. Verifiche applicative: non eseguite.
 
 ## Obiettivo e decisioni note
 
@@ -33,6 +33,10 @@ La [specifica dell'inventario](../BackEnd/Database/database-schema-v1.1.md#inven
 Distribuzione iniziale approvata dall’utente il **2026-11-24**: Standard Art **81%**, Extended Art **10%**, Full Art **7,5%**, Alternate Art **1,5%**; totale **100%**. Showcase è escluso e il suo precedente 1% passa a Standard. Si tratta di una scelta di bilanciamento del progetto, ispirata ai riferimenti pubblicati sui giochi di carte, non della distribuzione ufficiale di un prodotto esistente. I [tipi editoriali D01](lore-identita-carte.md#tipi-di-artwork) non includono livelli di effetti speciali.
 
 Le percentuali valgono per una singola estrazione del tipo di artwork; non fissano numero o posizione degli slot in un pacchetto e non sono le probabilità delle rarità delle carte. La configurazione è associata direttamente al pacchetto secondo [F03](../BackEnd/acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork). Applicazione agli slot, varianti mancanti e apertura restano da definire e implementare.
+
+## Copie ottenute dalle aperture
+
+Decisione dell’utente del **2026-11-26**: le carte estratte incrementano solo il possesso, senza aumentare le copie scambiabili. Per una variante già posseduta il contatore scambiabile resta invariato; per una variante nuova parte da zero. La regola vale anche per doppioni e non introduce conversioni in Rotami o nuove regole per rendere scambiabili le copie. [Contratto tecnico F03](../BackEnd/acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP), non ancora implementato.
 
 ## Garanzia mercy all'apertura
 

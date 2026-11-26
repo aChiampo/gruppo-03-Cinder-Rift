@@ -30,7 +30,7 @@ Aggiornamento implementato del **2026-11-20**: V7/V8 aggiungono gli effetti cond
 - [Riepilogo degli endpoint](GUIDA-API-FRONTEND.md) — elenco di autenticazione, profili, mazzi, PvE, rotte proposte per scambi e contratto definito per amicizie, con percorso e metodo HTTP, funzione, stato (`Planned`, `BE Implemented`, `FE Implemented`), autenticazione, codici HTTP, ruoli e riferimenti canonici.
 - [F01 — Accesso utenti](accesso-utenti.md)
 - [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
-- [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md) — catalogo e CRUD disponibili; apertura e acquisto rinviati, nessun seed dei pacchetti; configurazione artwork inizializzata.
+- [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md) — catalogo e CRUD disponibili; [proposta inventario/apertura differita](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) documentata il 2026-11-26, massimo dieci, lock non attendente, lotto atomico e risposta diretta dopo commit; nuove rotte non implementate, estrazione da definire. Acquisto rinviato, nessun seed dei pacchetti; configurazione artwork inizializzata.
 - [F04 — Catalogo e collezione delle carte](collezione-carte.md) — letture separate nei package `card` e `collection`.
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi e marketplace](scambi-mercato.md)
