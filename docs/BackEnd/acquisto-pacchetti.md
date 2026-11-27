@@ -1,5 +1,7 @@
 # Offerte e acquisto di pacchetti
 
+**Rinumerazione F03 — 2026-11-27.** Le migrazioni pacchetti e slot passano rispettivamente da V12/V13 a V13/V14 per riservare V12 alla PR dell’altro branch segnalata dall’utente. Questo branch contiene undici script: V1–V8, V11 e V13–V14; V12 non è ancora inclusa. La rinumerazione evita la duplicazione della versione V12, ma non garantisce assenza di conflitti Git o compatibilità SQL con l’altra PR. Integrare V12 prima di applicare la catena combinata e verificarla su un database isolato; se V13/V14 sono già applicate, una V12 aggiunta dopo richiede una procedura esplicita per la migrazione fuori ordine. I database che hanno già applicato le vecchie V12/V13 F03 richiedono una conversione separata: non avviare questa catena su quella cronologia e non usare `repair` per mascherare le differenze. Le verifiche precedenti alla rinumerazione restano evidenze storiche. Nessuna modifica al database applicativo.
+
 Verifica finale acquisto F03 del **2026-11-27**: **412 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.6 isolato. Incluse 49 prove di acquisto e 5 del lettore prenotazioni condiviso. Nessuna migrazione o modifica al database applicativo; frontend e flussi F06 esclusi. [Comando, copertura e limiti](../../springboot_app/app/README.md#verifica-acquisto-f03-del-2026-11-27).
 
 Aggiornamento acquisto del **2026-11-27**, su richiesta dell’utente: implementato `POST /api/users/me/pack-purchases`, con addebito tramite `DebitService` condiviso e lettura delle prenotazioni tramite `ReservationReader` condiviso. Confermata la corrispondenza degli hold monetari F06 con le Scaglie. Nessuna nuova migrazione, deduplicazione o cronologia acquisti; seed commerciale e frontend esclusi. [Contratto di acquisto](#acquisto-pacchetti-contratto-http). Le verifiche dell’apertura sotto sono precedenti a questo intervento.
@@ -8,7 +10,7 @@ Verifica dell’apertura F03 del **2026-11-27**: **358 test backend superati**, 
 
 Verifica precedente dell’integrazione del **2026-11-27**: **300 test backend**, **51 del motore** e **54 frontend** superati; JAR backend e build React prodotti. [Comandi, copertura e limiti](../../springboot_app/app/README.md#verifica-dellintegrazione-f03-del-2026-11-27). Database applicativo non modificato.
 
-**Integrazione con dev — 2026-11-27.** Su richiesta dell’utente, `feature/f03-packages` conserva il cleanup di `dev`: V1–V8 e V11 restano inalterate, V3 definisce lo schema completo e V5 inserisce direttamente carte e arti `STANDARD` con ID generati. Le migrazioni F03 diventano V12/V13 per seguire V11 amicizie senza collisioni. La catena completa contiene undici script: V1–V8 e V11–V13. La cronologia precedente al cleanup, incluse le vecchie V10/V11 F03, richiede una conversione separata: non usare `repair` per mascherare checksum o versioni incompatibili. Il database applicativo non viene modificato da questa integrazione.
+**Integrazione con dev — 2026-11-27.** Su richiesta dell’utente, `feature/f03-packages` conserva il cleanup di `dev`: V1–V8 e V11 restano inalterate, V3 definisce lo schema completo e V5 inserisce direttamente carte e arti `STANDARD` con ID generati. Le migrazioni F03 diventano V13/V14 per seguire V11 amicizie senza collisioni. La catena completa contiene undici script: V1–V8, V11 e V13–V14. La cronologia precedente al cleanup, incluse le vecchie V10/V11 F03, richiede una conversione separata: non usare `repair` per mascherare checksum o versioni incompatibili. Il database applicativo non viene modificato da questa integrazione.
 
 ID: F03 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: migrazioni, CRUD, validazione delle pescate, inventario, apertura e acquisto disponibili. Responsabile: Chiampo (Software Developer).
@@ -21,7 +23,7 @@ Decisioni confermate di Chiampo del **2026-11-26**: le pescate incrementano **so
 
 Revisione documentale del **2026-11-26**: aggiunti gli schemi di richiesta e risposta alla tabella degli endpoint, confrontati con i record Java; collegamenti alle sezioni adattati al formato dei titoli di Obsidian. Nessuna modifica al contratto o nuova esecuzione dei test backend.
 
-Aggiornamento implementativo del **2026-11-27**, su istruzione esplicita dell’utente: V12 definisce direttamente la rarità mercy nullable nel pacchetto. CRUD allineato e garanzia sull’ultimo slot ora implementata; la verifica di questa revisione dello schema è storica rispetto all’apertura. Verifica della precedente revisione dello schema: **38 test mirati superati**, zero fallimenti/errori/casi saltati, con JDK 21.0.11 e PostgreSQL 18.7 isolato; comando e copertura nel README backend. Nessuna modifica al database applicativo.
+Aggiornamento implementativo del **2026-11-27**, su istruzione esplicita dell’utente: V13 definisce direttamente la rarità mercy nullable nel pacchetto. CRUD allineato e garanzia sull’ultimo slot ora implementata; la verifica di questa revisione dello schema è storica rispetto all’apertura. Verifica della precedente revisione dello schema: **38 test mirati superati**, zero fallimenti/errori/casi saltati, con JDK 21.0.11 e PostgreSQL 18.7 isolato; comando e copertura nel README backend. Nessuna modifica al database applicativo.
 
 ## Decisioni confermate del 2026-11-27
 
@@ -34,13 +36,13 @@ Regole implementate nel backend per configurazione, apertura e acquisto. Seed co
 - **Acquisto:** ogni pacchetto rappresenta la propria offerta, con prezzo unitario `pack_price` in Scaglie (`cobalt_shards`). Sono acquistabili più unità dello stesso tipo, sempre chiuse e accreditate nell’inventario. Nessuna apertura immediata né limite commerciale di possesso; quantità limitata dal saldo disponibile, entro i limiti tecnici degli interi. Scaglie prenotate dal mercato non spendibili, con messaggio backend che spiega il rifiuto. Gli hold monetari F06 riservano Scaglie, su conferma dell’utente del 2026-11-27.
 - **Seed:** tipi, slot, prezzi, soglie e rarità iniziali sono in definizione. Acquisizione delle risorse: **DA DEFINIRE**. Attività solo backend; nessuna implementazione frontend.
 
-### Definizione della rarità mercy in V12
+### Definizione della rarità mercy in V13
 
-[V12](../../springboot_app/app/src/main/resources/db/migration/V12__create_f03_packs_schema.sql) definisce direttamente `packs.mercy_rarity integer NULL`, senza default, con FK `packs_mercy_rarity_fk` a `rarities.id`. `user_mercy` nasce con i soli campi `id_user`, `id_pack` e `mercy_counter`. Su istruzione esplicita dell’utente si modifica lo script iniziale: non viene aggiunta una migrazione successiva o una conversione di dati legacy. La catena resta V1–V8 e V11–V13. Nessuna modifica al database applicativo.
+[V13](../../springboot_app/app/src/main/resources/db/migration/V13__create_f03_packs_schema.sql) definisce direttamente `packs.mercy_rarity integer NULL`, senza default, con FK `packs_mercy_rarity_fk` a `rarities.id`. `user_mercy` nasce con i soli campi `id_user`, `id_pack` e `mercy_counter`. Su istruzione esplicita dell’utente si modifica lo script iniziale: non viene aggiunta una migrazione successiva o una conversione di dati legacy. La catena resta V1–V8, V11 e V13–V14. Nessuna modifica al database applicativo.
 
 ## Catalogo implementato: migrazione e API
 
-La migrazione [V12__create_f03_packs_schema.sql](../../springboot_app/app/src/main/resources/db/migration/V12__create_f03_packs_schema.sql) aggiunge `artwork_pull_rates`, `packs`, `inventory_packs` e `user_mercy` alla base V1–V8 e V11 di `dev`; riusa `inventory` e i cataloghi esistenti. Inizializza solo la configurazione artwork approvata e vincola i quattro codici delle arti già inizializzate da V5, senza inserire pacchetti, possesso o progressi.
+La migrazione [V13__create_f03_packs_schema.sql](../../springboot_app/app/src/main/resources/db/migration/V13__create_f03_packs_schema.sql) aggiunge `artwork_pull_rates`, `packs`, `inventory_packs` e `user_mercy` alla base V1–V8 e V11 di `dev`; riusa `inventory` e i cataloghi esistenti. Inizializza solo la configurazione artwork approvata e vincola i quattro codici delle arti già inizializzate da V5, senza inserire pacchetti, possesso o progressi.
 
 Tutte le rotte richiedono Bearer JWT F01. `USER` consulta soltanto pacchetti con `is_acquirable = true`, anche sul dettaglio; `ADMIN` vede tutti i pacchetti e può scriverli. Le scritture configurano prodotti senza caricare immagini o assegnare pacchetti/carte; PUT elimina i progressi mercy relativi e DELETE rimborsa il possesso come descritto sotto.
 
@@ -117,7 +119,7 @@ Gli oggetti annidati seguono i record [ArtworkPullRates](../../springboot_app/ap
 
 ### Slot e probabilità per rarità
 
-La migrazione [V13](../../springboot_app/app/src/main/resources/db/migration/V13__normalize_f03_slot_pull_rates.sql) sostituisce `packs.slot_pulls` con tre tabelle:
+La migrazione [V14](../../springboot_app/app/src/main/resources/db/migration/V14__normalize_f03_slot_pull_rates.sql) sostituisce `packs.slot_pulls` con tre tabelle:
 
 | Tabella | Colonne e vincoli |
 | --- | --- |
@@ -149,7 +151,7 @@ Esempio di frammento API con ID e valori illustrativi:
 
 La precisione SQL è `decimal(7,4)`: tre cifre intere più quattro decimali, equivalente a `numeric(7,4)`. `decimal(3,4)` non descrive il dominio richiesto. Sono percentuali, non frazioni; artwork e rarità usano lo stesso tipo e totali 100. I valori con più di quattro decimali sono arrotondati da PostgreSQL alla scala della colonna.
 
-V13 conserva pacchetti e percentuali artwork esistenti, inizializza `is_acquirable = false` e non inventa tipi o probabilità. Configurazioni legacy `{}`/`[]` diventano assenza di slot; prima di un nuovo PUT occorre fornire gli ID coerenti con `card_number`. Un JSON legacy non vuoto blocca e annulla la migrazione con errore esplicito: salvare il contenuto e predisporre una mappatura verificata prima di riprovare. V1–V8 e V11 di `dev` restano inalterate; V12/V13 sostituiscono le precedenti versioni F03 nella nuova catena.
+V14 conserva pacchetti e percentuali artwork esistenti, inizializza `is_acquirable = false` e non inventa tipi o probabilità. Configurazioni legacy `{}`/`[]` diventano assenza di slot; prima di un nuovo PUT occorre fornire gli ID coerenti con `card_number`. Un JSON legacy non vuoto blocca e annulla la migrazione con errore esplicito: salvare il contenuto e predisporre una mappatura verificata prima di riprovare. V1–V8 e V11 di `dev` restano inalterate; V13/V14 sostituiscono le precedenti versioni F03 nella nuova catena.
 
 
 ## Tipi e probabilità degli artwork
@@ -163,7 +165,7 @@ Decisione confermata dall’utente il **2026-11-24**: quattro tipi di artwork, s
 | Full Art | `FULL_ART` | `full_art` | 7,50% |
 | Alternate Art | `ALTERNATE_ART` | `alternate_art` | 1,50% |
 
-`artwork_pull_rates` contiene ID intero generato e quattro percentuali esatte `decimal(7,4)` dopo V13, obbligatorie, ciascuna fra 0 e 100 e con somma 100. V12 inizializza la configurazione approvata; V13 estende la precisione senza cambiarla. Ogni pacchetto richiede `id_artwork_pull_rates`, FK diretta obbligatoria senza default. Più pacchetti possono riutilizzare una configurazione; eliminarne uno non elimina la configurazione. Una configurazione referenziata non può essere eliminata.
+`artwork_pull_rates` contiene ID intero generato e quattro percentuali esatte `decimal(7,4)` dopo V14, obbligatorie, ciascuna fra 0 e 100 e con somma 100. V13 inizializza la configurazione approvata; V14 estende la precisione senza cambiarla. Ogni pacchetto richiede `id_artwork_pull_rates`, FK diretta obbligatoria senza default. Più pacchetti possono riutilizzare una configurazione; eliminarne uno non elimina la configurazione. Una configurazione referenziata non può essere eliminata.
 
 POST e PUT dei pacchetti richiedono `id_artwork_pull_rates` positivo ed esistente; riferimenti mancanti o sconosciuti restituiscono `400`. Non vengono create o modificate probabilità implicitamente. Per scegliere una configurazione, l’amministrazione legge gli ID da `SELECT id, standard, extended_art, full_art, alternate_art FROM artwork_pull_rates ORDER BY id`; non si assume che una sequenza sia consecutiva. La gestione delle righe avviene a livello database; non è introdotto un CRUD HTTP separato. Cambiare configurazione di un pacchetto significa sostituirne la FK, senza aggiornare una riga condivisa; possesso e mercy seguono la riconciliazione amministrativa descritta sopra.
 
@@ -184,7 +186,7 @@ GET, POST e PUT restituiscono anche `artwork_pull_rates`, oggetto di sola lettur
 
 Le percentuali descrivono una singola estrazione del tipo di artwork, distinta dalla rarità di gioco; non stabiliscono da sole una probabilità complessiva per pacchetto. Ogni slot estrae l’artwork indipendentemente; variante assente risolta con `STANDARD` della stessa carta. I filtri sono cumulativi. Estrazione e apertura seguono il contratto implementato sotto.
 
-V5 crea direttamente le arti `STANDARD` con immagini e ID generati. V12 aggiunge il `CHECK` sui quattro codici canonici senza rinominare arti o modificare immagini, collezione e riferimenti dei mazzi. Eventuali dati esterni con alias legacy richiedono una mappatura esplicita prima della migrazione; non si perdono varianti automaticamente. Le migrazioni ripulite V1–V8 e V11 di `dev` restano inalterate.
+V5 crea direttamente le arti `STANDARD` con immagini e ID generati. V13 aggiunge il `CHECK` sui quattro codici canonici senza rinominare arti o modificare immagini, collezione e riferimenti dei mazzi. Eventuali dati esterni con alias legacy richiedono una mappatura esplicita prima della migrazione; non si perdono varianti automaticamente. Le migrazioni ripulite V1–V8 e V11 di `dev` restano inalterate.
 
 ## Obiettivo e decisioni note
 
@@ -377,7 +379,7 @@ Esempio di descrizione e prezzo con cinque carte complete. Testi, identificativi
 
 `example_pull` è un’anteprima dimostrativa, non il risultato di un’apertura né un accredito alla collezione. I campi descrittivi di garanzia e miglior pesca sono metadati frontend; non determinano le probabilità e non sostituiscono i tipi di slot. Restano i controlli strutturali su quantità, forma, tipi e riferimenti delle anteprime. I campi `granted_*` descrivono la garanzia del pacchetto e non sostituiscono soglia o progresso mercy. JSONB valida la sintassi JSON ma non questi controlli; non sono introdotti nuovi `CHECK` SQL. Anteprime aggiornate solo dagli amministratori. Le regole di estrazione sopra sono implementate dal servizio di apertura.
 
-Il modello aggiornato è nella [specifica database](Database/database-schema-v1.1.md#Inventario%20e%20pacchetti) e nel relativo DBML. La revisione documentale del 2026-11-23 non applicava SQL; la V12 di questo branch crea `PACKS`, come descritto sopra. Eventuali dati preesistenti in altre installazioni richiederanno una conversione esplicita della descrizione e la valorizzazione del prezzo, senza inventare default.
+Il modello aggiornato è nella [specifica database](Database/database-schema-v1.1.md#Inventario%20e%20pacchetti) e nel relativo DBML. La revisione documentale del 2026-11-23 non applicava SQL; la V13 di questo branch crea `PACKS`, come descritto sopra. Eventuali dati preesistenti in altre installazioni richiederanno una conversione esplicita della descrizione e la valorizzazione del prezzo, senza inventare default.
 
 ## Mercy sulle aperture
 

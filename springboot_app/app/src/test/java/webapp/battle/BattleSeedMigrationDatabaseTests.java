@@ -91,7 +91,7 @@ class BattleSeedMigrationDatabaseTests {
                 .query(Integer.class).single();
         assertThat(unrelated).isGreaterThan(jdbc.sql("SELECT max(id) FROM cards WHERE id <> :id")
                 .param("id", unrelated).query(Integer.class).single());
-        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(6);
+        assertThat(target("14").migrate().migrationsExecuted).isEqualTo(6);
         assertThat(jdbc.sql("SELECT f.code FROM cards c JOIN factions f ON f.id = c.id_faction WHERE c.id = :id")
                 .param("id", sentinel).query(String.class).single()).isEqualTo("SAP");
         assertThat(jdbc.sql("SELECT energy_cost FROM cards WHERE id = :id")

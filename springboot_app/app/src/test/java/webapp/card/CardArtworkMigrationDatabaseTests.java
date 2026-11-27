@@ -51,7 +51,7 @@ class CardArtworkMigrationDatabaseTests {
     void laterMigrationsPreserveArtworkIdentitiesPlayersAndOwnership() {
         target("6").migrate();
         String before = snapshot();
-        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(5);
+        assertThat(target("14").migrate().migrationsExecuted).isEqualTo(5);
         assertThat(snapshot()).isEqualTo(before);
         assertArtwork();
     }

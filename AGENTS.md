@@ -10,15 +10,17 @@
   il risultato PvE è consultabile in memoria, senza storico persistito.
   I contratti correnti sono in `docs/BackEnd/accesso-utenti.md`,
   `docs/BackEnd/gestione-mazzi.md`, `docs/BackEnd/collezione-carte.md`
-  e `docs/BackEnd/app-battaglie-api.md`; Flyway applica undici script: V1–V8 e V11–V13.
+  e `docs/BackEnd/app-battaglie-api.md`; Flyway applica undici script: V1–V8, V11 e V13–V14.
   V3 contiene lo schema completo carte/arti e V5 il seed definitivo CR01 con artwork
   `STANDARD` e URL delle illustrazioni; gli ID carta sono generati dal database.
   V11 crea le amicizie; il cleanup F13 è nella transazione di cancellazione account.
-  V12 crea le strutture F03, inizializza `artwork_pull_rates` (81/10/7,5/1,5)
+  V12 è riservata all'altra PR e non è inclusa in questo branch; integrare e verificare
+  la catena combinata prima del deploy. Le vecchie V12/V13 F03 richiedono una conversione separata.
+  V13 crea le strutture F03, inizializza `artwork_pull_rates` (81/10/7,5/1,5)
   con FK diretta da `packs` e vincola i quattro tipi di artwork.
-  V13 normalizza gli slot in `pack_slots`, `slot_pull_type` e `type_pull_rate`,
+  V14 normalizza gli slot in `pack_slots`, `slot_pull_type` e `type_pull_rate`,
   usa percentuali `decimal(7,4)` e aggiunge `packs.is_acquirable`.
-  V12 definisce direttamente la FK nullable `packs.mercy_rarity`;
+  V13 definisce direttamente la FK nullable `packs.mercy_rarity`;
   `user_mercy` conserva soltanto utente, pacchetto e contatore.
   Catalogo e CRUD pacchetti sono implementati, senza seed dei pacchetti o dei tipi;
   distribuzioni referenziate immutabili e totali per rarità verificati al commit.

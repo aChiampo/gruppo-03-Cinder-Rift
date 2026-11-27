@@ -213,7 +213,7 @@ Table ARTWORK_PULL_RATES {
     `standard + extended_art + full_art + alternate_art = 100` [name: 'artwork_pull_rates_total_check']
   }
 
-  Note: 'Approved on 2026-11-24: percentages per artwork roll, total 100. One configuration is seeded by V12. Packs reference one configuration directly; several packs may reuse it. No junction table, Showcase category or special-effects layer. Independent artwork rolls per slot and Standard fallback for missing variants are approved; backend opening is implemented with atomic batches and last-slot mercy.'
+  Note: 'Approved on 2026-11-24: percentages per artwork roll, total 100. One configuration is seeded by V13. Packs reference one configuration directly; several packs may reuse it. No junction table, Showcase category or special-effects layer. Independent artwork rolls per slot and Standard fallback for missing variants are approved; backend opening is implemented with atomic batches and last-slot mercy.'
 }
 
 Table PACKS {
@@ -228,14 +228,14 @@ Table PACKS {
   allowed_types jsonb [not null]
   allowed_expansions jsonb [not null]
   allowed_rarities jsonb [not null]
-  mercy_rarity int [note: 'Nullable FK to RARITIES.id; shared pack configuration created directly by V12. Mercy requires both threshold and rarity. Natural equal-or-higher pulls reset the counter; at expiry without one, replace the last slot with exactly this rarity, preserving filters and Standard artwork fallback.']
+  mercy_rarity int [note: 'Nullable FK to RARITIES.id; shared pack configuration created directly by V13. Mercy requires both threshold and rarity. Natural equal-or-higher pulls reset the counter; at expiry without one, replace the last slot with exactly this rarity, preserving filters and Standard artwork fallback.']
   mercy_threshold int [note: 'NULL disables mercy for this pack. A positive value is the initial countdown copied by the backend into USER_MERCY.mercy_counter; it is not a SQL default on the user row.']
 
   checks {
     `mercy_threshold IS NULL OR mercy_threshold > 0` [name: 'packs_mercy_threshold_check']
   }
 
-  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. pack_price stores the price; payment uses cobalt_shards and each pack is its own offer. pack_description is display metadata; example_pull is a preview. Filters use catalog codes. V13 replaces slot_pulls JSON with PACK_SLOTS and adds is_acquirable, default false. API writes require one ordered slot type ID per card_number; repeated types are allowed. Filters are cumulative; an empty array allows no cards. Backend opening and eligibility validation on POST/PUT are implemented.'
+  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. pack_price stores the price; payment uses cobalt_shards and each pack is its own offer. pack_description is display metadata; example_pull is a preview. Filters use catalog codes. V14 replaces slot_pulls JSON with PACK_SLOTS and adds is_acquirable, default false. API writes require one ordered slot type ID per card_number; repeated types are allowed. Filters are cumulative; an empty array allows no cards. Backend opening and eligibility validation on POST/PUT are implemented.'
 }
 
 Table SLOT_PULL_TYPE {

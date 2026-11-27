@@ -2,7 +2,7 @@
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM packs WHERE slot_pulls NOT IN ('{}'::jsonb, '[]'::jsonb)) THEN
-        RAISE EXCEPTION 'Non-empty packs.slot_pulls requires an explicit mapping before V13; preserve and migrate the legacy configuration first';
+        RAISE EXCEPTION 'Non-empty packs.slot_pulls requires an explicit mapping before V14; preserve and migrate the legacy configuration first';
     END IF;
 END;
 $$;
