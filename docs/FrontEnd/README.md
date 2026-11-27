@@ -11,7 +11,7 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 ## Funzionalità
 
 - [F01 — Registrazione, accesso e recupero password](accesso-utenti.md) — accesso, registrazione, sessione e profilo integrati; cancellazione account e recupero password UI da realizzare, invio email rinviato.
-- [F03 — Negozio delle offerte di pacchetti](acquisto-pacchetti.md)
+- [F03 — Negozio delle offerte di pacchetti](acquisto-pacchetti.md) — API backend di catalogo, inventario e apertura disponibili; client F03 e acquisto non implementati.
 - [F04 — Consultazione della collezione](collezione-carte.md)
 - [F05 — Composizione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi privati e marketplace](scambi-mercato.md)

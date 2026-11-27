@@ -1,14 +1,14 @@
 # Gioco di carte collezionabili digitale
 
-Verifica dell’apertura F03 del **2026-11-27**: **344 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.7 temporaneo. Incluse 7 prove deterministiche di estrazione e 33 prove API/transazionali di apertura. Database applicativo non modificato; acquisto, seed commerciale e frontend F03 esclusi. [Comandi e copertura](springboot_app/app/README.md#verifica-dellapertura-f03-del-2026-11-27).
+Verifica dell’apertura F03 del **2026-11-27**: **358 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.6 temporaneo. Incluse 7 prove deterministiche di estrazione e 47 prove API/transazionali di apertura. Database applicativo non modificato; acquisto, seed commerciale e frontend F03 esclusi. [Comandi e copertura](springboot_app/app/README.md#verifica-dellapertura-f03-del-2026-11-27).
 
 Apertura F03 implementata il **2026-11-27**, su richiesta dell’utente: letture dell’inventario e apertura atomica di 1–10 pacchetti dello stesso tipo, filtri cumulativi, carte equiprobabili, artwork indipendente con fallback Standard e mercy sull’ultimo slot. Il servizio di validazione verifica i flussi amministrativi POST/PUT e ogni apertura. Nessuna nuova migrazione o seed commerciale; acquisto e frontend F03 restano esclusi. [Contratto e limiti](docs/BackEnd/acquisto-pacchetti.md).
 
-Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. Il CRUD legge e scrive il nuovo campo. Approvata la sostituzione dell’ultimo slot con la rarità esatta configurata quando mercy scade senza una pesca naturale qualificante. Apertura e acquisto restano non implementati. [Contratto corrente](docs/BackEnd/acquisto-pacchetti.md).
+Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. CRUD e apertura usano questo campo; la garanzia sostituisce l’ultimo slot con la rarità esatta configurata quando necessaria. Acquisto non implementato. [Contratto corrente](docs/BackEnd/acquisto-pacchetti.md).
 
-Verifica dell’integrazione del **2026-11-27**: **300 test backend**, **51 del motore** e **54 frontend** superati; JAR backend e build React prodotti. [Comandi, copertura e limiti](springboot_app/app/README.md#verifica-dellintegrazione-f03-del-2026-11-27). Database applicativo non modificato.
+Verifica precedente dell’integrazione del **2026-11-27**: **300 test backend**, **51 del motore** e **54 frontend** superati; JAR backend e build React prodotti. [Comandi, copertura e limiti](springboot_app/app/README.md#verifica-dellintegrazione-f03-del-2026-11-27). Database applicativo non modificato.
 
-Integrazione F03 con `dev` del **2026-11-27**, su richiesta dell’utente: preservati schema V3 e seed V5 ripuliti, artwork `STANDARD`, ID generati e amicizie V11. Pacchetti e slot sono ora V12/V13; catena completa di undici script, V1–V8 e V11–V13. Catalogo e CRUD conservati, nessun seed commerciale; acquisto e apertura rinviati. [Contratto e compatibilità](docs/BackEnd/acquisto-pacchetti.md).
+Integrazione F03 con `dev` del **2026-11-27**, su richiesta dell’utente: preservati schema V3 e seed V5 ripuliti, artwork `STANDARD`, ID generati e amicizie V11. Pacchetti e slot sono ora V12/V13; catena completa di undici script, V1–V8 e V11–V13. Catalogo, CRUD, inventario e apertura disponibili; acquisto e seed commerciale rinviati. [Contratto e compatibilità](docs/BackEnd/acquisto-pacchetti.md).
 
 Verifica storica del cleanup di `dev` del **2026-11-27**, prima dell’integrazione F03: **263 test backend** e **51 del motore** superati; JAR backend prodotto e catena V1–V8 e V11 verificata su PostgreSQL 18.6 isolato. [Comandi, copertura e limiti](springboot_app/app/README.md#verifica-della-riscrittura-del-2026-11-27). Frontend, browser e distribuzione Compose non rieseguiti.
 
@@ -60,7 +60,7 @@ Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pa
 | Termine | Significato | Esempio illustrativo, non configurazione approvata |
 | --- | --- | --- |
 | Offerta di un pacchetto | Crediti in cambio di una sola unità di un pacchetto | 1.000 crediti → 1 pacchetto «Rare» |
-| Pacchetto | Contenitore di carte con composizione e apertura da definire | Un pacchetto del tipo «Rare» |
+| Pacchetto | Contenitore di carte con slot configurabili e apertura backend implementata; composizioni commerciali da definire | Un pacchetto del tipo «Rare» |
 | Carta | Elemento della collezione utilizzabile nei mazzi | Creatura con attacco, difesa e fazione |
 
 Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti non rientrano nel perimetro. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità definitive. Catalogo e CRUD F03 disponibili senza seed; acquisto e apertura da implementare. [Contratto canonico](docs/BackEnd/acquisto-pacchetti.md).

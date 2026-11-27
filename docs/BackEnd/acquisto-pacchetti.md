@@ -1,8 +1,8 @@
 # Offerte e acquisto di pacchetti
 
-Verifica dell’apertura F03 del **2026-11-27**: **344 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.7 temporaneo. Incluse 7 prove deterministiche di estrazione e 33 prove API/transazionali di apertura. Database applicativo non modificato; acquisto, seed commerciale e frontend F03 esclusi. [Comandi e copertura](../../springboot_app/app/README.md#verifica-dellapertura-f03-del-2026-11-27).
+Verifica dell’apertura F03 del **2026-11-27**: **358 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.6 temporaneo. Incluse 7 prove deterministiche di estrazione e 47 prove API/transazionali di apertura. Database applicativo non modificato; acquisto, seed commerciale e frontend F03 esclusi. [Comandi e copertura](../../springboot_app/app/README.md#verifica-dellapertura-f03-del-2026-11-27).
 
-Verifica dell’integrazione del **2026-11-27**: **300 test backend**, **51 del motore** e **54 frontend** superati; JAR backend e build React prodotti. [Comandi, copertura e limiti](../../springboot_app/app/README.md#verifica-dellintegrazione-f03-del-2026-11-27). Database applicativo non modificato.
+Verifica precedente dell’integrazione del **2026-11-27**: **300 test backend**, **51 del motore** e **54 frontend** superati; JAR backend e build React prodotti. [Comandi, copertura e limiti](../../springboot_app/app/README.md#verifica-dellintegrazione-f03-del-2026-11-27). Database applicativo non modificato.
 
 **Integrazione con dev — 2026-11-27.** Su richiesta dell’utente, `feature/f03-packages` conserva il cleanup di `dev`: V1–V8 e V11 restano inalterate, V3 definisce lo schema completo e V5 inserisce direttamente carte e arti `STANDARD` con ID generati. Le migrazioni F03 diventano V12/V13 per seguire V11 amicizie senza collisioni. La catena completa contiene undici script: V1–V8 e V11–V13. La cronologia precedente al cleanup, incluse le vecchie V10/V11 F03, richiede una conversione separata: non usare `repair` per mascherare checksum o versioni incompatibili. Il database applicativo non viene modificato da questa integrazione.
 
@@ -48,13 +48,13 @@ Tutte le rotte richiedono Bearer JWT F01. `USER` consulta soltanto pacchetti con
 | `PUT /api/admin/packs/{packId}` | Sostituisce la definizione, conserva il possesso ed elimina i progressi mercy relativi | JSON [PackWriteRequest](#Schema%20della%20richiesta%20PackWriteRequest); `packId` intero positivo a 32 bit nel percorso | `200`, [PackView](#Schema%20della%20risposta%20PackView) |
 | `DELETE /api/admin/packs/{packId}` | Rimborsa il possesso, elimina i riferimenti e la definizione | Nessun corpo; `packId` intero positivo a 32 bit nel percorso | `204`, senza corpo |
 
-POST e PUT ricevono gli stessi campi: `pack_name`, `pack_description`, `pack_price`, `is_acquirable`, `pack_image_url`, `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`, `mercy_threshold`, `mercy_rarity`, `pack_slots`, `id_artwork_pull_rates`. Il dettaglio aggiunge `id`, `artwork_pull_rates` e `slot_pull_types` di sola lettura al medesimo oggetto, senza involucro `definition`. `pack_image_url`, `mercy_threshold` e `mercy_rarity` sono facoltativi e nullable; gli altri campi sono obbligatori. Gli ID devono essere interi positivi a 32 bit. Nome e testo descrittivo non possono essere vuoti. `pack_price` è un intero a 32 bit non negativo: la risorsa approvata è `cobalt_shards`; gli importi commerciali restano in definizione. `is_acquirable` è un booleano obbligatorio: abilita nuove acquisizioni e determina la visibilità nel catalogo USER. Disabilitarlo non revoca pacchetti già posseduti e non rimborsa crediti; acquisto e apertura non sono ancora implementati.
+POST e PUT ricevono gli stessi campi: `pack_name`, `pack_description`, `pack_price`, `is_acquirable`, `pack_image_url`, `allowed_factions`, `allowed_types`, `allowed_expansions`, `allowed_rarities`, `mercy_threshold`, `mercy_rarity`, `pack_slots`, `id_artwork_pull_rates`. Il dettaglio aggiunge `id`, `artwork_pull_rates` e `slot_pull_types` di sola lettura al medesimo oggetto, senza involucro `definition`. `pack_image_url`, `mercy_threshold` e `mercy_rarity` sono facoltativi e nullable; gli altri campi sono obbligatori. Gli ID devono essere interi positivi a 32 bit. Nome e testo descrittivo non possono essere vuoti. `pack_price` è un intero a 32 bit non negativo: la risorsa approvata è `cobalt_shards`; gli importi commerciali restano in definizione. `is_acquirable` è un booleano obbligatorio: abilita nuove acquisizioni e determina la visibilità nel catalogo USER. Disabilitarlo non revoca pacchetti già posseduti e non rimborsa crediti; il possesso resta apribile. Acquisto non implementato.
 
 `pack_description` segue la struttura confermata sotto. `card_number > 0`, `0 <= granted_number <= card_number`; i due codici di rarità devono essere presenti nel catalogo non cancellato. `example_pull` contiene esattamente `card1`…`cardN`, con `N = card_number`. Ogni valore deve coincidere con il dettaglio completo corrente F04 della carta, inclusi campi nullable e tutte le arti: dati incompleti, inventati o proprietà aggiuntive sono rifiutati. Il client amministrativo può ottenere queste rappresentazioni da F04 e inserirle nella mappa. La creazione non accredita le carte di anteprima.
 
 I quattro filtri sono array non vuoti di codici distinti ed esatti, esistenti nei cataloghi non cancellati. Un array vuoto non ammette alcuna carta ed è rifiutato dal servizio di validazione delle pescate. `pack_slots` è un array ordinato di ID di `slot_pull_type`, lungo esattamente `card_number`; lo stesso ID può comparire più volte. Il CRUD controlla esistenza, totale 100 e rarità non cancellate dei tipi, bloccandoli durante la scrittura. Filtri, duplicati, artwork e garanzie seguono le decisioni implementate sopra. Una rarità con probabilità positiva deve avere almeno una carta eleggibile; mercy attivo richiede una carta della rarità esatta configurata, anche se assente dalle probabilità ordinarie dell’ultimo slot. I campi descrittivi `granted_*` e `best_pull_rarity` restano metadati; le garanzie operative derivano dai tipi di slot e da mercy.
 
-PUT e DELETE acquisiscono `SELECT ... FOR UPDATE` sulla definizione e sono consentiti anche quando esistono righe in `inventory_packs` o `user_mercy`. PUT conserva tutte le quantità possedute e i saldi; dopo una scrittura valida elimina le righe mercy del pacchetto, anche per il solo cambio del flag. La futura apertura le inizializzerà dalla configurazione corrente: impostare il contatore a zero attiverebbe invece subito la garanzia e non rappresenta un reset alla soglia.
+PUT e DELETE acquisiscono `SELECT ... FOR UPDATE` sulla definizione e sono consentiti anche quando esistono righe in `inventory_packs` o `user_mercy`. PUT conserva tutte le quantità possedute e i saldi; dopo una scrittura valida elimina le righe mercy del pacchetto, anche per il solo cambio del flag. La successiva apertura le inizializza dalla configurazione corrente: impostare il contatore a zero attiverebbe invece subito la garanzia e non rappresenta un reset alla soglia.
 
 DELETE accredita a ogni inventario associato `item_quantity × pack_price` in `cobalt_shards`, usando il prezzo corrente della definizione bloccata, come confermato dall’utente il 2026-11-26. Il database non registra il prezzo originariamente speso: questo rimborso non ricostruisce lo storico e si applica a ogni quantità posseduta. `rift_cores`, `scraps`, altri pacchetti e relativi progressi restano invariati. Gli inventari coinvolti vengono bloccati per ID crescente e aggiornati con un incremento SQL; quindi vengono eliminate le righe di possesso e mercy del pacchetto, infine la definizione e i suoi slot. I tipi di slot condivisi restano disponibili.
 
@@ -206,7 +206,7 @@ Contratto dati confermato su richiesta dell’utente il **2026-11-23**, usato da
 
 | Campo | Tipo | Contenuto |
 | --- | --- | --- |
-| `pack_price` | integer | Prezzo del singolo pacchetto, obbligatorio e senza default; il CRUD richiede un valore non negativo a 32 bit. Risorsa di pagamento e importi commerciali restano da definire. |
+| `pack_price` | integer | Prezzo del singolo pacchetto, obbligatorio e senza default; il CRUD richiede un valore non negativo a 32 bit. Risorsa di pagamento: Scaglie; importi commerciali da definire. |
 | `pack_description` | object, persistito come JSONB | Oggetto obbligatorio con tutte le proprietà riportate sotto. |
 | `pack_description.pack_description` | string | Testo descrittivo. |
 | `pack_description.card_number` | integer | Numero di carte contenute nel pacchetto. |
@@ -392,9 +392,9 @@ Regole confermate dall'utente il **2026-11-09**, rappresentate anche nella [spec
 
 ### Apertura atomica
 
-Il servizio apre da uno a dieci pacchetti nella stessa transazione. La funzione `openOnePack(configuration, mercyState, drawSource)` restituisce carte e prossimo stato mercy senza aprire o committare transazioni autonome; il lotto usa lo stato restituito per l’iterazione successiva. Consumo dei pacchetti, accredito della collezione e stato mercy condividono il commit; un errore annulla tutto il lotto.
+Il servizio apre da uno a dieci pacchetti nella stessa transazione. La funzione `openOnePack(configuration, mercyState)` usa la sorgente casuale iniettata e restituisce carte e prossimo stato mercy senza aprire o committare transazioni autonome; il lotto usa lo stato restituito per l’iterazione successiva. Consumo dei pacchetti, accredito della collezione e stato mercy condividono il commit; un errore annulla tutto il lotto.
 
-Il PUT amministrativo elimina i progressi esistenti: la futura apertura li inizializza dalla soglia corrente, usando la rarità del pacchetto. La garanzia è risolta nella composizione del singolo pacchetto, senza ricompense differite.
+Il PUT amministrativo elimina i progressi esistenti: la successiva apertura li inizializza dalla soglia corrente, usando la rarità del pacchetto. La garanzia è risolta nella composizione del singolo pacchetto, senza ricompense differite.
 
 ## Inventario e apertura differita: contratto HTTP
 
@@ -517,6 +517,10 @@ Il lock dura fino a commit o rollback e protegge controllo e consumo delle quant
 
 Questa protezione rifiuta le sovrapposizioni che incontrano la riga occupata. Le richieste ricevute dopo il rilascio del lock vengono valutate come nuove aperture; ulteriori problemi di retry e recupero sono esclusi per decisione esplicita di Chiampo.
 
+Il lock del possesso precede `FOR SHARE NOWAIT` sulla definizione. Se un PUT/DELETE ha già acquisito il lock esclusivo della definizione, l’apertura risponde `503 TEMPORARILY_UNAVAILABLE` senza pescare o consumare. Se l’apertura ha già protetto la definizione, PUT/DELETE attende il suo commit: PUT conserva il possesso residuo e cancella mercy; DELETE rimborsa soltanto le copie ancora chiuse. Non esiste inversione con attesa da parte dell’apertura sulla definizione amministrativa.
+
+Il rifiuto immediato riguarda il possesso e la definizione. Gli upsert della collezione possono attendere scritture sulla stessa variante; sommano al valore committato dal concorrente e conservano `tradable_replica`. L’ordine stabile carta/arte coordina aperture di tipi diversi che condividono varianti. Non sono introdotti nuovi lock globali o scrittori F06.
+
 ### Approccio confermato per mercy nei lotti
 
 Usare una sola funzione per il singolo pacchetto, senza commit interni, passando il nuovo stato all’iterazione successiva:
@@ -573,9 +577,9 @@ Le risposte applicative di errore usano `application/problem+json` con campo sta
 | `409` | `PACK_CONFIGURATION_INVALID` | Configurazione incapace di produrre un’apertura valida. |
 | `415` | `UNSUPPORTED_MEDIA_TYPE` | POST con tipo di contenuto non JSON. |
 | `500` | `INTERNAL_ERROR` | Errore inatteso o violazione degli invarianti. |
-| `503` | `TEMPORARILY_UNAVAILABLE` | Indisponibilità tecnica temporanea. |
+| `503` | `TEMPORARILY_UNAVAILABLE` | Indisponibilità tecnica temporanea o definizione bloccata da PUT/DELETE amministrativo. |
 
-Letture e apertura riuscite restituiscono `200`. In caso di insufficienza includere `packId`, `requestedQuantity` e `availableQuantity` del chiamante. Non esporre SQL, stack trace o dati altrui.
+Letture e apertura riuscite restituiscono `200`. Gli errori contengono `type`, `title`, `status`, `detail`, `instance` e `code`; `instance` identifica il percorso richiesto. `401` include `WWW-Authenticate: Bearer`. In caso di insufficienza includere anche `packId`, `requestedQuantity` e `availableQuantity` del chiamante. OpenAPI pubblica gli schemi delle risposte e i codici applicativi nelle descrizioni degli errori. Non esporre SQL, stack trace o dati altrui.
 
 ### Criteri di accettazione e dipendenze aperte
 
@@ -593,7 +597,7 @@ Riferimenti tecnici: [lock di riga PostgreSQL](https://www.postgresql.org/docs/1
 
 ## Percorso acquisto, addebito, estrazione e collezione
 
-Il flusso seguente descrive il comportamento atteso a livello funzionale per F03 e F04. È una proposta da completare con le decisioni aperte riportate sotto: non definisce API, payload o una transazione già implementata.
+I passi di acquisto seguenti restano una proposta da completare con le decisioni aperte: non definiscono API o una transazione d’acquisto implementata. Apertura differita e aggiornamento della collezione sono invece implementati dal contratto HTTP precedente.
 
 1. **Scelta dell'offerta.** L'utente consulta un'offerta attiva relativa a una sola unità di un pacchetto, con prezzo unitario `PACKS.pack_price` in `cobalt_shards`. Prezzo e composizione sono quelli correnti del catalogo gestito dal backoffice, non valori autorevoli inviati dal client.
 2. **Richiesta d'acquisto.** L'utente conferma l'offerta. Il server identifica l'utente autenticato e rilegge prezzo, disponibilità e composizione dell'offerta. Non considera attendibile un saldo o un prezzo calcolato dal client.
@@ -605,10 +609,10 @@ Il flusso seguente descrive il comportamento atteso a livello funzionale per F03
 
 ### Coerenza e casi di errore da concordare
 
-- **Unità di successo.** È raccomandato che addebito e registrazione dell’acquisto siano atomici. L’eventuale composizione con un’apertura immediata resta da definire separatamente; per l’apertura differita valgono atomicità del lotto e risposta diretta stabilite sopra.
+- **Unità di successo.** Addebito e accredito dei pacchetti dovranno essere atomici nel futuro acquisto. Apertura immediata esclusa; per l’apertura differita valgono atomicità del lotto e risposta diretta stabilite sopra.
 - **Saldo insufficiente.** La richiesta non deve produrre un addebito né pacchetti o copie. La risposta d'errore e il modo in cui l'interfaccia comunica il saldo residuo sono da definire.
-- **Concorrenza.** Acquisti simultanei non devono spendere due volte la stessa disponibilità. Tecnica di serializzazione/controllo, isolamento e comportamento in caso di conflitto sono da definire dopo la scelta dello stack.
-- **Richieste concorrenti.** Per l’apertura differita vale il lock non attendente delil [contratto HTTP](#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP), con rifiuto della riga occupata. Deduplicazione dei retry e recupero delle pescate sono esclusi su richiesta esplicita di Chiampo. Il contratto dell’acquisto resta da definire separatamente.
+- **Concorrenza.** Acquisti simultanei non devono spendere due volte la stessa disponibilità. Tecnica di serializzazione/controllo, isolamento e comportamento in caso di conflitto restano da definire per il futuro acquisto.
+- **Richieste concorrenti.** Per l’apertura differita vale il lock non attendente del [contratto HTTP](#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP), con rifiuto della riga occupata. Deduplicazione dei retry e recupero delle pescate sono esclusi su richiesta esplicita di Chiampo. Il contratto dell’acquisto resta da definire separatamente.
 - **Errore durante l’apertura.** Un errore prima del commit annulla l’intero lotto; il risultato diretto viene inviato dopo commit. Recupero dopo una risposta persa e registrazione della casualità sono fuori dal piano richiesto.
 - **Saldo mostrato.** Il saldo restituito dal server è quello autorevole dopo l'operazione; i valori locali del client sono solo presentazione e devono riallinearsi alla risposta.
 

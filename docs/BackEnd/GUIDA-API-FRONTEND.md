@@ -100,6 +100,8 @@ Il branch corrente contiene le API PvE F07, catalogo/collezione F04, scritture c
 
 Le chiamate React presenti coprono F01 (accesso, registrazione, rinnovo, uscita, profilo), CRUD F05, PvE F07 e le due letture di elenco F04. I dettagli F04 sono già inclusi negli elenchi; le rotte di dettaglio restano `BE Implemented`. Le scritture del catalogo F10 restano amministrative e senza interfaccia. Le otto rotte F03 di catalogo/CRUD e inventario/apertura restano backend; F03 e storico F08 non sono integrati nel client.
 
+Per l’apertura F03, OpenAPI espone richiesta, risposta e descrizioni dei codici applicativi. Il conflitto sul possesso è `409 OPENING_IN_PROGRESS`; un PUT/DELETE che protegge già la definizione causa `503 TEMPORARILY_UNAVAILABLE`. Se l’apertura ha già il lock condiviso della definizione, la scrittura amministrativa attende il commit e usa il possesso residuo. Dettagli, atomicità e limiti restano nel [contratto canonico](acquisto-pacchetti.md#Lock%20semplice%20sulle%20aperture%20concorrenti).
+
 Gli endpoint tecnici documentati separatamente sono [OpenAPI e salute del backend](accesso-utenti.md#Guida%20autenticazione%2C%20header%20e%20OpenAPI) e [salute del motore](../../springboot_app/game_engine/README.md#Avvio%20con%20Docker%20Compose).
 
 Gli stati derivano dai contratti, dai controller e dalle chiamate React del branch corrente. La revisione documentale del **2026-11-26** allinea il perimetro al lock semplice richiesto da Chiampo, rimuove i flussi esclusi e verifica collegamenti, ancore, schemi e conteggi. Non esegue test applicativi e non attesta implementazione di nuovi DTO, migrazioni, controller o integrazioni FrontEnd.

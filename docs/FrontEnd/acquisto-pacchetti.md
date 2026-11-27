@@ -7,7 +7,7 @@ Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Ultimo aggiornamento significativo: **2026-11-27**, disponibilità delle API backend inventario/apertura e aggiornamento della pianificazione dell’apertura differita su richiesta e annotazioni dell’utente, oltre a catalogo per ruolo e riconciliazione amministrativa. Il [contratto canonico F03](../BackEnd/acquisto-pacchetti.md) distingue contratti backend implementati e decisioni commerciali ancora aperte. Implementazione del client e verifiche applicative: non eseguite.
 
-Aggiornamento backend del **2026-11-24**: disponibili [catalogo e CRUD amministrativo F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), con migrazione senza seed dei pacchetti e configurazione artwork iniziale. Il client deve seguire quel contratto; negozio integrato, acquisto e apertura restano da realizzare. Apertura e assegnazione agli slot rinviate su indicazione dell’utente; tipi e percentuali artwork confermati nel contratto.
+Aggiornamento backend del **2026-11-27**: disponibili [catalogo e CRUD amministrativo F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), inventario e apertura, senza seed dei pacchetti. Il client deve seguire il contratto canonico; negozio e apertura React restano da realizzare, acquisto backend escluso.
 
 ## Obiettivo e decisioni note
 
@@ -31,11 +31,12 @@ Il client segue i [quattro tipi e la configurazione restituita da F03](../BackEn
 
 ## Inventario e apertura differita: backend disponibile
 
-Percorsi, payload, ruoli, limite e codici sono nella [contratto HTTP canonico](../BackEnd/acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP), implementato nel backend il 2026-11-27. Il client resta da realizzare:
+Percorsi, payload, ruoli, limite e codici sono nel [contratto HTTP canonico](../BackEnd/acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP), implementato nel backend il 2026-11-27. Il client resta da realizzare:
 
 - Carica saldi e pacchetti posseduti dalle letture dedicate, distinguendo inventario vuoto, caricamento ed errore. Visualizza anche il possesso non più acquisibile senza dipendere dalla visibilità nel negozio.
 - Permette di scegliere un solo tipo e una quantità entro possesso e limite definiti dal contratto; la validazione del server resta autorevole.
 - Disabilita invii accidentali durante la richiesta e mostra il conflitto previsto dal contratto quando la riga è già occupata; non accoda automaticamente un nuovo tentativo.
+- Distingue il conflitto sul possesso dalla modifica amministrativa della definizione, secondo i codici del contratto. Dopo una modifica amministrativa completata rilegge inventario e configurazione; i pacchetti consumati non sono rimborsati dal successivo DELETE.
 - Mostra le carte restituite direttamente dopo il commit, con rivelazione per pacchetto e slot e duplicati distinti. Non presume successi parziali del lotto.
 - Riallinea inventario e collezione usando le rispettive letture. Non genera chiavi di richiesta e non usa identificativi storici o API di recupero delle pescate: questi flussi sono esclusi su richiesta esplicita di Chiampo.
 
@@ -52,7 +53,7 @@ Comportamento previsto per la futura integrazione: apertura e progresso sono dis
 
 ## Da definire
 
-- Schermate, conferma dell’acquisto, animazioni di apertura e presentazione degli stati; l’apertura differita e i suoi vincoli seguono la proposta canonica.
+- Schermate, conferma dell’acquisto, animazioni di apertura e presentazione degli stati; l’apertura differita e i suoi vincoli seguono il contratto canonico implementato.
 - Contenuti effettivi dei prodotti; nessun prezzo o nome commerciale è fissato dagli esempi.
 - Stati UI e riallineamento del saldo e della collezione dopo successo, errore o retry, in coerenza con il contratto F03.
 

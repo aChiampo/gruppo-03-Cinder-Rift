@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +39,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** Real HTTP, commits, rollback and lock contention on an isolated test database. */
+/** Spring MVC requests, real commits, rollback and lock contention on an isolated test database. */
 @SpringBootTest(properties = {"app.security.session-token-cleanup-cron=-", "app.security.password-reset-token-cleanup-cron=-"})
 class PackOpeningDatabaseTests {
     @Autowired WebApplicationContext context;
@@ -50,6 +51,7 @@ class PackOpeningDatabaseTests {
     @Autowired PackOpeningService opening;
     @MockitoBean PackDrawSource random;
     @MockitoSpyBean PackOpeningRepository ownership;
+    @MockitoSpyBean PackRepository definitions;
     private MockMvc mvc;
     private Session user;
     private Session admin;
@@ -143,6 +145,8 @@ class PackOpeningDatabaseTests {
             "{\"packId\":1,\"quantity\":\"1\"}", "{\"packId\":1,\"quantity\":1.0}",
             "{\"packId\":1,\"quantity\":2147483648}", "{\"packId\":0,\"quantity\":1}",
             "{\"packId\":1.0,\"quantity\":1}", "{\"packId\":\"1\",\"quantity\":1}",
+            "{\"quantity\":1}", "{\"packId\":null,\"quantity\":1}", "{\"packId\":-1,\"quantity\":1}",
+            "{\"packId\":true,\"quantity\":1}", "{\"packId\":1,\"quantity\":true}",
             "{\"packId\":2147483648,\"quantity\":1}", "{\"packId\":1,\"quantity\":1,\"userId\":2}", "{"})
     void rejectsMalformedOrCoercibleRequestsWithoutDrawing(String body) throws Exception {
         openRequest(user, body).andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
@@ -158,7 +162,30 @@ class PackOpeningDatabaseTests {
         openRequest(user, "{\"packId\":2147483647,\"quantity\":1}").andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("PACK_NOT_FOUND"));
         openRequest(user, request(6)).andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value("INSUFFICIENT_PACK_QUANTITY"))
+                .andExpect(jsonPath("$.instance").value("/api/users/me/pack-openings"))
+                .andExpect(jsonPath("$.detail").isNotEmpty())
+                .andExpect(jsonPath("$.packId").value(packId))
                 .andExpect(jsonPath("$.availableQuantity").value(5)).andExpect(jsonPath("$.requestedQuantity").value(6));
+        openRequest(user, "").andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+        verifyNoInteractions(random);
+    }
+
+    @Test
+    void invalidBearerTokensUseTheDocumentedErrorOnAllThreeRoutes() throws Exception {
+        for (String route : List.of("/api/users/me/inventory", "/api/users/me/inventory/packs", "/api/users/me/pack-openings")) {
+            mvc.perform((route.endsWith("pack-openings") ? post(route).contentType(MediaType.APPLICATION_JSON).content(request(1)) : get(route))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                    .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+                    .andExpect(jsonPath("$.instance").value(route));
+        }
+        assertThat(quantity(packId)).isEqualTo(5);
         verifyNoInteractions(random);
     }
 
@@ -185,11 +212,53 @@ class PackOpeningDatabaseTests {
     @Test
     void acceptsTenAndPreservesMercyAfterConsumingTheLastOwnedPack() throws Exception {
         jdbc.sql("UPDATE inventory_packs SET item_quantity = 10 WHERE id_pack = :pack").param("pack", packId).update();
-        openRequest(user, request(10)).andExpect(status().isOk()).andExpect(jsonPath("$.quantityOpened").value(10))
-                .andExpect(jsonPath("$.remainingPackQuantity").value(0)).andExpect(jsonPath("$.packs.length()").value(10));
+        String body = openRequest(user, request(10)).andExpect(status().isOk()).andExpect(jsonPath("$.quantityOpened").value(10))
+                .andExpect(jsonPath("$.remainingPackQuantity").value(0)).andExpect(jsonPath("$.packs.length()").value(10))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode batch = json.readTree(body).path("packs");
+        for (int index = 0; index < 10; index++) {
+            assertThat(batch.get(index).path("sequence").asInt()).isEqualTo(index + 1);
+            assertThat(batch.get(index).path("cards").get(0).path("cardId").asInt()).isEqualTo(common);
+            assertThat(batch.get(index).path("cards").get(1).path("cardId").asInt())
+                    .isEqualTo((index + 1) % 3 == 0 ? epic : common);
+        }
         assertThat(quantity(packId)).isZero();
         assertThat(counter()).isEqualTo(2);
         assertThat(owned(common) + owned(epic)).isEqualTo(20);
+    }
+
+    @Test
+    void singlePackResponseMatchesTheContractAndDeletesLastOwnershipWithoutLosingMercy() throws Exception {
+        jdbc.sql("UPDATE inventory_packs SET item_quantity = 1 WHERE id_pack = :pack").param("pack", packId).update();
+        String body = openRequest(user, request(1)).andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.packId").value(packId))
+                .andExpect(jsonPath("$.quantityOpened").value(1))
+                .andExpect(jsonPath("$.remainingPackQuantity").value(0))
+                .andExpect(jsonPath("$.packs[0].sequence").value(1))
+                .andExpect(jsonPath("$.packs[0].cards.length()").value(2))
+                .andExpect(jsonPath("$.mercy.threshold").value(3))
+                .andExpect(jsonPath("$.mercy.counter").value(2))
+                .andExpect(jsonPath("$.mercy.rarity.id").value(rarity("EPIC")))
+                .andExpect(jsonPath("$.mercy.rarity.code").value("EPIC"))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode result = json.readTree(body);
+        assertThat(result.propertyNames()).containsExactlyInAnyOrder("packId", "quantityOpened", "remainingPackQuantity", "packs", "mercy");
+        for (int index = 0; index < 2; index++) {
+            JsonNode card = result.path("packs").get(0).path("cards").get(index);
+            assertThat(card.propertyNames()).containsExactlyInAnyOrder("slot", "cardId", "cardArtId", "artCode", "name", "rarity", "imageUrl");
+            assertThat(card.path("slot").asInt()).isEqualTo(index + 1);
+            assertThat(card.path("cardId").asInt()).isEqualTo(common);
+            assertThat(card.path("cardArtId").asInt()).isEqualTo(standard(common));
+            assertThat(card.path("artCode").asText()).isEqualTo("STANDARD");
+            assertThat(card.path("name").asText()).isEqualTo("Opening COMMON");
+            assertThat(card.path("rarity").path("code").asText()).isEqualTo("COMMON");
+            assertThat(card.has("imageUrl") && card.path("imageUrl").isNull()).isTrue();
+        }
+        assertThat(jdbc.sql("SELECT count(*) FROM inventory_packs WHERE id_pack = :id")
+                .param("id", packId).query(Integer.class).single()).isZero();
+        assertThat(counter()).isEqualTo(2);
+        assertThat(owned(common)).isEqualTo(2);
     }
 
     @Test
@@ -223,6 +292,19 @@ class PackOpeningDatabaseTests {
     }
 
     @Test
+    void failureAfterDeletingLastOwnershipRestoresTheWholeBatchAndExistingMercy() throws Exception {
+        jdbc.sql("INSERT INTO user_mercy VALUES (:user, :pack, 1)").param("user", user.id()).param("pack", packId).update();
+        doAnswer(i -> { i.callRealMethod(); throw new IllegalStateException("Injected after ownership deletion"); })
+                .when(ownership).consume(anyInt(), anyInt(), anyInt());
+        openRequest(user, request(5)).andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"));
+        assertThat(quantity(packId)).isEqualTo(5);
+        assertThat(counter()).isEqualTo(1);
+        assertThat(owned(common)).isZero();
+        assertThat(owned(epic)).isZero();
+    }
+
+    @Test
     void collectionOverflowRollsBackPreviouslyCreditedVariantsAndPreservesExistingProgress() throws Exception {
         jdbc.sql("INSERT INTO user_mercy VALUES (:user, :pack, 1)").param("user", user.id()).param("pack", packId).update();
         jdbc.sql("INSERT INTO collections VALUES (:user, :card, :art, 2147483647, 0)")
@@ -245,6 +327,9 @@ class PackOpeningDatabaseTests {
             assertTimeoutPreemptively(Duration.ofSeconds(3), () -> openRequest(user, request(1))
                     .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("OPENING_IN_PROGRESS")));
             verifyNoInteractions(random);
+            assertThat(quantity(packId)).isEqualTo(5);
+            assertThat(owned(common)).isZero();
+            assertThat(counter()).isNull();
             connection.rollback();
         }
         openRequest(user, request(1)).andExpect(status().isOk());
@@ -282,6 +367,127 @@ class PackOpeningDatabaseTests {
         assertThat(owned(common)).isEqualTo(4);
         assertThat(quantity(packId)).isEqualTo(4);
         assertThat(quantity(other)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void activeAdministrativePutOrDeleteRejectsOpeningBeforeDrawing(boolean delete) throws Exception {
+        JsonNode definition = json.valueToTree(packs.get(packId).definition());
+        var locked = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        doAnswer(i -> {
+            Object result = i.callRealMethod();
+            locked.countDown();
+            if (!release.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Admin lock was not released");
+            return result;
+        }).when(definitions).lock(packId);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var adminRequest = executor.submit(() -> administrativeChange(definition, delete));
+            try {
+                assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
+                openRequest(user, request(1)).andExpect(status().isServiceUnavailable())
+                        .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"));
+                verifyNoInteractions(random);
+                assertThat(quantity(packId)).isEqualTo(5);
+                assertThat(owned(common)).isZero();
+            } finally {
+                release.countDown();
+            }
+            adminRequest.get(10, TimeUnit.SECONDS).andExpect(status().is(delete ? 204 : 200));
+        }
+        if (delete) {
+            assertThat(quantity(packId)).isZero();
+            assertThat(opening.inventory(user.id()).cobaltShards()).isEqualTo(1500);
+            openRequest(user, request(1)).andExpect(status().isNotFound());
+        } else {
+            openRequest(user, request(1)).andExpect(status().isOk());
+            assertThat(quantity(packId)).isEqualTo(4);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void administrativePutOrDeleteWaitsForOpeningCommitAndUsesItsRemainingOwnership(boolean delete) throws Exception {
+        JsonNode definition = json.valueToTree(packs.get(packId).definition());
+        var written = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var adminStarted = new CountDownLatch(1);
+        var openingPid = new AtomicInteger();
+        var adminPid = new AtomicInteger();
+        doAnswer(i -> {
+            i.callRealMethod();
+            openingPid.set(jdbc.sql("SELECT pg_backend_pid()").query(Integer.class).single());
+            written.countDown();
+            if (!release.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Opening was not released");
+            return null;
+        }).when(ownership).saveMercy(anyInt(), anyInt(), anyInt());
+        doAnswer(i -> {
+            adminPid.set(jdbc.sql("SELECT pg_backend_pid()").query(Integer.class).single());
+            adminStarted.countDown();
+            return i.callRealMethod();
+        }).when(definitions).lock(packId);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var opened = executor.submit(() -> openRequest(user, request(1)));
+            try {
+                assertThat(written.await(5, TimeUnit.SECONDS)).isTrue();
+                var adminRequest = executor.submit(() -> administrativeChange(definition, delete));
+                assertThat(adminStarted.await(5, TimeUnit.SECONDS)).isTrue();
+                awaitBlockedBy(adminPid.get(), openingPid.get());
+                // Uncommitted consumption and cards are invisible to other connections.
+                assertThat(quantity(packId)).isEqualTo(5);
+                assertThat(owned(common)).isZero();
+                release.countDown();
+                opened.get(10, TimeUnit.SECONDS).andExpect(status().isOk());
+                adminRequest.get(10, TimeUnit.SECONDS).andExpect(status().is(delete ? 204 : 200));
+            } finally {
+                release.countDown();
+            }
+        }
+        assertThat(owned(common)).isEqualTo(2);
+        assertThat(counter()).isNull();
+        assertThat(quantity(packId)).isEqualTo(delete ? 0 : 4);
+        assertThat(opening.inventory(user.id()).cobaltShards()).isEqualTo(delete ? 1200 : 0);
+    }
+
+    @Test
+    void openingAddsToAConcurrentCollectionUpdateAndPreservesItsTradableQuantity() throws Exception {
+        int art = standard(common);
+        jdbc.sql("INSERT INTO collections VALUES (:user, :card, :art, 4, 1)")
+                .param("user", user.id()).param("card", common).param("art", art).update();
+        var granting = new CountDownLatch(1);
+        var openingPid = new AtomicInteger();
+        doAnswer(i -> {
+            openingPid.set(jdbc.sql("SELECT pg_backend_pid()").query(Integer.class).single());
+            granting.countDown();
+            return i.callRealMethod();
+        }).when(ownership).grant(anyInt(), anyInt(), anyInt(), anyInt());
+        try (var connection = dataSource.getConnection(); var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            connection.setAutoCommit(false);
+            try {
+                int writerPid;
+                try (var statement = connection.createStatement(); var rows = statement.executeQuery("SELECT pg_backend_pid()")) {
+                    rows.next();
+                    writerPid = rows.getInt(1);
+                }
+                try (var statement = connection.prepareStatement("UPDATE collections SET owned_replica = owned_replica + 3, tradable_replica = 2 WHERE id_user = ? AND id_card = ?")) {
+                    statement.setInt(1, user.id());
+                    statement.setInt(2, common);
+                    assertThat(statement.executeUpdate()).isEqualTo(1);
+                }
+                var opened = executor.submit(() -> openRequest(user, request(1)));
+                assertThat(granting.await(5, TimeUnit.SECONDS)).isTrue();
+                awaitBlockedBy(openingPid.get(), writerPid);
+                assertThat(quantity(packId)).isEqualTo(5);
+                connection.commit();
+                opened.get(10, TimeUnit.SECONDS).andExpect(status().isOk());
+            } finally {
+                connection.rollback();
+            }
+        }
+        assertThat(owned(common)).isEqualTo(9);
+        assertThat(jdbc.sql("SELECT tradable_replica FROM collections WHERE id_user = :user AND id_card = :card")
+                .param("user", user.id()).param("card", common).query(Integer.class).single()).isEqualTo(2);
+        assertThat(quantity(packId)).isEqualTo(4);
     }
 
     @Test
@@ -333,6 +539,21 @@ class PackOpeningDatabaseTests {
     }
 
     @Test
+    void sharedValidationRejectsMissingExactMercyPoolForBothAdministrativeWritesAndOpening() throws Exception {
+        ObjectNode definition = json.valueToTree(packs.get(packId).definition());
+        // Common slots remain drawable, but the configured Epic replacement is unavailable.
+        definition.set("allowed_rarities", json.createArrayNode().add("COMMON"));
+        adminWrite(definition, false).andExpect(status().isBadRequest());
+        adminWrite(definition, true).andExpect(status().isBadRequest());
+        jdbc.sql("UPDATE cards SET is_deleted = true WHERE id = :id").param("id", epic).update();
+        openRequest(user, request(1)).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PACK_CONFIGURATION_INVALID"));
+        assertThat(quantity(packId)).isEqualTo(5);
+        assertThat(counter()).isNull();
+        verifyNoInteractions(random);
+    }
+
+    @Test
     void missingInventoryIsAnErrorAndOpenApiPublishesTheQuantityLimit() throws Exception {
         jdbc.sql("DELETE FROM inventory WHERE id_user = :id").param("id", admin.id()).update();
         jdbc.sql("UPDATE users SET id_role = (SELECT id FROM roles WHERE code = 'USER') WHERE id = :id")
@@ -345,6 +566,17 @@ class PackOpeningDatabaseTests {
         JsonNode quantity = doc.path("components").path("schemas").path("OpenPacksRequest").path("properties").path("quantity");
         assertThat(quantity.path("minimum").asInt()).isEqualTo(1);
         assertThat(quantity.path("maximum").asInt()).isEqualTo(10);
+        JsonNode responses = doc.path("paths").path("/api/users/me/pack-openings").path("post").path("responses");
+        assertThat(responses.propertyNames()).contains("200", "400", "401", "403", "404", "409", "415", "500", "503");
+        assertThat(responses.path("409").path("description").asText())
+                .contains("OPENING_IN_PROGRESS", "INSUFFICIENT_PACK_QUANTITY", "PACK_CONFIGURATION_INVALID");
+        assertThat(responses.path("200").path("content").path("application/json").path("schema").path("$ref").asText())
+                .endsWith("/OpenPacksResponse");
+        for (String route : List.of("/api/users/me/inventory", "/api/users/me/inventory/packs")) {
+            JsonNode read = doc.path("paths").path(route).path("get");
+            assertThat(read.path("responses").propertyNames()).contains("200", "401", "403", "500", "503");
+            assertThat(read.path("security").get(0).has("bearerAuth")).isTrue();
+        }
     }
 
     private int card(String rarity) {
@@ -412,5 +644,20 @@ class PackOpeningDatabaseTests {
         users.add(id);
         return new Session(id, value.path("accessToken").asText());
     }
+    private ResultActions administrativeChange(JsonNode definition, boolean delete) throws Exception {
+        return delete ? mvc.perform(delete("/api/admin/packs/{id}", packId).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                : adminWrite(definition, true);
+    }
+
+    private void awaitBlockedBy(int waitingPid, int blockerPid) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            if (jdbc.sql("SELECT :blocker = ANY(pg_blocking_pids(:waiting))")
+                    .param("blocker", blockerPid).param("waiting", waitingPid).query(Boolean.class).single()) return;
+            Thread.sleep(10);
+        }
+        fail("Expected PostgreSQL backend %s to block on %s", waitingPid, blockerPid);
+    }
+
     private record Session(int id, String token) { String bearer() { return "Bearer " + token; } }
 }

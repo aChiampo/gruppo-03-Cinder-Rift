@@ -2,9 +2,9 @@
 
 Apertura F03 implementata il **2026-11-27**, su richiesta dell’utente: letture dell’inventario e apertura atomica di 1–10 pacchetti dello stesso tipo, filtri cumulativi, carte equiprobabili, artwork indipendente con fallback Standard e mercy sull’ultimo slot. Il servizio di validazione verifica i flussi amministrativi POST/PUT e ogni apertura. Nessuna nuova migrazione o seed commerciale; acquisto e frontend F03 restano esclusi. [Contratto e limiti](../../docs/BackEnd/acquisto-pacchetti.md).
 
-Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. Il CRUD legge e scrive il nuovo campo. Approvata la sostituzione dell’ultimo slot con la rarità esatta configurata quando mercy scade senza una pesca naturale qualificante. Apertura e acquisto restano non implementati. [Contratto corrente](../../docs/BackEnd/acquisto-pacchetti.md).
+Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. CRUD e apertura usano questo campo; la garanzia sostituisce l’ultimo slot con la rarità esatta configurata quando necessaria. Acquisto non implementato. [Contratto corrente](../../docs/BackEnd/acquisto-pacchetti.md).
 
-Integrazione F03 con `dev` del **2026-11-27**, su richiesta dell’utente: preservati schema V3 e seed V5 ripuliti, artwork `STANDARD`, ID generati e amicizie V11. Pacchetti e slot sono ora V12/V13; catena completa di undici script, V1–V8 e V11–V13. Catalogo e CRUD conservati, nessun seed commerciale; acquisto e apertura rinviati. [Contratto e compatibilità](../../docs/BackEnd/acquisto-pacchetti.md).
+Integrazione F03 con `dev` del **2026-11-27**, su richiesta dell’utente: preservati schema V3 e seed V5 ripuliti, artwork `STANDARD`, ID generati e amicizie V11. Pacchetti e slot sono ora V12/V13; catena completa di undici script, V1–V8 e V11–V13. Catalogo, CRUD, inventario e apertura disponibili; acquisto e seed commerciale rinviati. [Contratto e compatibilità](../../docs/BackEnd/acquisto-pacchetti.md).
 
 Verifica storica del cleanup di `dev` del **2026-11-27**, prima dell’integrazione F03: **263 test backend** e **51 del motore** superati; JAR backend prodotto e catena V1–V8 e V11 verificata su PostgreSQL 18.6 isolato. [Comandi, copertura e limiti](#verifica-della-riscrittura-del-2026-11-27). Frontend, browser e distribuzione Compose non rieseguiti.
 
@@ -154,13 +154,47 @@ I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/Round
 
 ## Verifica dell’apertura F03 del 2026-11-27
 
-`mvnw.cmd -o verify` ha superato **344 test backend**, senza fallimenti, errori o casi saltati, e prodotto il JAR con JDK 21.0.11 e PostgreSQL 18.7 in un container temporaneo senza volumi applicativi. Il JAR include i servizi di apertura e gli undici script V1–V8/V11–V13; nessuna nuova migrazione o seed commerciale.
+Verifica sulla copia di lavoro con base `f6b5651` (`feature/f03-packages`). Database dedicato `f03_opening_verification` su porta locale `55438`, in un container PostgreSQL temporaneo senza volumi applicativi. I test degli endpoint usano MockMvc con la catena Spring Security e JWT reali; transazioni, connessioni concorrenti e migrazioni usano PostgreSQL reale. Nessuna modifica al database applicativo.
+
+Prerequisiti: JDK 21, Docker disponibile e dipendenze Maven già in cache. Dalla radice del repository:
+
+```powershell
+docker run --detach --rm --name cinder-f03-opening-verification -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=f03_opening_verification -p 127.0.0.1:55438:5432 postgres:18-alpine
+docker exec cinder-f03-opening-verification pg_isready -U postgres -d f03_opening_verification
+```
+
+Attendere che PostgreSQL sia pronto; dalla cartella `springboot_app/app/`:
+
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21.0.11'
+$env:SPRING_DATASOURCE_URL = 'jdbc:postgresql://localhost:55438/f03_opening_verification'
+$env:SPRING_DATASOURCE_USERNAME = 'postgres'
+$env:SPRING_DATASOURCE_PASSWORD = ''
+$f03Key = New-Object byte[] 32
+$f03Rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$f03Rng.GetBytes($f03Key)
+$env:APP_SECURITY_JWT_SECRET = [Convert]::ToBase64String($f03Key)
+$f03Rng.Dispose()
+$env:SPRING_DOCKER_COMPOSE_ENABLED = 'false'
+$env:APP_SECURITY_SESSION_TOKEN_CLEANUP_CRON = '-'
+$env:APP_SECURITY_PASSWORD_RESET_TOKEN_CLEANUP_CRON = '-'
+.\mvnw.cmd -o '-Daether.syncContext.named.factory=rwlock-local' test-compile
+.\mvnw.cmd -o '-Daether.syncContext.named.factory=rwlock-local' '-Dtest=PackDrawingServiceTests,PackOpeningDatabaseTests,PackControllerDatabaseTests,PackDeletionDatabaseTests,PackMigrationDatabaseTests' test
+.\mvnw.cmd -o '-Daether.syncContext.named.factory=rwlock-local' clean verify
+docker stop cinder-f03-opening-verification
+```
+
+Il factory `rwlock-local` evita scritture ai file di lock della cache Maven nell’ambiente ristretto. La chiave JWT è generata soltanto per la sessione di prova. Il container usa autenticazione di test e viene rimosso al termine; nessun servizio Compose applicativo viene ricreato.
+
+La compilazione backend/test e i **93 test mirati** sono superati, senza fallimenti, errori o casi saltati: 7 di estrazione, 47 di apertura, 24 di catalogo/CRUD, 13 di migrazione e 2 di cancellazione con rollback.
+
+`mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` ha superato **358 test backend** in 33 suite, senza fallimenti, errori o casi saltati, e prodotto il JAR con JDK 21.0.11 e PostgreSQL 18.6. Controllati anche i report XML e il JAR eseguibile `target/app-0.0.1-SNAPSHOT.jar`: contiene i servizi di apertura e gli undici script correnti V1–V8/V11–V13. Confermata la stessa catena nella cronologia Flyway del database isolato; nessuna nuova migrazione o seed commerciale.
 
 - [7 test deterministici](src/test/java/webapp/pack/PackDrawingServiceTests.java): frontiere delle probabilità a quattro decimali, equiprobabilità delle carte, duplicati e arti diverse nello stesso pacchetto, fallback Standard, avanzamento/reset mercy e sostituzione dell’ultimo slot con rarità esatta.
-- [33 test di apertura](src/test/java/webapp/pack/PackOpeningDatabaseTests.java): Bearer JWT e ruolo USER esclusivo, inventario privato/vuoto/mancante, possesso non acquisibile, input senza coercizioni, limiti 1/10, errori stabili, consumo e accrediti dopo commit, scambiabilità invariata, mercy persistente a possesso zero, rollback dopo scritture, overflow, conflitto immediato NOWAIT e lock amministrativo concorrente, incrementi atomici di tipi diversi e validazione cumulativa su POST/PUT.
+- [47 test di apertura](src/test/java/webapp/pack/PackOpeningDatabaseTests.java): Bearer JWT e ruolo USER esclusivo, inventario privato/vuoto/mancante, possesso non acquisibile, input senza coercizioni, limiti 1/10, schemi delle risposte e codici OpenAPI, consumo e accrediti dopo commit, scambiabilità invariata, mercy persistente a possesso zero e transizioni sequenziali nel lotto. Rollback dopo cancellazione dell’ultimo possesso o scrittura mercy, overflow, conflitto immediato NOWAIT senza pescate, ripresa dopo rilascio, PUT/DELETE concorrenti in entrambi gli ordini, incrementi atomici di tipi diversi e aggiornamenti condivisi della collezione; validazione cumulativa su POST/PUT e apertura, compreso il pool esatto mercy.
 - Suite esistente di autenticazione, collezione, mazzi, amicizie, orchestrazione PvE, catalogo pacchetti, cancellazione e migrazioni inclusa nell’esecuzione completa. Le fixture amministrative sono state adeguate alle nuove verifiche di eleggibilità, senza modificare il seed commerciale.
 
-Il database applicativo non è stato modificato. Frontend e motore separato non rieseguiti; acquisto, assegnazione iniziale dei pacchetti e seed commerciale restano da realizzare. Risultati delle pescate non persistiti: nessun registro, chiave di richiesta, deduplicazione o recupero introdotto.
+Controllati 461 collegamenti locali e 213 riferimenti a sezioni in dieci documenti, senza destinazioni mancanti; `git diff --check` superato. Il database di prova temporaneo è stato rimosso al termine. Il database applicativo non è stato modificato. Frontend, browser, distribuzione Compose e motore separato non rieseguiti; acquisto, assegnazione iniziale dei pacchetti e seed commerciale restano da realizzare. Risultati delle pescate non persistiti: nessun registro, chiave di richiesta, deduplicazione o recupero introdotto.
 
 ## Verifica della rarità mercy del 2026-11-27
 

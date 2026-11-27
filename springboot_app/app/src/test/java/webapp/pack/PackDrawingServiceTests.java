@@ -35,7 +35,8 @@ class PackDrawingServiceTests {
                 new CardArtwork(103, "FULL_ART", null), new CardArtwork(104, "ALTERNATE_ART", null));
         var config = config(List.of(type(1, "COMMON")), null,
                 Map.of(1, List.of(new DrawCard(11, "Test", new CardReference(1, "COMMON", "Common"), arts))));
-        for (var entry : Map.of(809999, "STANDARD", 810000, "EXTENDED_ART", 910000, "FULL_ART", 985000, "ALTERNATE_ART").entrySet()) {
+        for (var entry : Map.of(0, "STANDARD", 809999, "STANDARD", 810000, "EXTENDED_ART", 909999, "EXTENDED_ART",
+                910000, "FULL_ART", 984999, "FULL_ART", 985000, "ALTERNATE_ART", 999999, "ALTERNATE_ART").entrySet()) {
             assertThat(drawWith(0, 0, entry.getKey()).openOnePack(config, null).cards().getFirst().artCode()).isEqualTo(entry.getValue());
         }
         var fallback = drawWith(0, 0, 999999).openOnePack(config(List.of(type(1, "COMMON")), null, CARDS), null).cards().getFirst();
@@ -53,6 +54,11 @@ class PackDrawingServiceTests {
         var result = new PackDrawingService(source).openOnePack(config, null);
         assertThat(result.cards()).extracting(OpenPacksResponse.PulledCardView::cardId).containsExactly(12, 12);
         verify(source, times(2)).nextInt(2);
+        var threeCards = config(List.of(type(1, "COMMON")), null,
+                Map.of(1, List.of(card(11, 1, "COMMON"), card(12, 1, "COMMON"), card(13, 1, "COMMON"))));
+        for (int index = 0; index < 3; index++) {
+            assertThat(drawWith(0, index, 0).openOnePack(threeCards, null).cards().getFirst().cardId()).isEqualTo(11 + index);
+        }
     }
 
     @Test

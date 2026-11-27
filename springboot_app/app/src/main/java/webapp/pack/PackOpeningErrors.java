@@ -22,6 +22,7 @@ public final class PackOpeningErrors {
 
     static ProblemDetail problem(PackOpeningFailure failure, HttpServletRequest request) {
         var problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(failure.status()), failure.getMessage());
+        problem.setType(java.net.URI.create("about:blank"));
         problem.setInstance(java.net.URI.create(request.getRequestURI()));
         problem.setProperty("code", failure.code());
         failure.properties().forEach(problem::setProperty);
