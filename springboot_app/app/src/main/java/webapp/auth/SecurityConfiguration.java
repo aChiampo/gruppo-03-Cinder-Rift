@@ -46,6 +46,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.DispatcherType;
 import webapp.friendship.FriendshipErrors;
+import webapp.pack.PackOpeningErrors;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -75,10 +76,12 @@ class SecurityConfiguration {
         var bearerDenied = new BearerTokenAccessDeniedHandler();
         AuthenticationEntryPoint entryPoint = (request, response, failure) -> {
             if (FriendshipErrors.matches(request)) FriendshipErrors.write(request, response, 401);
+            else if (PackOpeningErrors.matches(request)) PackOpeningErrors.write(request, response, 401);
             else bearerEntryPoint.commence(request, response, failure);
         };
         AccessDeniedHandler denied = (request, response, failure) -> {
             if (FriendshipErrors.matches(request)) FriendshipErrors.write(request, response, 403);
+            else if (PackOpeningErrors.matches(request)) PackOpeningErrors.write(request, response, 403);
             else bearerDenied.handle(request, response, failure);
         };
         // Public browser authentication writes require CSRF, including password recovery.
@@ -142,6 +145,8 @@ class SecurityConfiguration {
                         // Requires ADMIN for every HTTP method under /api/admin, including GET and PATCH.
                         // hasRole("ADMIN") checks the ROLE_ADMIN authority assigned during authentication.
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/me/inventory", "/api/users/me/inventory/packs",
+                                "/api/users/me/pack-openings").hasRole("USER")
                         // Every request not matched above must have a valid authenticated principal.
                         .anyRequest().authenticated())
                 // Reads Authorization: Bearer <JWT> and validates it using the JwtDecoder bean below.

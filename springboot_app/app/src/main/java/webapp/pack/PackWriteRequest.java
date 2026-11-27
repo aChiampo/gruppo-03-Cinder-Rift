@@ -24,6 +24,7 @@ public record PackWriteRequest(
         @JsonProperty("allowed_expansions") @NotNull List<@NotBlank String> allowedExpansions,
         @JsonProperty("allowed_rarities") @NotNull List<@NotBlank String> allowedRarities,
         @JsonProperty("mercy_threshold") @Positive Integer mercyThreshold,
+        @JsonProperty("mercy_rarity") @Positive Integer mercyRarity,
         @JsonProperty("pack_slots") @NotNull List<@NotNull @Positive Integer> packSlots) {
 
     /** Preview cards use the exact complete F04 representation, including explicit nullable fields. */

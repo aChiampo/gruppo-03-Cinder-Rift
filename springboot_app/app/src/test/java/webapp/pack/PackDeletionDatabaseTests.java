@@ -57,15 +57,15 @@ class PackDeletionDatabaseTests {
         jdbc.sql("INSERT INTO inventory_packs SELECT id, :id, 3 FROM inventory")
                 .param("id", packId).update();
         jdbc.sql("""
-                INSERT INTO user_mercy SELECT u.id, :id, 3, r.id
-                FROM users u CROSS JOIN rarities r WHERE r.code = 'EPIC'
+                INSERT INTO user_mercy (id_user, id_pack, mercy_counter) SELECT id, :id, 3 FROM users
                 """).param("id", packId).update();
         transactions = new AnnotationConfigApplicationContext();
         transactions.register(TransactionConfig.class);
         transactions.registerBean("transactionManager", DataSourceTransactionManager.class,
                 () -> new DataSourceTransactionManager(isolated));
         transactions.registerBean(PackService.class, () -> new PackService(
-                new PackRepository(jdbc, json), new CardCatalogRepository(jdbc), json));
+                new PackRepository(jdbc, json), new CardCatalogRepository(jdbc), json,
+                new PackConfigurationValidationService(new PackDrawRepository(jdbc))));
         transactions.refresh();
         packs = transactions.getBean(PackService.class);
     }

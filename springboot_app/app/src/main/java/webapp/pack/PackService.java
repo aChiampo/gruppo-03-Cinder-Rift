@@ -17,11 +17,14 @@ public class PackService {
     private final PackRepository packs;
     private final CardCatalogRepository cards;
     private final JsonMapper json;
+    private final PackConfigurationValidationService configuration;
 
-    public PackService(PackRepository packs, CardCatalogRepository cards, JsonMapper json) {
+    public PackService(PackRepository packs, CardCatalogRepository cards, JsonMapper json,
+            PackConfigurationValidationService configuration) {
         this.packs = packs;
         this.cards = cards;
         this.json = json;
+        this.configuration = configuration;
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +77,9 @@ public class PackService {
         if (!packs.artworkPullRatesExist(pack.artworkPullRatesId())) {
             throw failure(HttpStatus.BAD_REQUEST, "Unknown id_artwork_pull_rates");
         }
+        if (pack.mercyRarity() != null && !packs.rarityExists(pack.mercyRarity())) {
+            throw failure(HttpStatus.BAD_REQUEST, "Unknown or deleted mercy_rarity");
+        }
         validateCodes("factions", pack.allowedFactions());
         validateCodes("card_types", pack.allowedTypes());
         validateCodes("expansions", pack.allowedExpansions());
@@ -92,6 +98,7 @@ public class PackService {
                 throw failure(HttpStatus.BAD_REQUEST, "Unknown or invalid slot pull type");
             }
         }
+        configuration.validateForWrite(pack);
         var preview = pack.description().examplePull();
         if (preview.size() != pack.description().cardNumber()) {
             throw failure(HttpStatus.BAD_REQUEST, "example_pull must contain card1 through cardN for card_number");

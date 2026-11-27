@@ -213,7 +213,7 @@ Table ARTWORK_PULL_RATES {
     `standard + extended_art + full_art + alternate_art = 100` [name: 'artwork_pull_rates_total_check']
   }
 
-  Note: 'Approved on 2026-11-24: percentages per artwork roll, total 100. One configuration is seeded by V12. Packs reference one configuration directly; several packs may reuse it. No junction table, Showcase category or special-effects layer. Opening, slot application and missing-variant policy remain unimplemented.'
+  Note: 'Approved on 2026-11-24: percentages per artwork roll, total 100. One configuration is seeded by V12. Packs reference one configuration directly; several packs may reuse it. No junction table, Showcase category or special-effects layer. Independent artwork rolls per slot and Standard fallback for missing variants are approved; backend opening is implemented with atomic batches and last-slot mercy.'
 }
 
 Table PACKS {
@@ -221,20 +221,21 @@ Table PACKS {
   id_artwork_pull_rates int [not null]
   pack_name varchar [not null]
   pack_description jsonb [not null, note: 'Required object: pack_description string, card_number integer, granted_number integer, granted_rarity string, best_pull_rarity string, example_pull object keyed by card1...cardN. Each card requires id (int32), name (string or null), faction/rarity/type/expansion (object or null; required id: int32 or null, code: string or null, name: string or null), energyCost/attack/defense/power (int32 or null), artworks (non-null array; each object requires cardArtId: int32, artCode: string, imageUrl: string or null). No additional card/reference/artwork properties. Complete JSON Schema: F03, Schema JSON completo di una carta. Application validation; no nested foreign keys.']
-  pack_price int [not null, note: 'Price for one pack; no SQL default. The payment resource and approved amounts remain DA DEFINIRE.']
+  pack_price int [not null, note: 'Price for one pack; no SQL default. Payment uses cobalt_shards; seed amounts remain DA DEFINIRE.']
   is_acquirable boolean [not null, default: false, note: 'Eligibility for new acquisitions and USER catalog visibility; ADMIN sees all packs. Existing ownership is preserved when disabled. Purchase is not implemented.']
   pack_image_url varchar
   allowed_factions jsonb [not null]
   allowed_types jsonb [not null]
   allowed_expansions jsonb [not null]
   allowed_rarities jsonb [not null]
+  mercy_rarity int [note: 'Nullable FK to RARITIES.id; shared pack configuration created directly by V12. Mercy requires both threshold and rarity. Natural equal-or-higher pulls reset the counter; at expiry without one, replace the last slot with exactly this rarity, preserving filters and Standard artwork fallback.']
   mercy_threshold int [note: 'NULL disables mercy for this pack. A positive value is the initial countdown copied by the backend into USER_MERCY.mercy_counter; it is not a SQL default on the user row.']
 
   checks {
     `mercy_threshold IS NULL OR mercy_threshold > 0` [name: 'packs_mercy_threshold_check']
   }
 
-  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. pack_price stores the price; the payment resource and offer-to-pack mapping remain DA DEFINIRE. pack_description is display metadata; example_pull is a preview. Filters use catalog codes. V13 replaces slot_pulls JSON with PACK_SLOTS and adds is_acquirable, default false. API writes require one ordered slot type ID per card_number; repeated types are allowed. Opening and filter interactions remain unimplemented.'
+  Note: 'Each shop offer contains exactly one unit of one pack; no multi-pack bundles. pack_price stores the price; payment uses cobalt_shards and each pack is its own offer. pack_description is display metadata; example_pull is a preview. Filters use catalog codes. V13 replaces slot_pulls JSON with PACK_SLOTS and adds is_acquirable, default false. API writes require one ordered slot type ID per card_number; repeated types are allowed. Filters are cumulative; an empty array allows no cards. Backend opening and eligibility validation on POST/PUT are implemented.'
 }
 
 Table SLOT_PULL_TYPE {
@@ -277,8 +278,7 @@ Table PACK_SLOTS {
 Table USER_MERCY {
   id_user int [not null]
   id_pack int [not null]
-  mercy_counter int [not null, note: 'No SQL default. On the first opening of the corresponding enabled pack, the backend initializes this countdown from PACKS.mercy_threshold, then decrements it for that opening. Zero forces a card of mercy_rarity or higher. Any qualifying pull, including the forced one, resets the counter to the pack threshold. Pack consumption, progress and granted cards are committed atomically; failure leaves all unchanged.']
-  mercy_rarity int [not null, note: 'Required minimum rarity, referencing RARITIES.id. The backend uses an explicit rarity ranking, never the numeric ID, to determine qualifying outcomes. Rarity initialization comes from an approved pack policy.']
+  mercy_counter int [not null, note: 'No SQL default. On the first opening of the corresponding enabled pack, the backend initializes this countdown from PACKS.mercy_threshold, then decrements it for that opening. At zero without a natural qualifying pull, replace the last slot with exactly PACKS.mercy_rarity. Any qualifying pull, including the forced one, resets the counter to the pack threshold. Pack consumption, progress and granted cards are committed atomically; failure leaves all unchanged.']
 
   indexes {
     (id_user, id_pack) [pk]
@@ -288,7 +288,7 @@ Table USER_MERCY {
     `mercy_counter >= 0` [name: 'user_mercy_counter_check']
   }
 
-  Note: 'One progress row per user and pack. The two primary-key columns are inherited foreign keys, not generated IDs. Progress is independent of INVENTORY_PACKS and survives consumption of the last owned pack. Counter initialization and the cross-table bound mercy_counter <= PACKS.mercy_threshold are backend responsibilities, not enforced by a default or this row CHECK. Only successful openings of the corresponding pack advance mercy. NULL mercy_threshold disables mercy and no progress is initialized or advanced while disabled. A zero counter is resolved by a guaranteed qualifying pull in the opening transaction and resets only with successful delivery. Full rules are defined in database-schema-v1.1.md.'
+  Note: 'One progress row per user and pack. The two primary-key columns are inherited foreign keys, not generated IDs. Progress is independent of INVENTORY_PACKS and survives consumption of the last owned pack. Counter initialization and the cross-table bound mercy_counter <= PACKS.mercy_threshold are backend responsibilities, not enforced by a default or this row CHECK. Only successful openings of the corresponding pack advance mercy. NULL mercy_threshold or PACKS.mercy_rarity disables mercy and no progress is initialized or advanced while disabled. A zero counter is resolved by a guaranteed qualifying pull in the opening transaction and resets only with successful delivery. Full rules are defined in database-schema-v1.1.md.'
 }
 
 Table INVENTORY_PACKS {
@@ -555,7 +555,7 @@ Ref type_pull_rate_rarity_fk: TYPE_PULL_RATE.id_rarity > RARITIES.id
 Ref inventory_packs_id_pack_fk: INVENTORY_PACKS.id_pack > PACKS.id
 Ref user_mercy_id_user_fk: USER_MERCY.id_user > USERS.id
 Ref user_mercy_id_pack_fk: USER_MERCY.id_pack > PACKS.id
-Ref user_mercy_rarity_fk: USER_MERCY.mercy_rarity > RARITIES.id
+Ref packs_mercy_rarity_fk: PACKS.mercy_rarity > RARITIES.id
 Ref original_announces_publisher_id_fk: ORIGINAL_ANNOUNCES.publisher_id > USERS.id
 Ref current_negotiations_announce_id_fk: CURRENT_NEGOTIATIONS.announce_id > ORIGINAL_ANNOUNCES.id
 Ref current_negotiations_publisher_id_fk: CURRENT_NEGOTIATIONS.publisher_id > USERS.id

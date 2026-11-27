@@ -14,7 +14,7 @@ Ultimo aggiornamento significativo: 2026-11-27, riscrittura approvata dello sche
 - Ordinamenti concordati: nome, fazione, rarità, energia, attacco, difesa e punti potenza, con direzione crescente o decrescente.
 - Le rotte di consultazione richiedono un bearer token valido secondo F01. La scrittura del catalogo è amministrativa e descritta nel contratto [F10](gestione-amministrativa.md).
 - La collezione non espone scritture dirette: le copie sono gestite dai flussi di dominio, non dal client.
-- Pianificazione F03 del **2026-11-26**: la [proposta di apertura differita](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) prevede accrediti aggregati per carta/arte, lotto atomico e lock non attendente sul possesso; le carte sono restituite direttamente senza persistere il risultato della pesca. Su annotazione dell’utente, le copie estratte incrementano solo `ownedReplica`: `tradableReplica` resta invariato su righe esistenti ed è `0` su righe nuove, anche per duplicati. Nessuna scrittura di apertura è implementata.
+- Pianificazione F03 del **2026-11-26**: la [proposta di apertura differita](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) prevede accrediti aggregati per carta/arte, lotto atomico e lock non attendente sul possesso; le carte sono restituite direttamente senza persistere il risultato della pesca. Su annotazione dell’utente, le copie estratte incrementano solo `ownedReplica`: `tradableReplica` resta invariato su righe esistenti ed è `0` su righe nuove, anche per duplicati. Le scritture di apertura sono implementate dal 2026-11-27: incremento atomico del solo possesso, in ordine carta/arte, senza cambiare la scambiabilità.
 
 ## Contratto HTTP condiviso
 

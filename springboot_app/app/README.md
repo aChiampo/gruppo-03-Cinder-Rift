@@ -1,5 +1,9 @@
 # Applicazione backend
 
+Apertura F03 implementata il **2026-11-27**, su richiesta dell’utente: letture dell’inventario e apertura atomica di 1–10 pacchetti dello stesso tipo, filtri cumulativi, carte equiprobabili, artwork indipendente con fallback Standard e mercy sull’ultimo slot. Il servizio di validazione verifica i flussi amministrativi POST/PUT e ogni apertura. Nessuna nuova migrazione o seed commerciale; acquisto e frontend F03 restano esclusi. [Contratto e limiti](../../docs/BackEnd/acquisto-pacchetti.md).
+
+Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. Il CRUD legge e scrive il nuovo campo. Approvata la sostituzione dell’ultimo slot con la rarità esatta configurata quando mercy scade senza una pesca naturale qualificante. Apertura e acquisto restano non implementati. [Contratto corrente](../../docs/BackEnd/acquisto-pacchetti.md).
+
 Integrazione F03 con `dev` del **2026-11-27**, su richiesta dell’utente: preservati schema V3 e seed V5 ripuliti, artwork `STANDARD`, ID generati e amicizie V11. Pacchetti e slot sono ora V12/V13; catena completa di undici script, V1–V8 e V11–V13. Catalogo e CRUD conservati, nessun seed commerciale; acquisto e apertura rinviati. [Contratto e compatibilità](../../docs/BackEnd/acquisto-pacchetti.md).
 
 Verifica storica del cleanup di `dev` del **2026-11-27**, prima dell’integrazione F03: **263 test backend** e **51 del motore** superati; JAR backend prodotto e catena V1–V8 e V11 verificata su PostgreSQL 18.6 isolato. [Comandi, copertura e limiti](#verifica-della-riscrittura-del-2026-11-27). Frontend, browser e distribuzione Compose non rieseguiti.
@@ -147,6 +151,28 @@ Aggiornamento del **2026-11-27**, su richiesta dell’utente: V3 definisce lo sc
 V6 è una migrazione ordinaria applicata automaticamente: crea questo account dimostrativo in ogni database che applica V6. Un’email o un nickname già occupati fanno fallire la migrazione senza sovrascrivere account esistenti. Un nuovo avvio non duplica i dati grazie alla cronologia Flyway.
 
 I [test correnti delle configurazioni dei round](src/test/java/webapp/deck/RoundConfigurationMigrationDatabaseTests.java) verificano l’installazione V1–V8 e V11–V13 su uno schema vuoto, i valori iniziali e i vincoli positivi delle configurazioni dei round, seguiti da un’esecuzione senza ulteriori migrazioni. Richiedono PostgreSQL e le stesse variabili della suite. Comando mirato `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`. La verifica dettagliata del CSV e dell’accesso dimostrativo del 2026-11-16 è un’evidenza storica descritta sotto.
+
+## Verifica dell’apertura F03 del 2026-11-27
+
+`mvnw.cmd -o verify` ha superato **344 test backend**, senza fallimenti, errori o casi saltati, e prodotto il JAR con JDK 21.0.11 e PostgreSQL 18.7 in un container temporaneo senza volumi applicativi. Il JAR include i servizi di apertura e gli undici script V1–V8/V11–V13; nessuna nuova migrazione o seed commerciale.
+
+- [7 test deterministici](src/test/java/webapp/pack/PackDrawingServiceTests.java): frontiere delle probabilità a quattro decimali, equiprobabilità delle carte, duplicati e arti diverse nello stesso pacchetto, fallback Standard, avanzamento/reset mercy e sostituzione dell’ultimo slot con rarità esatta.
+- [33 test di apertura](src/test/java/webapp/pack/PackOpeningDatabaseTests.java): Bearer JWT e ruolo USER esclusivo, inventario privato/vuoto/mancante, possesso non acquisibile, input senza coercizioni, limiti 1/10, errori stabili, consumo e accrediti dopo commit, scambiabilità invariata, mercy persistente a possesso zero, rollback dopo scritture, overflow, conflitto immediato NOWAIT e lock amministrativo concorrente, incrementi atomici di tipi diversi e validazione cumulativa su POST/PUT.
+- Suite esistente di autenticazione, collezione, mazzi, amicizie, orchestrazione PvE, catalogo pacchetti, cancellazione e migrazioni inclusa nell’esecuzione completa. Le fixture amministrative sono state adeguate alle nuove verifiche di eleggibilità, senza modificare il seed commerciale.
+
+Il database applicativo non è stato modificato. Frontend e motore separato non rieseguiti; acquisto, assegnazione iniziale dei pacchetti e seed commerciale restano da realizzare. Risultati delle pescate non persistiti: nessun registro, chiave di richiesta, deduplicazione o recupero introdotto.
+
+## Verifica della rarità mercy del 2026-11-27
+
+Eseguito `mvnw.cmd -o "-Dtest=PackControllerDatabaseTests,PackMigrationDatabaseTests,RoundConfigurationMigrationDatabaseTests" clean test` con JDK 21.0.11 e PostgreSQL 18.7 in un container temporaneo senza volumi applicativi: **38 test superati**, nessun fallimento, errore o caso saltato. Verificati installazione V1–V8/V11–V13, definizione diretta della FK nullable in V12, assenza della rarità nei progressi utente, conservazione di configurazione/contatori/possesso attraverso V13, API e configurazioni round. Build pulita senza migrazioni rimosse nelle risorse compilate. Suite completa e JAR non rieseguiti; frontend, acquisto e apertura non verificati. Database applicativo non modificato.
+
+## Verifica dell’integrazione F03 del 2026-11-27
+
+Su `feature/f03-packages`, durante la risoluzione del merge da `dev`, `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` supera **300 test backend**, senza fallimenti, errori o casi saltati, e produce il JAR con JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato. Il JAR contiene esattamente undici migrazioni: V1–V8 e V11–V13. I file V1–V8 e V11 coincidono con il genitore `dev` del merge (`f9a779c`); F03 usa V12/V13, senza collisioni.
+
+Verificati installazione vuota, aggiornamento dalla base ripulita V11 fino a V13, conservazione di utenti, saldi, carte, arti complete, collezione, amicizie, effetti e mazzi; CRUD pacchetti, visibilità per ruolo, slot, precisione delle probabilità, mercy amministrativa e rollback dei rimborsi. Le fixture usano gli ID generati e non interrogano più `cards.code`.
+
+Separatamente, `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" test` nel motore supera **51 test JUnit**; `npm test` nel frontend supera **54 test** e `npm run build` riesce, senza differenze nel build distribuito da `dev`. Verificati JSON del diagramma, tabelle DBML, collegamenti relativi e sezioni della documentazione modificata e `git diff --check`. Browser e distribuzione Compose non eseguiti; database applicativo e volumi esistenti non modificati. La vecchia cronologia precedente al cleanup richiede un trattamento separato, descritto nel contratto F03.
 
 ### Verifica della riscrittura del 2026-11-27
 

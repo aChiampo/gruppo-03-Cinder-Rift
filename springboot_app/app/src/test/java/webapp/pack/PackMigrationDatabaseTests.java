@@ -52,6 +52,48 @@ class PackMigrationDatabaseTests {
     }
 
     @Test
+    void installsCurrentSchemaWithNullablePackRarityAndCounterOnlyUserProgress() {
+        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(11);
+        assertEmptyPackageTables();
+        assertThat(target("13").migrate().migrationsExecuted).isZero();
+        assertThat(jdbc.sql("SELECT is_nullable FROM information_schema.columns WHERE table_schema = :schema "
+                + "AND table_name = 'packs' AND column_name = 'mercy_rarity'")
+                .param("schema", schema).query(String.class).single()).isEqualTo("YES");
+        assertThat(jdbc.sql("SELECT column_name FROM information_schema.columns WHERE table_schema = :schema "
+                + "AND table_name = 'user_mercy' ORDER BY ordinal_position")
+                .param("schema", schema).query(String.class).list())
+                .containsExactly("id_user", "id_pack", "mercy_counter");
+    }
+
+    @Test
+    void preservesPackRarityCountersAndOwnershipThroughV13() {
+        target("12").migrate();
+        int packId = createPack();
+        int withoutRarity = createPack();
+        jdbc.sql("UPDATE packs SET mercy_rarity = (SELECT id FROM rarities WHERE code = 'EPIC') WHERE id = :id")
+                .param("id", packId).update();
+        jdbc.sql("INSERT INTO user_mercy (id_user, id_pack, mercy_counter) SELECT id, :pack, 3 FROM users")
+                .param("pack", packId).update();
+        jdbc.sql("INSERT INTO inventory_packs SELECT id, :pack, 2 FROM inventory")
+                .param("pack", packId).update();
+        String before = snapshot();
+        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(snapshot()).isEqualTo(before);
+        assertThat(jdbc.sql("SELECT r.code FROM packs p JOIN rarities r ON r.id = p.mercy_rarity WHERE p.id = :id")
+                .param("id", packId).query(String.class).single()).isEqualTo("EPIC");
+        assertThat(jdbc.sql("SELECT mercy_rarity FROM packs WHERE id = :id")
+                .param("id", withoutRarity).query((row, index) -> row.getObject(1)).list()).containsExactly((Object) null);
+        assertThat(jdbc.sql("SELECT mercy_counter FROM user_mercy WHERE id_pack = :id")
+                .param("id", packId).query(Integer.class).single()).isEqualTo(3);
+        assertThat(jdbc.sql("SELECT item_quantity FROM inventory_packs WHERE id_pack = :id")
+                .param("id", packId).query(Integer.class).single()).isEqualTo(2);
+        assertThatThrownBy(() -> jdbc.sql("UPDATE packs SET mercy_rarity = 2147483647 WHERE id = :id")
+                .param("id", packId).update()).hasMessageContaining("packs_mercy_rarity_fk");
+        jdbc.sql("UPDATE packs SET mercy_rarity = NULL WHERE id = :id").param("id", packId).update();
+        assertThat(target("13").migrate().migrationsExecuted).isZero();
+    }
+
+    @Test
     void installsOnEmptyDatabaseWithoutPackageSeedAndDoesNotRerun() {
         assertThat(target("13").migrate().migrationsExecuted).isEqualTo(11);
         assertEmptyPackageTables();
@@ -145,8 +187,8 @@ class PackMigrationDatabaseTests {
                 SELECT id, :id, 1 FROM inventory
                 """).param("id", packId).update();
         jdbc.sql("""
-                INSERT INTO user_mercy (id_user, id_pack, mercy_counter, mercy_rarity)
-                SELECT u.id, :id, 0, r.id FROM users u CROSS JOIN rarities r WHERE r.code = 'EPIC'
+                INSERT INTO user_mercy (id_user, id_pack, mercy_counter)
+                SELECT id, :id, 0 FROM users
                 """).param("id", packId).update();
         assertThatThrownBy(() -> jdbc.sql("UPDATE user_mercy SET mercy_counter = -1").update())
                 .hasMessageContaining("user_mercy_counter_check");
@@ -170,15 +212,13 @@ class PackMigrationDatabaseTests {
         assertThatThrownBy(() -> jdbc.sql("INSERT INTO inventory_packs SELECT id, :id, 1 FROM inventory")
                 .param("id", packId).update()).hasMessageContaining("inventory_packs_pkey");
         assertThatThrownBy(() -> jdbc.sql("""
-                INSERT INTO user_mercy SELECT id, :id, 1, 2147483647 FROM users
-                """).param("id", packId).update()).hasMessageContaining("user_mercy_rarity_fk");
+                UPDATE packs SET mercy_rarity = 2147483647 WHERE id = :id
+                """).param("id", packId).update()).hasMessageContaining("packs_mercy_rarity_fk");
         jdbc.sql("""
-                INSERT INTO user_mercy SELECT u.id, :id, 1, r.id
-                FROM users u CROSS JOIN rarities r WHERE r.code = 'RARE'
+                INSERT INTO user_mercy (id_user, id_pack, mercy_counter) SELECT id, :id, 1 FROM users
                 """).param("id", packId).update();
         assertThatThrownBy(() -> jdbc.sql("""
-                INSERT INTO user_mercy SELECT u.id, :id, 1, r.id
-                FROM users u CROSS JOIN rarities r WHERE r.code = 'RARE'
+                INSERT INTO user_mercy (id_user, id_pack, mercy_counter) SELECT id, :id, 1 FROM users
                 """).param("id", packId).update()).hasMessageContaining("user_mercy_pkey");
     }
 

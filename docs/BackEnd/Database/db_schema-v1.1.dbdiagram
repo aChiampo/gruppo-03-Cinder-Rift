@@ -112,14 +112,14 @@
       {
         "name": "PACKS",
         "schemaName": "public",
-        "x": 320.87939453125,
-        "y": 1376
+        "x": 600.9056806696572,
+        "y": 2103.5054770530483
       },
       {
         "name": "USER_MERCY",
         "schemaName": "public",
-        "x": 1593.37548828125,
-        "y": 1883
+        "x": 935.2707972543484,
+        "y": 2433.592538532408
       },
       {
         "name": "INVENTORY_PACKS",
@@ -136,14 +136,14 @@
       {
         "name": "DAILY_QUESTS",
         "schemaName": "public",
-        "x": 320.87939453125,
-        "y": 1774
+        "x": 371.53741614422813,
+        "y": 1412.3580123740167
       },
       {
         "name": "WEEKLY_QUESTS",
         "schemaName": "public",
-        "x": 320.87939453125,
-        "y": 2012
+        "x": 371.53741614422813,
+        "y": 1650.3580123740167
       },
       {
         "name": "DAILY_REWARDS",
@@ -208,26 +208,26 @@
       {
         "name": "ARTWORK_PULL_RATES",
         "schemaName": "public",
-        "x": 12,
-        "y": 3938
+        "x": 233.7628734923812,
+        "y": 2423.28037302079
       },
       {
         "name": "SLOT_PULL_TYPE",
         "schemaName": "public",
-        "x": 337.87996078644403,
-        "y": 4176.640794408726
+        "x": 559.6428342788251,
+        "y": 2661.9211674295166
       },
       {
         "name": "TYPE_PULL_RATE",
         "schemaName": "public",
-        "x": 9.774977075648906,
-        "y": 4160.640794408726
+        "x": 183.02554609822738,
+        "y": 2737.433014497554
       },
       {
         "name": "PACK_SLOTS",
         "schemaName": "public",
-        "x": 599.6428405279486,
-        "y": 4181.613267132606
+        "x": 821.4057140203297,
+        "y": 2666.8936401533956
       }
     ],
     "tableGroupCollapseStates": [],
@@ -591,21 +591,6 @@
           "id"
         ],
         "secondTableName": "PACKS",
-        "secondSchemaName": "public",
-        "secondRelation": "1",
-        "checkPoints": []
-      },
-      {
-        "firstFieldNames": [
-          "mercy_rarity"
-        ],
-        "firstTableName": "USER_MERCY",
-        "firstSchemaName": "public",
-        "firstRelation": "*",
-        "secondFieldNames": [
-          "id"
-        ],
-        "secondTableName": "RARITIES",
         "secondSchemaName": "public",
         "secondRelation": "1",
         "checkPoints": []
@@ -1039,6 +1024,21 @@
           "id_rarity"
         ],
         "firstTableName": "TYPE_PULL_RATE",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "RARITIES",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "mercy_rarity"
+        ],
+        "firstTableName": "PACKS",
         "firstSchemaName": "public",
         "firstRelation": "*",
         "secondFieldNames": [

@@ -1,5 +1,9 @@
 # Area BackEnd
 
+Apertura F03 implementata il **2026-11-27**, su richiesta dell’utente: letture dell’inventario e apertura atomica di 1–10 pacchetti dello stesso tipo, filtri cumulativi, carte equiprobabili, artwork indipendente con fallback Standard e mercy sull’ultimo slot. Il servizio di validazione verifica i flussi amministrativi POST/PUT e ogni apertura. Nessuna nuova migrazione o seed commerciale; acquisto e frontend F03 restano esclusi. [Contratto e limiti](acquisto-pacchetti.md).
+
+Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. Il CRUD legge e scrive il nuovo campo. Approvata la sostituzione dell’ultimo slot con la rarità esatta configurata quando mercy scade senza una pesca naturale qualificante. Apertura e acquisto restano non implementati. [Contratto corrente](acquisto-pacchetti.md).
+
 Allineamento del **2026-11-27**: backend Java 21, Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18. Implementati [F01](accesso-utenti.md), [F04](collezione-carte.md), [F05](gestione-mazzi.md), PvE F07, amicizie F13 e [scritture F10](gestione-amministrativa.md). Il [catalogo e CRUD F03](acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api) conserva visibilità per ruolo, possesso su PUT e rimborso in Scaglie su DELETE. Undici script, V1–V8 e V11–V13: cleanup di `dev` preservato e F03 rinumerata V12/V13. Nessun seed commerciale; acquisto e apertura rinviati.
 
 Le pagine BackEnd ospitano i contratti tecnici canonici delle funzionalità
@@ -24,7 +28,7 @@ Aggiornamento del **2026-11-27**: V3 contiene lo schema completo delle carte e V
 - [Riepilogo degli endpoint](GUIDA-API-FRONTEND.md) — elenco di autenticazione, profili, mazzi, PvE, rotte proposte per scambi e contratto definito per amicizie, con percorso e metodo HTTP, funzione, stato (`Planned`, `BE Implemented`, `FE Implemented`), autenticazione, codici HTTP, ruoli e riferimenti canonici.
 - [F01 — Accesso utenti](accesso-utenti.md)
 - [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
-- [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md) — catalogo e CRUD disponibili; [proposta inventario/apertura differita](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) documentata il 2026-11-26, massimo dieci, lock non attendente, lotto atomico e risposta diretta dopo commit; nuove rotte non implementate, estrazione da definire. Acquisto rinviato, nessun seed dei pacchetti; configurazione artwork inizializzata.
+- [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md) — catalogo e CRUD disponibili; [proposta inventario/apertura differita](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) documentata il 2026-11-26, massimo dieci, lock non attendente, lotto atomico e risposta diretta dopo commit; nuove rotte non implementate, estrazione da definire. Acquisto rinviato, nessun seed dei pacchetti; configurazione artwork inizializzata.
 - [F04 — Catalogo e collezione delle carte](collezione-carte.md) — letture separate nei package `card` e `collection`.
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi e marketplace](scambi-mercato.md)

@@ -31,9 +31,11 @@ CREATE TABLE packs (
     allowed_expansions jsonb NOT NULL,
     allowed_rarities jsonb NOT NULL,
     mercy_threshold integer,
+    mercy_rarity integer,
     slot_pulls jsonb NOT NULL,
     CONSTRAINT packs_id_artwork_pull_rates_fk
         FOREIGN KEY (id_artwork_pull_rates) REFERENCES artwork_pull_rates (id),
+    CONSTRAINT packs_mercy_rarity_fk FOREIGN KEY (mercy_rarity) REFERENCES rarities (id),
     CONSTRAINT packs_mercy_threshold_check
         CHECK (mercy_threshold IS NULL OR mercy_threshold > 0)
 );
@@ -52,10 +54,8 @@ CREATE TABLE user_mercy (
     id_user integer NOT NULL,
     id_pack integer NOT NULL,
     mercy_counter integer NOT NULL,
-    mercy_rarity integer NOT NULL,
     CONSTRAINT user_mercy_pkey PRIMARY KEY (id_user, id_pack),
     CONSTRAINT user_mercy_id_user_fk FOREIGN KEY (id_user) REFERENCES users (id),
     CONSTRAINT user_mercy_id_pack_fk FOREIGN KEY (id_pack) REFERENCES packs (id),
-    CONSTRAINT user_mercy_rarity_fk FOREIGN KEY (mercy_rarity) REFERENCES rarities (id),
     CONSTRAINT user_mercy_counter_check CHECK (mercy_counter >= 0)
 );

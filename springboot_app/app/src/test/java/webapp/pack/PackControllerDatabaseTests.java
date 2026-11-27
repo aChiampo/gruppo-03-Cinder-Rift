@@ -61,7 +61,7 @@ class PackControllerDatabaseTests {
                 new PackWriteRequest.Description("Fixture only", 1, 0, "COMMON", "COMMON",
                         Map.of("card1", preview)), 300, false, null,
                 List.of("SAP"), List.of("CREATURE"), List.of("CR01"), List.of("COMMON"),
-                null, List.of(slotTypeId)));
+                null, null, List.of(slotTypeId)));
     }
 
     @Test
@@ -123,6 +123,49 @@ class PackControllerDatabaseTests {
     }
 
     @Test
+    void roundTripsNullablePackMercyRarityAndClearsProgressOnChange() throws Exception {
+        int epic = jdbc.sql("SELECT id FROM rarities WHERE code = 'COMMON'").query(Integer.class).single();
+        payload.put("mercy_threshold", 10);
+        payload.put("mercy_rarity", epic);
+        int id = createPack();
+        mvc.perform(get("/api/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.mercy_rarity").value(epic));
+        assertThat(packs.get(id).definition().mercyRarity()).isEqualTo(epic);
+        mercy(user, id);
+        payload.putNull("mercy_rarity");
+        mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.mercy_rarity").value((Object) null));
+        assertThat(packs.get(id).definition().mercyRarity()).isNull();
+        assertThat(mercyRows(id)).isZero();
+        payload.remove("mercy_rarity");
+        int omitted = createPack();
+        assertThat(packs.get(omitted).definition().mercyRarity()).isNull();
+    }
+
+    @Test
+    void rejectsUnknownDeletedAndInvalidMercyRaritiesWithoutChangingProgress() throws Exception {
+        int id = createPack();
+        mercy(user, id);
+        for (int rarity : new int[]{0, -1, Integer.MAX_VALUE}) {
+            payload.put("mercy_rarity", rarity);
+            submit(payload).andExpect(status().isBadRequest());
+            mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                    .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
+                    .andExpect(status().isBadRequest());
+        }
+        int deleted = jdbc.sql("SELECT id FROM rarities WHERE code = 'EPIC'").query(Integer.class).single();
+        jdbc.sql("UPDATE rarities SET is_deleted = true WHERE id = :id").param("id", deleted).update();
+        payload.put("mercy_rarity", deleted);
+        submit(payload).andExpect(status().isBadRequest());
+        mvc.perform(put("/api/admin/packs/{id}", id).header(HttpHeaders.AUTHORIZATION, admin.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest());
+        assertThat(mercyRows(id)).isEqualTo(1);
+        assertThat(packs.get(id).definition().mercyRarity()).isNull();
+    }
+
+    @Test
     void listsTheEntireCatalogInIdOrderAndIgnoresObsoletePaginationParameters() throws Exception {
         mvc.perform(get("/api/packs").header(HttpHeaders.AUTHORIZATION, admin.bearer()))
                 .andExpect(status().isOk()).andExpect(content().json("[]"));
@@ -148,6 +191,8 @@ class PackControllerDatabaseTests {
         payload.put("pack_name", "Replaced");
         payload.put("pack_price", 0);
         payload.put("mercy_threshold", 2);
+        ensureEligibleCard("RARE");
+        payload.set("allowed_rarities", json.createArrayNode().add("COMMON").add("RARE"));
         int replacementType = createSlotType("RARE");
         payload.set("pack_slots", json.createArrayNode().add(replacementType));
         payload.put("is_acquirable", true);
@@ -216,7 +261,7 @@ class PackControllerDatabaseTests {
             invalid.remove(field);
             submit(invalid).andExpect(status().isBadRequest());
         }
-        for (String field : List.of("pack_price", "mercy_threshold", "id_artwork_pull_rates")) {
+        for (String field : List.of("pack_price", "mercy_threshold", "mercy_rarity", "id_artwork_pull_rates")) {
             ObjectNode invalid = payload.deepCopy();
             invalid.put(field, -1);
             submit(invalid).andExpect(status().isBadRequest());
@@ -320,6 +365,8 @@ class PackControllerDatabaseTests {
     void preservesSlotOrderAndRepeatedTypesWithAnAdditionalRarity() throws Exception {
         jdbc.sql("INSERT INTO rarities (code, name, order_index) VALUES ('MYTHIC', 'Mythic', 5)").update();
         int first = payload.path("pack_slots").get(0).asInt();
+        ensureEligibleCard("MYTHIC");
+        payload.set("allowed_rarities", json.createArrayNode().add("COMMON").add("MYTHIC"));
         int second = createSlotType("MYTHIC");
         payload.set("pack_slots", json.createArrayNode().add(second).add(first).add(second));
         ObjectNode description = (ObjectNode) payload.path("pack_description");
@@ -355,6 +402,15 @@ class PackControllerDatabaseTests {
         jdbc.sql("UPDATE rarities SET is_deleted = true WHERE code = 'COMMON'").update();
         submit(payload).andExpect(status().isBadRequest());
         assertThat(packs.get(id).definition().packSlots()).containsExactly(original);
+    }
+
+    private void ensureEligibleCard(String rarity) {
+        int id = jdbc.sql("""
+                INSERT INTO cards (name, id_type, id_faction, id_expansion, id_rarity)
+                SELECT 'Eligible fixture', c.id_type, (SELECT id FROM factions WHERE code = 'SAP'), c.id_expansion, r.id
+                FROM cards c CROSS JOIN rarities r WHERE c.name = 'Ash Novice' AND r.code = :rarity RETURNING id
+                """).param("rarity", rarity).query(Integer.class).single();
+        jdbc.sql("INSERT INTO cards_arts (id_card, art_code) VALUES (:id, 'STANDARD')").param("id", id).update();
     }
 
     private int createSlotType(String rarity) {
@@ -492,8 +548,8 @@ class PackControllerDatabaseTests {
 
     private void mercy(Session owner, int packId) {
         jdbc.sql("""
-                INSERT INTO user_mercy (id_user, id_pack, mercy_counter, mercy_rarity)
-                VALUES (:userId, :packId, 3, (SELECT id FROM rarities WHERE code = 'EPIC'))
+                INSERT INTO user_mercy (id_user, id_pack, mercy_counter)
+                VALUES (:userId, :packId, 3)
                 """).param("packId", packId).param("userId", owner.id()).update();
     }
 

@@ -45,6 +45,15 @@ public class PackRepository {
                 .param("id", id).query(this::map).optional();
     }
 
+    public List<OwnedPackView> findOwned(int userId) {
+        return jdbc.sql(SELECT_PACK.replace("SELECT p.*,", "SELECT p.*, ip.item_quantity,") + """
+                 JOIN inventory_packs ip ON ip.id_pack = p.id
+                 JOIN inventory i ON i.id = ip.id_inventory
+                 WHERE i.id_user = :user ORDER BY p.id
+                """).param("user", userId)
+                .query((row, index) -> new OwnedPackView(row.getInt("id"), row.getInt("item_quantity"), map(row, index))).list();
+    }
+
     public boolean lock(int id) {
         return jdbc.sql("SELECT id FROM packs WHERE id = :id FOR UPDATE")
                 .param("id", id).query(Integer.class).optional().isPresent();
@@ -54,10 +63,10 @@ public class PackRepository {
         int id = parameters(jdbc.sql("""
                 INSERT INTO packs (id_artwork_pull_rates, pack_name, pack_description, pack_price, is_acquirable, pack_image_url,
                     allowed_factions, allowed_types, allowed_expansions, allowed_rarities,
-                    mercy_threshold)
+                    mercy_threshold, mercy_rarity)
                 VALUES (:artworkRates, :name, CAST(:description AS jsonb), :price, :acquirable, :image,
                     CAST(:factions AS jsonb), CAST(:types AS jsonb), CAST(:expansions AS jsonb),
-                    CAST(:rarities AS jsonb), :mercy)
+                    CAST(:rarities AS jsonb), :mercy, :mercyRarity)
                 RETURNING id
                 """), pack).query(Integer.class).single();
         insertSlots(id, pack.packSlots());
@@ -71,7 +80,8 @@ public class PackRepository {
                     pack_price = :price, is_acquirable = :acquirable, pack_image_url = :image,
                     allowed_factions = CAST(:factions AS jsonb), allowed_types = CAST(:types AS jsonb),
                     allowed_expansions = CAST(:expansions AS jsonb),
-                    allowed_rarities = CAST(:rarities AS jsonb), mercy_threshold = :mercy
+                    allowed_rarities = CAST(:rarities AS jsonb), mercy_threshold = :mercy,
+                    mercy_rarity = :mercyRarity
                 WHERE id = :id
                 """), pack).param("id", id).update();
         jdbc.sql("DELETE FROM pack_slots WHERE id_pack = :id").param("id", id).update();
@@ -123,6 +133,11 @@ public class PackRepository {
                 .param("id", id).query(Boolean.class).single();
     }
 
+    public boolean rarityExists(int id) {
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM rarities WHERE id = :id AND NOT is_deleted)")
+                .param("id", id).query(Boolean.class).single();
+    }
+
     public boolean lockValidSlotPullType(int id) {
         if (jdbc.sql("SELECT id FROM slot_pull_type WHERE id = :id FOR SHARE")
                 .param("id", id).query(Integer.class).optional().isEmpty()) return false;
@@ -142,7 +157,7 @@ public class PackRepository {
                 .param("types", json.writeValueAsString(pack.allowedTypes()))
                 .param("expansions", json.writeValueAsString(pack.allowedExpansions()))
                 .param("rarities", json.writeValueAsString(pack.allowedRarities()))
-                .param("mercy", pack.mercyThreshold());
+                .param("mercy", pack.mercyThreshold()).param("mercyRarity", pack.mercyRarity());
     }
 
     private PackView map(ResultSet row, int index) throws SQLException {
@@ -153,6 +168,7 @@ public class PackRepository {
                 strings(row, "allowed_factions"), strings(row, "allowed_types"),
                 strings(row, "allowed_expansions"), strings(row, "allowed_rarities"),
                 row.getObject("mercy_threshold", Integer.class),
+                row.getObject("mercy_rarity", Integer.class),
                 json.readValue(row.getString("slot_type_ids"),
                         json.getTypeFactory().constructCollectionType(List.class, Integer.class))),
                 new ArtworkPullRates(ratesId, row.getBigDecimal("standard"), row.getBigDecimal("extended_art"),

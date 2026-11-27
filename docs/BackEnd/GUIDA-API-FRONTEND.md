@@ -1,6 +1,6 @@
 # Riepilogo degli endpoint
 
-Ultimo aggiornamento significativo: **2026-11-27**, integrazione F03 con il cleanup di `dev`. F01/F04/F05/F07 sono integrati nel frontend, F13 e catalogo/CRUD F03 sono implementati nel backend. Le tre rotte inventario/apertura F03 restano Planned secondo il contratto del 2026-11-26.
+Ultimo aggiornamento significativo: **2026-11-27**, integrazione F03 con il cleanup di `dev`. F01/F04/F05/F07 sono integrati nel frontend, F13 e catalogo/CRUD F03 sono implementati nel backend. Le tre rotte inventario/apertura F03 sono BE Implemented dal 2026-11-27, con validazione condivisa POST/PUT e transazione atomica del lotto.
 
 
 Aggiornamento del **2026-11-21**: aggiunte le sette rotte F04/F10 importate da `feature/api-collezione-catalogo`; importazione backend distinta dalla successiva integrazione React F04 del 2026-11-22.
@@ -72,9 +72,9 @@ Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consenton
 | `POST /api/admin/packs` | Crea una definizione senza assegnare pacchetti o carte | BE Implemented | Bearer JWT | `201`, `400`, `401`, `403`, `415` | `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#Catalogo%20implementato%3A%20migrazione%20e%20API) · [Schema richiesta](acquisto-pacchetti.md#Schema%20della%20richiesta%20PackWriteRequest) |
 | `PUT /api/admin/packs/{packId}` | Sostituisce la definizione anche con possesso o mercy; conserva quantità e saldi ed elimina i progressi mercy relativi | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `415` | `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#Catalogo%20implementato%3A%20migrazione%20e%20API) · [Schema richiesta](acquisto-pacchetti.md#Schema%20della%20richiesta%20PackWriteRequest) |
 | `DELETE /api/admin/packs/{packId}` | Rimborsa il possesso in `cobalt_shards` al prezzo corrente ed elimina riferimenti e definizione | BE Implemented | Bearer JWT | `204`, `400`, `401`, `403`, `404` | `ADMIN` | [F03 — Catalogo e CRUD](acquisto-pacchetti.md#Catalogo%20implementato%3A%20migrazione%20e%20API) |
-| `GET /api/users/me/inventory` | Legge i tre saldi del chiamante | Planned | Bearer JWT | `200`, `401`, `403`, `500`, `503` | `USER`, proposto; solo proprio inventario | [F03 — Proposta inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) |
-| `GET /api/users/me/inventory/packs` | Elenca quantità e definizioni possedute, incluse quelle non acquisibili | Planned | Bearer JWT | `200`, `401`, `403`, `500`, `503` | `USER`, proposto; solo proprio inventario | [F03 — Proposta inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) |
-| `POST /api/users/me/pack-openings` | Apre atomicamente da 1 a 10 copie; rifiuta il possesso occupato con lock non attendente e restituisce direttamente le carte | Planned | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409`, `415`, `500`, `503` | `USER`; solo proprio possesso | [F03 - Proposta inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP) |
+| `GET /api/users/me/inventory` | Legge i tre saldi del chiamante | BE Implemented | Bearer JWT | `200`, `401`, `403`, `500`, `503` | `USER`; solo proprio inventario | [F03 — Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) |
+| `GET /api/users/me/inventory/packs` | Elenca quantità e definizioni possedute, incluse quelle non acquisibili | BE Implemented | Bearer JWT | `200`, `401`, `403`, `500`, `503` | `USER`; solo proprio inventario | [F03 — Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) |
+| `POST /api/users/me/pack-openings` | Apre atomicamente da 1 a 10 copie; rifiuta il possesso occupato con lock non attendente e restituisce direttamente le carte | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409`, `415`, `500`, `503` | `USER`; solo proprio possesso | [F03 - Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) |
 
 ## Contratti e codice di riferimento
 
@@ -85,7 +85,7 @@ Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consenton
 - [F01 — Cancellazione account](accesso-utenti.md#Cancellazione%20account)
 - [F01 — Profili](accesso-utenti.md#Profili%20utente)
 - [F03 — Catalogo pacchetti e CRUD](acquisto-pacchetti.md#Catalogo%20implementato%3A%20migrazione%20e%20API)
-- [F03 — Proposta inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20proposta%20HTTP)
+- [F03 — Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP)
 - [Controller catalogo pacchetti](../../springboot_app/app/src/main/java/webapp/pack/PackController.java) e [amministrazione pacchetti](../../springboot_app/app/src/main/java/webapp/pack/PackManagementController.java).
 - [F05 — API mazzi](gestione-mazzi.md#API%20HTTP%20implementate)
 - [F07 — Endpoint e payload](app-battaglie-api.md)
@@ -96,9 +96,9 @@ Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consenton
 
 ## Ambito e verifiche
 
-Il branch corrente contiene le API PvE F07, catalogo/collezione F04, scritture carte F10 e catalogo/CRUD pacchetti F03. Per F03 sono implementate soltanto le cinque rotte di catalogo e amministrazione: le tre nuove rotte inventario/apertura sono proposte Planned, non disponibili. Acquisto, accredito, apertura e avanzamento mercy restano non implementati; nessun percorso d’acquisto o storico F08 è introdotto. La migrazione [V12](../../springboot_app/app/src/main/resources/db/migration/V12__create_f03_packs_schema.sql) crea le quattro tabelle F03 senza seed dei pacchetti; [V13](../../springboot_app/app/src/main/resources/db/migration/V13__normalize_f03_slot_pull_rates.sql) normalizza slot e probabilità e aggiunge `is_acquirable`. Nessuna nuova migrazione o chiamata React è introdotta dalla pianificazione.
+Il branch corrente contiene le API PvE F07, catalogo/collezione F04, scritture carte F10 e catalogo/CRUD pacchetti F03. Per F03 sono implementate le cinque rotte di catalogo/amministrazione e le tre rotte inventario/apertura. L’apertura aggiorna atomicamente possesso, collezione e mercy; acquisto e accredito iniziale dei pacchetti restano non implementati; nessun percorso d’acquisto o storico F08 è introdotto. La migrazione [V12](../../springboot_app/app/src/main/resources/db/migration/V12__create_f03_packs_schema.sql) crea le quattro tabelle F03 senza seed dei pacchetti; [V13](../../springboot_app/app/src/main/resources/db/migration/V13__normalize_f03_slot_pull_rates.sql) normalizza slot e probabilità e aggiunge `is_acquirable`. Nessuna nuova migrazione o chiamata React è introdotta dall’implementazione dell’apertura.
 
-Le chiamate React presenti coprono F01 (accesso, registrazione, rinnovo, uscita, profilo), CRUD F05, PvE F07 e le due letture di elenco F04. I dettagli F04 sono già inclusi negli elenchi; le rotte di dettaglio restano `BE Implemented`. Le scritture del catalogo F10 restano amministrative e senza interfaccia. Le cinque rotte F03 di catalogo/CRUD restano backend; inventario/apertura F03 e storico F08 non sono integrati nel client.
+Le chiamate React presenti coprono F01 (accesso, registrazione, rinnovo, uscita, profilo), CRUD F05, PvE F07 e le due letture di elenco F04. I dettagli F04 sono già inclusi negli elenchi; le rotte di dettaglio restano `BE Implemented`. Le scritture del catalogo F10 restano amministrative e senza interfaccia. Le otto rotte F03 di catalogo/CRUD e inventario/apertura restano backend; F03 e storico F08 non sono integrati nel client.
 
 Gli endpoint tecnici documentati separatamente sono [OpenAPI e salute del backend](accesso-utenti.md#Guida%20autenticazione%2C%20header%20e%20OpenAPI) e [salute del motore](../../springboot_app/game_engine/README.md#Avvio%20con%20Docker%20Compose).
 

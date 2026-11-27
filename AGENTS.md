@@ -18,10 +18,15 @@
   con FK diretta da `packs` e vincola i quattro tipi di artwork.
   V13 normalizza gli slot in `pack_slots`, `slot_pull_type` e `type_pull_rate`,
   usa percentuali `decimal(7,4)` e aggiunge `packs.is_acquirable`.
+  V12 definisce direttamente la FK nullable `packs.mercy_rarity`;
+  `user_mercy` conserva soltanto utente, pacchetto e contatore.
   Catalogo e CRUD pacchetti sono implementati, senza seed dei pacchetti o dei tipi;
   distribuzioni referenziate immutabili e totali per rarità verificati al commit.
-  Showcase ed effetti speciali sono esclusi. Acquisto, apertura e avanzamento mercy
-  restano rinviati; contratto in `docs/BackEnd/acquisto-pacchetti.md`.
+  F03 espone inventario e apertura atomica di 1–10 pacchetti: lock possesso NOWAIT,
+  filtri cumulativi, artwork indipendente con fallback Standard e mercy sull’ultimo slot.
+  La validazione delle pescate è condivisa fra POST/PUT e apertura; solo il possesso
+  delle carte aumenta. Acquisto e seed commerciale restano rinviati.
+  Showcase ed effetti speciali sono esclusi; contratto in `docs/BackEnd/acquisto-pacchetti.md`.
   V1–V8 e V11 di `dev` restano inalterate; la cronologia precedente al cleanup
   richiede una conversione separata. Frontend F13 e F06 restano da completare.
   Allineamento ai sorgenti del 2026-11-27; stato e limiti in `docs/README.md`.
