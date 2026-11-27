@@ -6,6 +6,8 @@ import com.benedetto.game_engine.effect.CardEffect;
 import com.benedetto.game_engine.battle.dto.ChallengerDeckRequest;
 import com.benedetto.game_engine.battle.dto.ChallengerInfoRequest;
 import com.benedetto.game_engine.battle.dto.PveBattleRequest;
+import com.benedetto.game_engine.battle.dto.PvpBattleRequest;
+import com.benedetto.game_engine.battle.dto.PvpBattleResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -191,6 +193,147 @@ class BattleControllerTest {
                 .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
 
         mockMvc.perform(options("/api/battle/pve/1")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    }
+
+    private PvpBattleRequest buildValidPvpRequest() {
+        return PvpBattleRequest.builder()
+                .playerA(ChallengerInfoRequest.builder()
+                        .userId("user-pvp-a")
+                        .username("player_alpha")
+                        .displayName("Alpha")
+                        .build())
+                .deckA(ChallengerDeckRequest.builder()
+                        .entries(buildValidEntries())
+                        .build())
+                .playerB(ChallengerInfoRequest.builder()
+                        .userId("user-pvp-b")
+                        .username("player_beta")
+                        .displayName("Beta")
+                        .build())
+                .deckB(ChallengerDeckRequest.builder()
+                        .entries(buildValidEntries())
+                        .build())
+                .build();
+    }
+
+    @Test
+    void executePvpBattle_withValidRequest_returnsOkAndConsistentWinnerFields() throws Exception {
+        PvpBattleRequest request = buildValidPvpRequest();
+
+        String responseJson = mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mode").value("RANKED"))
+                .andExpect(jsonPath("$.outcome").value(anyOf(is("PLAYER_A_WIN"), is("PLAYER_B_WIN"), is("DRAW"))))
+                .andExpect(jsonPath("$.battleLog").isArray())
+                .andExpect(jsonPath("$.battleLog", not(empty())))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        PvpBattleResponse response = objectMapper.readValue(responseJson, PvpBattleResponse.class);
+        if ("PLAYER_A_WIN".equals(response.getOutcome())) {
+            org.junit.jupiter.api.Assertions.assertEquals("user-pvp-a", response.getWinnerUserId());
+            org.junit.jupiter.api.Assertions.assertEquals("player_alpha", response.getWinnerUsername());
+        } else if ("PLAYER_B_WIN".equals(response.getOutcome())) {
+            org.junit.jupiter.api.Assertions.assertEquals("user-pvp-b", response.getWinnerUserId());
+            org.junit.jupiter.api.Assertions.assertEquals("player_beta", response.getWinnerUsername());
+        } else {
+            org.junit.jupiter.api.Assertions.assertNull(response.getWinnerUserId());
+            org.junit.jupiter.api.Assertions.assertNull(response.getWinnerUsername());
+        }
+    }
+
+    @Test
+    void executePvpBattle_withFriendlyMode_returnsFriendlyMode() throws Exception {
+        PvpBattleRequest request = buildValidPvpRequest();
+        request.setMode("FRIENDLY");
+
+        mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mode").value("FRIENDLY"))
+                .andExpect(jsonPath("$.outcome").value(anyOf(is("PLAYER_A_WIN"), is("PLAYER_B_WIN"), is("DRAW"))))
+                .andExpect(jsonPath("$.battleLog", not(empty())));
+    }
+
+    @Test
+    void executePvpBattle_withSelfChallenge_returnsBadRequestProblemDetail() throws Exception {
+        PvpBattleRequest request = buildValidPvpRequest();
+        request.getPlayerB().setUserId("user-pvp-a");
+
+        mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"));
+    }
+
+    @Test
+    void executePvpBattle_withInvalidMode_returnsBadRequestProblemDetail() throws Exception {
+        PvpBattleRequest request = buildValidPvpRequest();
+        request.setMode("BLITZ");
+
+        mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"));
+    }
+
+    @Test
+    void executePvpBattle_withMissingRequiredFields_returnsBadRequestProblemDetail() throws Exception {
+        mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"));
+    }
+
+    @Test
+    void executePvpBattle_withInvalidDeck_returnsUnprocessableEntityWithViolations() throws Exception {
+        PvpBattleRequest request = buildValidPvpRequest();
+        request.setDeckB(ChallengerDeckRequest.builder()
+                .entries(List.of(ChallengerDeckEntryRequest.builder().cardId(999).destination("ROUND1").build()))
+                .build());
+
+        mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(422))
+                .andExpect(jsonPath("$.violations").isArray())
+                .andExpect(jsonPath("$.violations", not(empty())));
+    }
+
+    @Test
+    void executePvpBattle_withExpiredDeadline_returnsGatewayTimeout() throws Exception {
+        PvpBattleRequest request = buildValidPvpRequest();
+
+        mockMvc.perform(post("/api/battle/pvp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Battle-Deadline", "2000-01-01T00:00:00Z")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isGatewayTimeout());
+    }
+
+    @Test
+    void preflightCorsRequest_pvpFromFrontendOrigins_isRejectedWithoutCorsHeaders() throws Exception {
+        mockMvc.perform(options("/api/battle/pvp")
+                        .header("Origin", "http://localhost:8082")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+
+        mockMvc.perform(options("/api/battle/pvp")
                         .header("Origin", "http://localhost:5173")
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isForbidden())

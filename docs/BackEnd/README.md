@@ -1,6 +1,6 @@
 # Area BackEnd
 
-Documentazione dei Software Developer: servizi e regole server. Il backend in `springboot_app/app/` usa Java 21, Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18. Sono implementati [autenticazione e profili F01](accesso-utenti.md), [catalogo e collezione F04](collezione-carte.md), [mazzi e validazione F05](gestione-mazzi.md), orchestrazione PvE F07 e [scritture amministrative carte F10](gestione-amministrativa.md). Flyway applica nove script, V1–V8 e V11; il modello v1.1 completo resta parzialmente implementato. Allineamento ai sorgenti: **2026-11-27**. Le altre funzionalità mantengono lo stato indicato nelle rispettive schede.
+Documentazione dei Software Developer: servizi e regole server. Il backend in `springboot_app/app/` usa Java 21, Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18. Sono implementati [autenticazione e profili F01](accesso-utenti.md), [catalogo e collezione F04](collezione-carte.md), [mazzi e validazione F05](gestione-mazzi.md), orchestrazione F07 PvE/PvP, storico PvP F08 e [scritture amministrative carte F10](gestione-amministrativa.md). Flyway applica dieci script: V1–V8, V11 e V12; il modello v1.1 completo resta parzialmente implementato. Allineamento ai sorgenti: **2026-11-27**. L'interfaccia PvP e dello storico non è ancora integrata.
 
 Le pagine BackEnd ospitano i contratti tecnici canonici delle funzionalità
 trasversali, concordati con le altre aree. Approfondire progressivamente permessi,
@@ -9,7 +9,7 @@ stati, payload, dati, errori, transazioni, concorrenza e verifiche secondo il
 da quelle FrontEnd, collegati allo stesso ID funzionalità e contratto.
 Stato corrente nell'[indice generale](../README.md#stato-delle-funzionalità).
 
-Dal **2026-11-16** il [motore dimostrativo](../../springboot_app/game_engine/README.md#avvio-con-docker-compose) dispone di build Docker e salute Actuator, con H2 in memoria e menu CLI disabilitato nel container. L'[API pubblica PvE](app-battaglie-api.md) e l'orchestrazione sono presenti nei sorgenti correnti, con L2 + T2, snapshot coerenti e validatore F05 condiviso. React avvia la simulazione e mostra il risultato della sessione; integrazione browser non verificata in questa revisione. Comportamento server ed evidenze sono in [App battaglie](app-battaglie.md). [Avvio comune](../../guida-avvio.md) · [Verifica corrente](../report/2026-11-23-allineamento-documentazione.md) · [Verifica storica dello stack isolato](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/400ceeb0a81aca58d7abd6baff355f60baf2c12c/docs/report/2026-11-16-verifica-docker-compose.md).
+Dal **2026-11-16** il [motore dimostrativo](../../springboot_app/game_engine/README.md#avvio-con-docker-compose) dispone di build Docker e salute Actuator, con H2 in memoria e menu CLI disabilitato nel container. L'[API pubblica PvE](app-battaglie-api.md) e l'orchestrazione sono presenti nei sorgenti correnti, con L2 + T2, snapshot coerenti e validatore F05 condiviso. Le API Ranked e Amichevoli PvP sono orchestrate dall'applicazione e registrano i report in V12; React avvia PvE ma non ha ancora client PvP o storico. Il token interno app→motore non è implementato; i dettagli di sicurezza e il limite sono espliciti in [F07](sfide-simulazione.md). Comportamento server ed evidenze PvE sono in [App battaglie](app-battaglie.md). [Avvio comune](../../guida-avvio.md) · [Verifica storica dello stack isolato](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/400ceeb0a81aca58d7abd6baff355f60baf2c12c/docs/report/2026-11-16-verifica-docker-compose.md).
 
 ## Base di dati v1.1
 
@@ -17,21 +17,21 @@ Ultimo aggiornamento significativo: **2026-11-23**, su richiesta dell’utente: 
 
 Gli ID generati sono `int` auto-incrementali; FK e chiavi associative ereditano gli interi. Carte e arti sono distinte anche nei mazzi, le prenotazioni appartengono alle trattative e ai consensi correnti, le missioni usano flag di riscossione booleani. Le regole/API ancora proposte restano da concordare. Nessuna migrazione, implementazione o verifica applicativa è attestata da questo allineamento.
 
-Aggiornamento del **2026-11-27**: V3 contiene lo schema completo delle carte e V5 inserisce direttamente fazioni, energia e arti definitive. V9/V10 sono rimosse. V7/V8 gestiscono gli effetti condivisi tra creature ed equipaggiamenti; gli ID sono generati dal database e V8 associa gli effetti tramite `cards.id`. [Schema e vincoli](Database/database-schema-v1.1.md#perimetro-sql-implementato) · [Effetti nel motore](app-battaglie.md#attivazione-e-responsabilità-degli-effetti) · [Verifica della riscrittura](../../springboot_app/app/README.md#verifica-della-riscrittura-del-2026-11-27).
+Aggiornamento del **2026-11-27**: V3 contiene lo schema completo delle carte e V5 inserisce direttamente fazioni, energia e arti definitive. V9/V10 sono rimosse. V7/V8 gestiscono gli effetti condivisi tra creature ed equipaggiamenti; gli ID sono generati dal database e V8 associa gli effetti tramite `cards.id`. [Schema e vincoli](Database/database-schema-v1.1.md#perimetro-sql-implementato) · [Effetti nel motore](app-battaglie.md#attivazione-e-responsabilità-degli-effetti) · [Verifica storica pre-V12](../../springboot_app/app/README.md#verifica-storica-pre-v12-della-riscrittura-del-2026-11-27).
 
 ## Funzionalità
 
-- [Riepilogo degli endpoint](GUIDA-API-FRONTEND.md) — elenco di autenticazione, profili, mazzi, PvE, rotte proposte per scambi e contratto definito per amicizie, con percorso e metodo HTTP, funzione, stato (`Planned`, `BE Implemented`, `FE Implemented`), autenticazione, codici HTTP, ruoli e riferimenti canonici.
+- [Riepilogo degli endpoint](GUIDA-API-FRONTEND.md) — elenco di autenticazione, profili, mazzi, PvE/PvP, storico, rotte proposte per scambi e amicizie, con percorso e metodo HTTP, funzione, stato (`Planned`, `BE Implemented`, `FE Implemented`), autenticazione, codici HTTP, ruoli e riferimenti canonici.
 - [F01 — Accesso utenti](accesso-utenti.md)
 - [F01 — Invio mail con template Thymeleaf](invio-mail.md) — dipendenza documentata; implementazione rinviata.
 - [F03 — Offerte e acquisto di pacchetti](acquisto-pacchetti.md)
 - [F04 — Catalogo e collezione delle carte](collezione-carte.md) — letture separate nei package `card` e `collection`.
 - [F05 — Gestione e validazione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi e marketplace](scambi-mercato.md)
-- [F07 — Sfide e simulazione](sfide-simulazione.md)
+- [F07 — Sfide e simulazione PvE/PvP](sfide-simulazione.md) — backend PvP Ranked e Sfide Amichevoli disponibili; client PvP non integrato.
 - [F07 — Battaglie PvE nel backend applicativo](app-battaglie.md) — orchestrazione implementata con L2 + T2, budget 8/9/10 secondi e rilascio del guard al termine HTTP.
 - [F07 — Endpoint e payload PvE per il FrontEnd](app-battaglie-api.md) — riferimento canonico del contratto pubblico implementato e usato da React.
-- [F08 — Storico delle partite](storico-partite.md)
+- [F08 — Storico delle partite](storico-partite.md) — V12 e API storico PvP implementate; PvE e interfaccia storico non inclusi.
 - [F10 — Gestione amministrativa](gestione-amministrativa.md)
 - [F13 — Amicizie; dipendenza di F06](amicizie.md) — backend, migrazione V11 e cleanup amicizie F01 implementati il **2026-11-22** nella copia di lavoro. Frontend e F06 esclusi; [report e verifiche](../report/2026-11-22-implementazione-amicizie.md).
 

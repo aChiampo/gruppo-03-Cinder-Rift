@@ -180,4 +180,4 @@ Il budget approvato è cumulativo: deadline motore a **8 secondi**, obiettivo di
 - [F07 — Sfide e simulazione](sfide-simulazione.md) · [Riepilogo API](GUIDA-API-FRONTEND.md) · [Indice BackEnd](README.md).
 - [F01 — Autenticazione](accesso-utenti.md) · [F05 — Mazzi](gestione-mazzi.md) · [Interfaccia F07](../FrontEnd/sfide-simulazione.md).
 
-Questo documento definisce il contratto HTTP implementato. Per strategia di lock ed evidenze di verifica consultare [App battaglie](app-battaglie.md). Persistenza PvE, ricompense, progressione della campagna e scoperta degli stage restano **DA DEFINIRE**.
+Questo documento definisce esclusivamente il contratto HTTP PvE. Il contratto applicativo PvP Ranked/Sfide Amichevoli, la persistenza V12 e il confine di sicurezza tra applicazione e motore sono descritti in [F07 — Sfide e simulazione](sfide-simulazione.md); lo storico PvP in [F08](storico-partite.md). Per strategia di lock ed evidenze PvE consultare [App battaglie](app-battaglie.md). Persistenza PvE, ricompense, progressione della campagna e scoperta degli stage restano **DA DEFINIRE**.

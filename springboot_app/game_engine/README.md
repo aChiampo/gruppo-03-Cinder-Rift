@@ -2,9 +2,9 @@
 
 `game_engine` è un'unica applicazione Spring Boot che contiene il motore delle partite e i servizi dimostrativi della campagna. La campagna è organizzata nel package `com.benedetto.game_engine.campaign`; non è più un modulo Maven o un'applicazione avviabile separatamente.
 
-> **Stato:** il codice presente è una prima implementazione dimostrativa. Include l'endpoint HTTP PvE descritto sotto, limitato alla simulazione di campagna/tutorial prevista per il SAL; non costituisce l'implementazione completa delle funzionalità F05, F07 o F08, né conferma le regole proposte come definitive.
+> **Stato:** il modulo contiene il motore stateless e gli endpoint HTTP interni PvE/PvP. Il PvP `POST /api/battle/pvp` calcola il report senza autenticazione o persistenza: utenti, validazione, snapshot, concorrenza e storico sono responsabilità di `springboot_app/app`. Il modulo non costituisce l'implementazione completa di F05, F07 o F08 e non conferma le regole proposte come definitive.
 
-Ultimo aggiornamento significativo: **2026-11-20**, effetti configurabili per equipaggiamenti e creature, attivazione all’ingresso e ordine equipaggiamenti prima delle creature, su richiesta dell’utente. Fonte: controller, DTO, risorse e test del modulo.
+Ultimo aggiornamento significativo: **2026-11-27**, endpoint interno PvP e contratto aggiornati ai sorgenti.
 
 ## Motore di gioco
 
@@ -46,11 +46,13 @@ Verifica del **2026-11-22**, copia di lavoro con base `d2e81e2`, JDK 21 e H2: `m
 
 Lo stage 3 richiede l'evento `BLOOD_MOON`. L'applicazione usa H2 in memoria e crea lo schema JPA all'avvio; non è presente un seed per tale evento, quindi lo stage 3 non supera il controllo nella configurazione predefinita.
 
-## API dimostrativa PvE
+## API interne PvE e PvP
 
 Verifica dell'orchestrazione del **2026-11-20**: **49 test del motore** superati con JDK 21.0.11 e H2, inclusi rifiuto di deadline scadute/malformate e interruzione tra scambi. La suite applicativa ha superato **212 test** su PostgreSQL 18.6 isolato. Verificato anche il flusso fra JAR reali, senza integrare il browser o distribuire nuove immagini sullo stack dell'utente. [Report storico](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/73ad701a20b4fbd3e540689e92b5569a4c1e4da0/docs/report/2026-11-20-orchestrazione-pve.md). La successiva verifica del motore del 2026-11-22 è descritta nella sezione Campagna; nessuna nuova esecuzione JUnit nella revisione documentale del 2026-11-23.
 
-L'API interna del motore è implementata dalla PR #36, integrata in `dev` con `786707a`. Payload, validazione dimostrativa, risposta ed errori sono descritti esclusivamente nella [specifica BackEnd del motore](../../docs/BackEnd/app-battaglie.md#api-interna-del-motore-implementata).
+L'endpoint PvE interno è descritto nella [specifica BackEnd](../../docs/BackEnd/app-battaglie.md#api-interna-del-motore-implementata). Il modulo espone anche `POST /api/battle/pvp`: riceve `playerA`, `deckA`, `playerB`, `deckB` e `mode` (`RANKED` o `FRIENDLY`), quindi restituisce `mode`, `outcome`, `winnerUserId`, `winnerUsername` e `battleLog`. Il contratto PvP completo, inclusi i valori di esito, è documentato nella [specifica F07](../../docs/BackEnd/sfide-simulazione.md#endpoint-pvp-stateless-del-motore).
+
+Il controller del motore non autentica le richieste PvP. `BattleEngineClient` invia JSON e `X-Battle-Deadline`, senza Bearer utente né token interno di servizio. La comunicazione è prevista sulla rete Compose interna, ma l'endpoint non implementa una propria verifica del token; il limite è riportato nella [specifica F07](../../docs/BackEnd/sfide-simulazione.md#architettura-e-responsabilità).
 
 L'orchestrazione applicativa e il [contratto pubblico](../../docs/BackEnd/app-battaglie-api.md) sono implementati nei sorgenti correnti e usati da React, con visualizzatore del risultato della sessione. Allineamento documentale del **2026-11-23**; browser integrato non verificato in questa revisione. Il frontend si integra con l'applicazione, non direttamente con il motore. Le chiamate interne usano `http://game-engine:8083`; il binding host resta disponibile per debug come indicato nella configurazione Compose.
 
@@ -97,7 +99,7 @@ Il [Dockerfile](Dockerfile) usa Java 21, Maven Wrapper e un’immagine runtime J
 
 L’immagine imposta `SERVER_PORT=8083` e `GAME_ENGINE_CLI_ENABLED=false`, anche per l’avvio diretto senza Compose. Lo starter Actuator fornisce `GET /actuator/health`, usato da Docker e Compose. Per debug locale da terminale o `curl`, il controllo è disponibile su `http://127.0.0.1:8083/actuator/health`; `ENGINE_PORT` modifica solo la porta host. Compose usa filesystem in sola lettura e `/tmp` scrivibile.
 
-La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. Espone l'endpoint HTTP PvE interno descritto sopra; il controllo di salute non verifica il flusso applicativo completo. Il menu dimostrativo resta disponibile nell'avvio Maven interattivo descritto sopra.
+La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il PostgreSQL applicativo e non conserva gli eventi al riavvio. Espone gli endpoint HTTP interni PvE e PvP; le partite PvP sono persistite dall'applicazione chiamante, non da questo modulo. Il controllo di salute non verifica il flusso applicativo completo. Il menu dimostrativo resta disponibile nell'avvio Maven interattivo descritto sopra.
 
 ## Struttura essenziale
 
@@ -109,7 +111,7 @@ La configurazione resta H2 in memoria, con schema ricreato all'avvio: non usa il
 | `src/main/resources/campaign/` | Stage e mazzi nemici della campagna |
 | `src/test/java/` | Test JUnit del combattimento e della campagna |
 
-Non sono presenti API HTTP per le sfide PvP, persistenza dei risultati di partita o avanzamento della campagna; non vengono implementati sblocco e completamento degli stage. La modalità CLI usa mazzi predefiniti e non è collegata al deckbuilder React F05; non autentica un utente e non salva la progressione.
+Il modulo non implementa matchmaking, sfide amichevoli, autenticazione utenti, persistenza dei risultati o avanzamento della campagna: questi aspetti sono dell'applicazione o restano da realizzare. Non vengono implementati sblocco e completamento degli stage. La modalità CLI usa mazzi predefiniti e non è collegata al deckbuilder React F05; non autentica un utente e non salva la progressione.
 
 Nel regolamento proposto il giocatore prende decisioni strategiche prima della partita, componendo e distribuendo il mazzo e scegliendo se inviare o accettare una sfida. Durante il combattimento non sono previste decisioni manuali. La scelta CLI fra campagna e scontro è solo una selezione di modalità; non sostituisce le scelte di mazzo e sfida previste per il prodotto.
 

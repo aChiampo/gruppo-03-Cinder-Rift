@@ -1,6 +1,6 @@
 # Area FrontEnd
 
-Documentazione dei Web Developer: interfacce e flussi del portale. Il frontend React 18/Vite 5 è in `cinder-rift/` e dispone di [build Docker e istruzioni](../../cinder-rift/README.md#avvio-con-docker-compose). Allineamento ai sorgenti: **2026-11-23**. Accesso, registrazione, sessione e profilo usano [F01 reale](accesso-utenti.md); catalogo/collezione, editor mazzi e campagna PvE usano rispettivamente F04, F05 e F07. Il visualizzatore del risultato resta in memoria. Negozio, sfide PvP e storico mostrano le parti indisponibili; non esiste una modalità mock. [Verifica corrente e limiti](../report/2026-11-23-allineamento-documentazione.md).
+Documentazione dei Web Developer: interfacce e flussi del portale. Il frontend React 18/Vite 5 è in `cinder-rift/` e dispone di [build Docker e istruzioni](../../cinder-rift/README.md#avvio-con-docker-compose). Allineamento ai sorgenti: **2026-11-27**. Accesso, registrazione, sessione e profilo usano [F01 reale](accesso-utenti.md); catalogo/collezione, editor mazzi e campagna PvE usano rispettivamente F04, F05 e F07. Il visualizzatore PvE resta in memoria. Il backend dispone ora di API PvP e storico, ma client e schermate React non sono integrati; negozio e F06 restano indisponibili. Non esiste una modalità mock.
 
 Quando saranno disponibili le decisioni, approfondire flussi e stati UI, errori,
 accessibilità e verifiche secondo il [modello](../modello-funzionalita.md).
@@ -15,9 +15,9 @@ ID funzionalità e contratto. Stato corrente nell'[indice generale](../README.md
 - [F04 — Consultazione della collezione](collezione-carte.md)
 - [F05 — Composizione dei mazzi](gestione-mazzi.md)
 - [F06 — Scambi privati e marketplace](scambi-mercato.md)
-- [F07 — Sfide tra utenti](sfide-simulazione.md)
+- [F07 — Sfide tra utenti](sfide-simulazione.md) — PvE integrato; API Ranked e Amichevoli backend senza client React.
 - [F07 — Endpoint e payload PvE](../BackEnd/app-battaglie-api.md) — endpoint applicativo e chiamata React implementati; risultato con round, scambi e replay locale. Comportamento server descritto esclusivamente nell'area BackEnd.
-- [F08 — Consultazione dello storico](storico-partite.md)
+- [F08 — Consultazione dello storico](storico-partite.md) — endpoint backend per partite PvP; chiamata e interfaccia React da realizzare.
 - [F09 — Pagine informative](pagine-informative.md) — DA DEFINIRE
 - [F10 — Interfaccia di backoffice](gestione-amministrativa.md)
 - [F11 — Accessibilità e interfacce responsive](accessibilita-responsive.md)
