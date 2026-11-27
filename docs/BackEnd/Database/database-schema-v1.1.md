@@ -1,6 +1,6 @@
 # Specifica della base di dati — v1.1
 
-**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-26. Catalogo per ruolo, possesso conservato su PUT e rimborso in Scaglie al prezzo corrente su DELETE; pulizia mercy amministrativa, senza nuove migrazioni. V11 normalizza gli slot per rarità, estende le percentuali a decimal(7,4) e aggiunge is_acquirable. Migrazione V10 F03 e CRUD del catalogo pacchetti implementati su richiesta dell’utente; apertura rinviata e seed dei pacchetti escluso. Tipi di artwork e probabilità confermati: `STANDARD` 81%, `EXTENDED_ART` 10%, `FULL_ART` 7,5%, `ALTERNATE_ART` 1,5%; FK diretta `PACKS.id_artwork_pull_rates` e nessun livello di effetti speciali. Revisione F03 richiesta dall’utente: `PACKS.pack_description` diventa JSONB strutturato con anteprime nel formato del catalogo carte; aggiunto `pack_price int`. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
+**Versione:** v1.1. **Ultimo aggiornamento documentale:** 2026-11-27. Catalogo per ruolo, possesso conservato su PUT e rimborso in Scaglie al prezzo corrente su DELETE; pulizia mercy amministrativa, senza nuove migrazioni. V13 normalizza gli slot per rarità, estende le percentuali a decimal(7,4) e aggiunge is_acquirable. Migrazione V12 F03 e CRUD del catalogo pacchetti implementati su richiesta dell’utente; apertura rinviata e seed dei pacchetti escluso. Tipi di artwork e probabilità confermati: `STANDARD` 81%, `EXTENDED_ART` 10%, `FULL_ART` 7,5%, `ALTERNATE_ART` 1,5%; FK diretta `PACKS.id_artwork_pull_rates` e nessun livello di effetti speciali. Revisione F03 richiesta dall’utente: `PACKS.pack_description` diventa JSONB strutturato con anteprime nel formato del catalogo carte; aggiunto `pack_price int`. Estensione degli effetti richiesta dall’utente: schema V7/V8, attivazione all’ingresso e ordine equipaggiamenti prima delle creature. **Motore del modello:** PostgreSQL 18. Revisione F05 approvata dall’utente con aggiornamento delle migrazioni V3/V4 per energia individuale e potenza aggregata. Le verifiche correnti sono riportate nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile). La revisione richiesta dall’utente distingue il modello completo dalle migrazioni F01/F05 correnti e dalle responsabilità applicative già implementate. Il resto del modello deriva dall’aggiornamento del 2026-11-09, con inventario di Scaglie, Nuclei Rift e Rotami, sistema mercy, rimozione dei campi anagrafici dell’utente e durata degli scambi di due giorni.
 
 Questo documento è la fonte canonica e autonoma della struttura della base di dati, dei vincoli dichiarati e delle responsabilità applicative associate. Le decisioni mancanti sono elencate qui e restano **DA DEFINIRE**; nessun altro documento è necessario per interpretare lo schema. La rappresentazione completa equivalente in DBML è [db_schema-v1.1.dbml](db_schema-v1.1.dbml).
 
@@ -16,17 +16,19 @@ Allineamento documentale F13/F01/F06 del **2026-11-18**, su decisioni dell'utent
 
 ### Perimetro SQL implementato
 
-Stato F03 del **2026-11-24**: V10 crea `ARTWORK_PULL_RATES`, `PACKS`, `INVENTORY_PACKS` e `USER_MERCY`, inizializza solo la configurazione artwork approvata e normalizza `CARDS_ARTS.art_code`, senza seed dei pacchetti. Sono disponibili catalogo e CRUD; apertura, acquisto e aggiornamento mercy non sono implementati. [Verifiche F03/artwork: 244 test backend e JAR](../acquisto-pacchetti.md#Tipi%20e%20probabilit%C3%A0%20degli%20artwork).
+Aggiornamento F04/F05/F07 del **2026-11-27**, su richiesta dell’utente: V3 definisce lo schema completo di `cards` e `cards_arts`, compresi `flavor_text` e `source_image`. `cards` ha 13 colonne e non contiene `code`, `transfer_and_discard` o `duration`. [V5](../../../springboot_app/app/src/main/resources/db/migration/V5__seed_initial_card_set.sql) inserisce direttamente le 30 carte CR01 con fazioni corrette, energia 0 per gli equipaggiamenti e arti `STANDARD` con URL WebP. Gli ID sono sempre generati dal database; `INSERT ... RETURNING` collega le arti alle carte appena inserite. V9 e V10 del vecchio catalogo sono rimosse; la base V1–V8 e V11 di `dev` resta inalterata. La riscrittura è destinata a database nuovi e non è un aggiornamento automatico dei database con la vecchia cronologia. [Asset e limiti](../collezione-carte.md#immagini-del-set-cr01).
 
-Aggiornamento F03 del **2026-11-25**: V11 conserva V1–V10 e amplia la precisione artwork senza cambiare le percentuali. Non inserisce tipi o pacchetti. Il flag di acquisizione parte da false anche per i record esistenti. Gli slot legacy vuoti diventano assenza di slot; JSON legacy non vuoti bloccano e annullano la migrazione, richiedendo una mappatura esplicita prima di riprovare. Precisione SQL 7, scala 4: tre cifre intere e quattro decimali. Le verifiche storiche V10 sopra non verificano V11; risultati correnti nel [contratto F03](../acquisto-pacchetti.md#slot-e-probabilità-per-rarità).
+Integrazione F03 del **2026-11-27**, su richiesta dell’utente: V12 crea `ARTWORK_PULL_RATES`, `PACKS`, `INVENTORY_PACKS` e `USER_MERCY` e vincola i quattro tipi di artwork senza cambiare le arti di V5. V13 introduce `PACK_SLOTS`, `SLOT_PULL_TYPE`, `TYPE_PULL_RATE`, precisione `decimal(7,4)` e `is_acquirable`. Catalogo e CRUD disponibili; acquisto, apertura e avanzamento mercy rinviati. Nessun seed commerciale o dei tipi. Undici script: V1–V8 e V11–V13. [Contratto e compatibilità F03](../acquisto-pacchetti.md).
 
-Aggiornamento F07 del **2026-11-20**, su decisione dell'utente: V9 corregge soltanto fazioni mancanti delle 25 creature CR01 note e assegna energia 0 ai cinque equipaggiamenti iniziali se nulla, conservando valori non nulli, ID e possesso. Non aggiunge tabelle, colonne o vincoli e non cambia il DBML. L'orchestrazione usa advisory lock di sessione PostgreSQL per utente e una transazione breve `REPEATABLE READ` per validazione/snapshot, conclusa prima della chiamata remota. Non crea `BATTLE_HISTORY` né il guard catalogo comune. [Verifica corrente: 212 test applicativi, 49 del motore e flusso reale fra JAR](../../report/2026-11-20-orchestrazione-pve.md).
+Aggiornamento F13 del **2026-11-24**: [V11](../../../springboot_app/app/src/main/resources/db/migration/V11__create_friendships.sql) crea `friendships` con PK, quattro CHECK e tre cascate FK previsti dalla v1.1, senza cambiare il modello completo. Scritture e cleanup F01 usano lock utenti ordinati. F06 esclusa; [evidenze](../../report/2026-11-22-implementazione-amicizie.md).
 
-Aggiornamento del **2026-11-20**: V7 crea `effects` e `card_effects`; V8 inizializza tre comportamenti e sette associazioni agli equipaggiamenti CR01. Le nuove migrazioni aggiornano normalmente un database a V6 senza modificare V1–V6 o richiedere un reset. Allineati nei diagrammi anche i campi editoriali introdotti da V5 in `cards` e `cards_arts`. Verifica storica locale degli effetti: 139 test applicativi e 45 del motore superati con JDK 21.0.11, PostgreSQL 18.6 isolato per le migrazioni e H2 per la campagna; installazione, aggiornamento, vincoli ed effetti verificati, orchestrazione applicativa PvE e browser non verificati.
+L’orchestrazione F07 usa advisory lock di sessione PostgreSQL per utente e una transazione breve `REPEATABLE READ` per validazione/snapshot, conclusa prima della chiamata remota. Non crea `BATTLE_HISTORY` né il guard catalogo comune. Le riparazioni in precedenza affidate a V9 sono incorporate nel seed V5. [Evidenza storica del 2026-11-20](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/73ad701a20b4fbd3e540689e92b5569a4c1e4da0/docs/report/2026-11-20-orchestrazione-pve.md).
+
+V7 crea `effects` e `card_effects`; V8 inizializza tre comportamenti e sette associazioni agli equipaggiamenti CR01 usando gli ID generati delle carte. I diagrammi descrivono lo schema corrente; le prove riportate nei report precedenti alla riscrittura del 2026-11-27 restano evidenze storiche.
 
 Aggiornamento del **2026-11-18** con `max_card_energy` e `max_round_power` nelle configurazioni dei round. V4 configura energia uguale al numero del round, potenza 14 per i cinque gruppi creature e 10 per `EQUIPMENT`, con energia 6. La [procedura scelta dall’utente](../../../springboot_app/app/README.md#aggiornamento-dei-limiti-f05-del-2026-11-18) ricrea il database tramite il reset dei volumi Docker Compose e applica V1–V6 su uno schema vuoto. V5/V6 inizializzano il set CR01 e l’utente dimostrativo.
 
-Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. A quella data pacchetti, mercy, amicizie, scambi, missioni e partite del modello completo non avevano ancora migrazioni in questa applicazione; la successiva V10 F03 è descritta sopra. Le evidenze di quella revisione sono nel [report di verifica](../../report/2026-11-13-revisione-stato-sviluppo.md).
+Allineamento del **2026-11-13** ai sorgenti della copia di lavoro, su richiesta dell’utente. Le [migrazioni versionate](../../../springboot_app/app/src/main/resources/db/migration) applicano V1/V2 per autenticazione, inventario e ruoli e V3/V4 per catalogo, arti, collezione, configurazioni dei round e mazzi. V4 inizializza tipi, rarità, fazioni e round; non inserisce carte o copie possedute. A quella data pacchetti, mercy, amicizie, scambi, missioni e partite non avevano ancora migrazioni in questa applicazione. Le evidenze di quella revisione sono nel [report di verifica](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/6208de547e9c1d6d69a9021e0d0ef1a2add9beba/docs/report/2026-11-13-revisione-stato-sviluppo.md).
 
 **Differenza da riconciliare.** V3 dichiara `decks_cards.id_deck → decks.id ON DELETE CASCADE`, usata dalla cancellazione dei mazzi F05; il DBML v1.1 e i diagrammi non dichiarano questa cascata. Il comportamento SQL corrente è descritto nel [contratto F05](../gestione-mazzi.md#implementazione-backend-disponibile); il modello completo richiede un successivo allineamento esplicito. Il guard condiviso del catalogo resta da implementare.
 
@@ -80,10 +82,7 @@ erDiagram
     CARDS {
         int id PK "NOT NULL; auto-incremento"
         varchar name "NULL ammesso"
-        varchar code UK "NULL ammesso; V5"
-        varchar transfer_and_discard "NULL ammesso; V5"
-        varchar duration "NULL ammesso; V5"
-        varchar flavor_text "NULL ammesso; V5"
+        varchar flavor_text "NULL ammesso; V3"
         varchar description "NULL ammesso"
         int id_type FK "NULL ammesso"
         int energy_cost "NULL ammesso"
@@ -312,7 +311,7 @@ erDiagram
         varchar art_code PK "NOT NULL"
         int id_art UK "NOT NULL; auto-incremento"
         varchar url_card_art UK "NULL ammesso"
-        varchar source_image "NULL ammesso; V5"
+        varchar source_image "NULL ammesso; V3"
     }
     TRADE_TOKEN_RESERVATIONS {
         int negotiation_id PK,FK "NOT NULL"
@@ -395,10 +394,7 @@ erDiagram
     CARDS {
         int id PK "NOT NULL; auto-incremento"
         varchar name "NULL ammesso"
-        varchar code UK "NULL ammesso; V5"
-        varchar transfer_and_discard "NULL ammesso; V5"
-        varchar duration "NULL ammesso; V5"
-        varchar flavor_text "NULL ammesso; V5"
+        varchar flavor_text "NULL ammesso; V3"
         varchar description "NULL ammesso"
         int id_type FK "NULL ammesso"
         int energy_cost "NULL ammesso"
@@ -415,7 +411,7 @@ erDiagram
         varchar art_code PK "NOT NULL"
         int id_art UK "NOT NULL; auto-incremento"
         varchar url_card_art UK "NULL ammesso"
-        varchar source_image "NULL ammesso; V5"
+        varchar source_image "NULL ammesso; V3"
     }
     FACTIONS {
         int id PK "NOT NULL; auto-incremento"
@@ -513,7 +509,7 @@ erDiagram
 
 **Effetti delle carte.** `EFFECTS` ha ID intero generato, `code` obbligatorio univoco nel formato `^[A-Z][A-Z0-9_]*$` e descrizione obbligatoria non vuota dopo `trim`. `CARD_EFFECTS` ha PK autonoma generata e FK obbligatorie `card_id → CARDS.id` con cancellazione a cascata ed `effect_id → EFFECTS.id` senza cascata. `parameters` è JSONB obbligatorio con default `{}` e `CHECK` che richiede un oggetto. `execution_order` è positivo e univoco insieme a `card_id`; l'indice su `effect_id` supporta la ricerca delle associazioni. Lo stesso effetto può comparire più volte sulla stessa carta in posizioni diverse. I parametri specifici sono verificati dall'applicazione e dalla classe Java eseguibile, non da vincoli SQL che interpretano la descrizione. Questa struttura sostituisce la precedente proposta di parole chiave, mai migrata nell'applicazione.
 
-**Seed e comportamento.** V8 risolve gli ID tramite `cards.code` ed `effects.code`, senza presupporre ID fissi. Sono inizializzati `ATTACK_BONUS` (`amount` intero), `STARTING_DEFENSE_MODIFIER` (`amount` intero, `minimum` intero positivo facoltativo con default 1) e `FIRST_EXCHANGE_ATTACK_BONUS` (`amount` intero). Le sette associazioni appartengono a Pulse Blade, Recovery Armor, Breach Capacitor, Overdrive Harness e Bastion Rig; le creature CR01 mantengono zero effetti. Gli array nello snapshot seguono `execution_order`. All'ingresso in battaglia si attivano prima gli equipaggiamenti di entrambi i giocatori e poi le creature, nell'ordine dei giocatori del motore; bersaglio e durata sono responsabilità delle classi dedicate. L'ID effetto è metadato e il codice seleziona il comportamento registrato. Il motore non carica cataloghi o pool e rifiuta configurazioni non eseguibili. I modificatori e le scadenze sono stato locale della singola istanza in battaglia, non aggiornamenti del catalogo.
+**Seed e comportamento.** V8 salva le associazioni tramite `cards.id` e risolve gli ID generati delle cinque carte per nome esatto ed espansione CR01, senza presupporre valori numerici. Una carta assente o ambigua fa fallire il seed. Gli ID degli effetti sono risolti tramite `effects.code`. Sono inizializzati `ATTACK_BONUS` (`amount` intero), `STARTING_DEFENSE_MODIFIER` (`amount` intero, `minimum` intero positivo facoltativo con default 1) e `FIRST_EXCHANGE_ATTACK_BONUS` (`amount` intero). Le sette associazioni appartengono a Pulse Blade, Recovery Armor, Breach Capacitor, Overdrive Harness e Bastion Rig; le creature CR01 mantengono zero effetti. Gli array nello snapshot seguono `execution_order`. All'ingresso in battaglia si attivano prima gli equipaggiamenti di entrambi i giocatori e poi le creature, nell'ordine dei giocatori del motore; bersaglio e durata sono responsabilità delle classi dedicate. L'ID effetto è metadato e il codice seleziona il comportamento registrato. Il motore non carica cataloghi o pool e rifiuta configurazioni non eseguibili. I modificatori e le scadenze sono stato locale della singola istanza in battaglia, non aggiornamenti del catalogo.
 
 **Vantaggi di fazione.** `FACTION_ADVANTAGES` usa la PK `(id_advantaged_faction, id_disadvantaged_faction)`, due FK verso `FACTIONS.id` e `bonus_value` obbligatorio. Il `CHECK` vieta la stessa fazione sui due lati. È ammesso un solo bonus per coppia ordinata, senza imporre simmetria.
 

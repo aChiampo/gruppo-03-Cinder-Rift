@@ -49,7 +49,11 @@ class PackControllerDatabaseTests {
         user = register();
         jdbc.sql("UPDATE users SET id_role = (SELECT id FROM roles WHERE code = 'ADMIN') WHERE id = :id")
                 .param("id", admin.id()).update();
-        int cardId = jdbc.sql("SELECT id FROM cards WHERE code = 'CR01-001'").query(Integer.class).single();
+        int cardId = jdbc.sql("""
+                SELECT c.id FROM cards c
+                JOIN expansions e ON e.id = c.id_expansion
+                WHERE e.code = 'CR01' AND c.name = 'Ash Novice'
+                """).query(Integer.class).single();
         JsonNode preview = json.valueToTree(cards.findById(cardId).orElseThrow());
         int ratesId = jdbc.sql("SELECT id FROM artwork_pull_rates ORDER BY id LIMIT 1").query(Integer.class).single();
         int slotTypeId = createSlotType("COMMON");

@@ -78,6 +78,12 @@ class AccountRepository {
         }
     }
 
+    /** Called under the target user lock, in the same transaction as soft deletion. */
+    void deleteFriendships(int userId) {
+        jdbc.sql("DELETE FROM friendships WHERE user_a_id = :id OR user_b_id = :id")
+                .param("id", userId).update();
+    }
+
     /** Removes every recovery secret for an account being deleted. */
     void deletePasswordResetTokens(int userId) {
         jdbc.sql("DELETE FROM password_reset_tokens WHERE id_user = :userId")

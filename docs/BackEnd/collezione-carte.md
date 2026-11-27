@@ -1,8 +1,8 @@
 # Catalogo e collezione delle carte
 
 ID: F04 · Perimetro: confermato; contratto HTTP implementato.
-Implementazione: controller, servizi e repository JDBC disponibili; integrazione React da completare.
-Ultimo aggiornamento significativo: 2026-11-22, importazione parziale da `test-connessione` delle API F04/F10 e dei relativi test. Escluse la migrazione V10, le modifiche al relativo test di migrazione e tutte le modifiche frontend. Contratto iniziale: 2026-11-15; importazione nel branch sorgente di `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
+Implementazione: controller, servizi e repository JDBC disponibili; catalogo e collezione React collegati. Otto test API superati il 2026-11-21; verifiche frontend e client contro Spring del 2026-11-22 descritte sotto.
+Ultimo aggiornamento significativo: 2026-11-27, riscrittura approvata dello schema V3 e del seed V5 con ID generati e arti definitive, rimozione dei tre campi carta e delle migrazioni V9/V10. Il contratto HTTP backend resta invariato. Contratto iniziale: 2026-11-15; importazione del branch `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
 
 ## Obiettivo e decisioni note
 
@@ -48,7 +48,9 @@ Gli intervalli devono avere limiti non negativi e il minimo non può superare il
 
 ### Risposta catalogo
 
-Ogni elemento contiene `id`, `name`, `faction`, `rarity`, `energyCost`, `attack`, `defense`, `power`, `type`, `expansion` e `artworks`. Un riferimento ha `id`, `code` e `name`; statistiche e riferimenti opzionali possono essere `null`. Ogni elemento di `artworks` contiene `cardArtId`, `artCode` e `imageUrl`, che può essere `null`. Dal 2026-11-24, su decisione dell’utente, `artCode` ammette solo `STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`; il codice storico `default` viene convertito da V10 conservando gli ID e il possesso. Nessuna variante Showcase o livello di effetti speciali è previsto. [Tipi e probabilità F03](acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork).
+La riscrittura delle migrazioni del **2026-11-27** non cambia richieste o risposte HTTP. I campi rimossi `cards.code`, `transfer_and_discard` e `duration` non facevano parte dei payload; `flavor_text` resta nel database e non è esposto. Le proprietà `code` nei riferimenti di tipo, fazione, rarità ed espansione restano valide: appartengono ai relativi cataloghi, non a `cards`.
+
+Ogni elemento contiene `id`, `name`, `faction`, `rarity`, `energyCost`, `attack`, `defense`, `power`, `type`, `expansion` e `artworks`. Un riferimento ha `id`, `code` e `name`; statistiche e riferimenti opzionali possono essere `null`. Ogni elemento di `artworks` contiene `cardArtId`, `artCode` e `imageUrl`, che può essere `null`. `artCode` ammette soltanto `STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`, vincolati da V12; V5 crea già `STANDARD`. Showcase e livelli di effetti speciali sono esclusi. [Tipi e probabilità F03](acquisto-pacchetti.md#tipi-e-probabilità-degli-artwork).
 
 Esempio illustrativo:
 
@@ -138,8 +140,6 @@ Evidenza storica del branch sorgente: la prima esecuzione mirata del **2026-11-1
 
 ## Verifica dell’integrazione del 2026-11-21
 
-Evidenze storiche di `test-connessione`, distinte dalle verifiche della presente importazione parziale.
-
 Su richiesta dell’utente, integrate le modifiche di `feature/api-collezione-catalogo` (`3f01878`) in `test-connessione`, con base `8b358bd`. Risolti sei conflitti documentali conservando i contratti e le evidenze F01/F05/F07 più recenti. Adeguati i test importati a `/api/auth/signin`, Jackson 3, codici fazione `SAP`/`CYB`/`ALN`/`CLT`/`RAD` e filtro sull’espansione della fixture per non contare il seed CR01.
 
 Ambiente: Windows, JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato, con database e chiave JWT di prova separati dall’applicazione. Il tentativo iniziale della suite si è fermato per una chiave JWT di prova non Base64; corretto il formato prima delle prove successive.
@@ -152,11 +152,31 @@ I 220 test sono passati in esecuzioni distinte: la suite completa non è stata r
 
 ## Verifica dell'importazione parziale del 2026-11-22
 
-Sul branch `feature/backend-catalog-and-tutorial`, con base `dev` (`73ad701`) e sorgente `test-connessione` (`19c97f4`), eseguito `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` con JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato: **220 test applicativi superati**, zero fallimenti, errori o casi saltati; JAR prodotto. Inclusi gli otto test `CardCollectionControllerDatabaseTests` e il test di migrazione originale, che verifica le nove migrazioni V1-V9. Il container di prova viene rimosso al termine; il database applicativo non viene usato.
+Evidenza storica. Sul branch `feature/backend-catalog-and-tutorial`, con base `dev` (`73ad701`) e sorgente `test-connessione` (`19c97f4`), eseguito `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" clean verify` con JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato: **220 test applicativi superati**, zero fallimenti, errori o casi saltati; JAR prodotto. Inclusi gli otto test `CardCollectionControllerDatabaseTests` e il test di migrazione originale, che verifica le nove migrazioni V1-V9. Il container di prova viene rimosso al termine; il database applicativo non viene usato.
 
 Il build pulito elimina una copia obsoleta di V10 presente in `target/classes`: la migrazione non fa parte dei sorgenti importati o del JAR prodotto. Nessuna modifica al test `RoundConfigurationMigrationDatabaseTests`. Il motore supera separatamente **51 test JUnit**, inclusi i due controlli del mescolamento tutorial. [Verifica corrente del motore](../../springboot_app/game_engine/README.md#campagna).
 
 Importati i 30 file selezionati sotto `springboot_app/` e otto documenti condivisi; il codice coincide con il branch sorgente. Escluse tutte le modifiche in `cinder-rift/`, `docs/FrontEnd/` e nelle migrazioni. Le immagini CR01 restano quelle disponibili prima dell'importazione; `imageUrl` conserva la nullabilità del contratto. Non eseguite prove browser o nuove chiamate HTTP tra i due servizi in questa attività.
+
+## Integrazione React e verifica del 2026-11-22
+
+Il client usa le due rotte di elenco, senza body nelle richieste GET né scelta del proprietario. Conserva `CardPage<T>` e i DTO canonici; la sola conversione della paginazione avviene tra interfaccia a base uno e query a base zero. La UI richiede `size=15`, nome crescente come default e filtri singoli per i codici categoriali. Nessun limite numerico è implicito; i campi vuoti sono omessi e zero viene conservato.
+
+Catalogo e collezione hanno sorgenti distinte: il catalogo conserva tutte le arti nella stessa carta e consente di selezionarle nel dettaglio; la collezione conserva una riga per variante e i due contatori persistiti, senza dedurre gli hold F06. Gli elenchi contengono già i dettagli necessari: le rotte di dettaglio rimangono implementate solo nel backend. [Comportamento dell'interfaccia, verifiche e limiti](../FrontEnd/collezione-carte.md).
+
+Nella copia di lavoro di `test-connessione` con base `9e0dd83` e modifiche non committate, `npm test` ha superato 33 test frontend e `npm run build` ha prodotto il bundle. Il client sorgente è stato verificato anche contro Spring locale: catalogo e collezione da 30 righe, filtro combinato, seconda pagina, intervallo invertito `400` e accesso senza Bearer `401`. Dopo la ricostruzione del solo frontend con Compose, gli stessi controlli sono passati attraverso Nginx sulla porta 8082, insieme alla lettura dei cinque equipaggiamenti, alla conservazione dei payload e al controllo del bundle e della salute. Usato l'account dimostrativo già documentato; sessioni di prova chiuse, nessuna scrittura su carte o copie. Nessuna modifica al codice Java o al contratto HTTP; suite backend non ripetuta. Browser non verificato: host di accesso non disponibile.
+
+## Immagini del set CR01
+
+Aggiornamento del **2026-11-27**. [V3](../../springboot_app/app/src/main/resources/db/migration/V3__create_f05_cards_and_decks_schema.sql) definisce lo schema completo delle carte e delle arti. [V5](../../springboot_app/app/src/main/resources/db/migration/V5__seed_initial_card_set.sql) crea direttamente le 30 carte CR01 e le arti `STANDARD` con URL `/img/cards/<nome-carta>.webp`, usando gli ID generati restituiti dall’inserimento delle carte. `source_image` conserva il nome originale. Non sono presenti `cards.code`, `transfer_and_discard` o `duration`; `flavor_text` rimane nello schema. V9/V10 sono rimosse e non servono riparazioni successive del seed.
+
+I 30 file in [public/img/cards](../../cinder-rift/public/img/cards/) contengono soltanto l'illustrazione centrale ritagliata dagli originali forniti nella cartella locale `Carte/`, con nomi stampati verificati contro il seed V5. Sono WebP lossless, senza ridimensionamento o rigenerazione dell'illustrazione; cornici, pannelli del titolo, statistiche e testi sono esclusi. Il retro comune non rappresenta una carta e non entra nella migrazione. Gli originali restano esterni al repository; `source_image` ne conserva il nome originale.
+
+La catena riscritta V1–V8 e V11–V13 è destinata a un database nuovo; non aggiorna automaticamente una vecchia cronologia Flyway. Gli URL sono relativi all’origine del frontend: Vite e Nginx servono gli asset da `/img/cards/`. Ricostruire e distribuire anche il frontend con i file; il backend non serve queste immagini. La ricreazione del database applicativo resta un’operazione separata. Le verifiche datate sotto precedono questa riscrittura.
+
+Verifica locale del **2026-11-22**, copia di lavoro di `test-connessione`: il test `RoundConfigurationMigrationDatabaseTests` passa con JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato. Flyway applica V1–V10 su schema vuoto e non applica ulteriori migrazioni al secondo avvio. Comando dalla cartella backend, con le variabili di prova documentate: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`.
+
+Controlli SQL separati, nello stesso database isolato, verificano tutte le 30 associazioni dopo l'installazione e l'aggiornamento di uno schema a V9: sostituzione di un URL precedente, conservazione di ID e metadati delle arti, carte, collezioni, mazzi e relative copie, esclusione di un'arte alternativa e di una carta esterna con lo stesso nome, rispetto del nome esatto e seconda esecuzione senza aggiornamenti. Le fixture di aggiornamento sono annullate con rollback; il database applicativo non è modificato. Suite backend completa, distribuzione Compose e browser non verificati da questa attività.
 
 ## Dati, copie e varianti grafiche
 
@@ -170,7 +190,7 @@ Importati i 30 file selezionati sotto `springboot_app/` e otto documenti condivi
 ## Da definire
 
 - Conferma definitiva del regolamento V2.1, dei valori numerici e dei contenuti delle carte.
-- Integrazione FrontEnd e verifica browser di immagini mancanti, filtri, varianti e paginazione.
+- Verifica browser di immagini mancanti, filtri, varianti e paginazione; comportamento implementato e descritto nella pagina FrontEnd, verifica browser ancora da eseguire.
 - Compatibilità delle modifiche amministrative con flussi e dati di gioco non ancora presenti, da coordinare nelle funzionalità F03, F05 e F06.
 
 ## Collegamenti

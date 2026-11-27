@@ -9,7 +9,7 @@ Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo 
 Ultimo aggiornamento significativo il **2026-11-26** per visibilità e riconciliazione del CRUD pacchetti F03, su richiesta dell’utente; acquisto, apertura e seed dei pacchetti esclusi; aggiunte configurazione artwork e validazione dei quattro tipi. La revisione del **2026-11-18** riguarda la propagazione delle decisioni dell'utente sui confini dei permessi F13 e sul futuro cleanup F01/F06. I permessi amministrativi di cancellazione account F01 risalgono al 2026-11-13; la protezione del namespace amministrativo al 2026-11-12. L'allineamento a inventario, mercy e regolamento Versione 2.1 risale al 2026-11-09. Verifica CRUD pacchetti/artwork del **2026-11-24**: 244 test backend e JAR superati su PostgreSQL 18.7 isolato; [ambito e limiti](acquisto-pacchetti.md#Tipi%20e%20probabilit%C3%A0%20degli%20artwork). Altre funzioni di backoffice da verificare.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#dettaglio-struttura-delle-carte).
 
-Evidenza storica di `test-connessione` del **2026-11-21**: importate le API CRUD del catalogo da `feature/api-collezione-catalogo`; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
+Aggiornamento del **2026-11-21**: importate le API CRUD del catalogo da `feature/api-collezione-catalogo`; 8 test API superati il 2026-11-21 su JDK 21.0.11/PostgreSQL 18.6 isolato; JAR prodotto. Le prove non verificano il browser o le nuove immagini Compose.
 
 ## Obiettivo e decisioni note
 
@@ -46,6 +46,8 @@ Le rotte richiedono Bearer JWT e ruolo `ADMIN`; senza autenticazione rispondono 
 | `PUT /api/admin/cards/{cardId}` | Sostituisce la definizione e le varianti di una carta attiva non utilizzata | `200` con dettaglio F04 |
 | `DELETE /api/admin/cards/{cardId}` | Cancella logicamente una carta attiva non utilizzata | `204` |
 
+La riscrittura del **2026-11-27** non modifica il payload amministrativo. `cards.code`, `transfer_and_discard` e `duration` non erano campi del contratto; `flavor_text` resta persistito ma non è gestibile tramite queste rotte.
+
 POST e PUT ricevono `name`, `description`, `typeId`, `energyCost`, `power`, `rarityId`, `attack`, `defense`, `factionId`, `expansionId` e `artworks`. `name` è obbligatorio e non vuoto; `artworks` è obbligatorio e può essere vuoto. Ogni variante contiene `artCode` obbligatorio, con uno dei soli valori esatti `STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`, e `imageUrl` facoltativo. Il backend e il `CHECK` SQL rifiutano gli altri codici; una carta ha al massimo una variante per tipo. Showcase ed effetti speciali sovrapposti sono esclusi. Gli ID di riferimento facoltativi devono essere positivi e riferirsi a voci esistenti non cancellate. Il payload non modifica gli effetti delle carte.
 
 Parametri non validi, riferimenti sconosciuti e codici arte duplicati producono `400`; carta assente o cancellata produce `404` su PUT/DELETE; URL immagine duplicati e carte già presenti in collezioni o mazzi producono `409`. PUT/DELETE acquisiscono il lock della carta nella transazione. La conversione delle copie e la pulizia dei futuri scambi non sono implementate da queste rotte. Le risposte di dettaglio seguono [F04](collezione-carte.md#risposta-catalogo).
@@ -72,7 +74,7 @@ Il **2026-11-12**, `mvnw.cmd -o -Dtest=SecurityConfigurationTests test` ha super
 - [Accesso](accesso-utenti.md)
 - [Offerte di pacchetti](acquisto-pacchetti.md)
 - [Carte e identità](../Digital/lore-identita-carte.md)
-- [Regolamento Versione 2.1](../Digital/regolamento-base.md)
+- [Regolamento Versione 2.0](../Digital/regolamento-base.md)
 - [Catalogo e collezione F04](collezione-carte.md)
 - [Schema dati v1.1](Database/database-schema-v1.1.md)
 - [Mazzi](gestione-mazzi.md)

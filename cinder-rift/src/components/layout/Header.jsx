@@ -1,41 +1,20 @@
-import { Home, Layers, BookCopy, Swords, ShoppingBag, Settings, Plus, Coins, LogOut } from 'lucide-react'
+import { Home, Layers, Library, BookCopy, Swords, ShoppingBag, Settings, UserRound, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { navItems } from '../../data/navigation.js'
+const icons = { Home, Layers, Library, BookCopy, Swords, ShoppingBag }
 
-const icons = { Home, Layers, BookCopy, Swords, ShoppingBag }
-
-export default function Header({ page, setPage, credits }) {
+export default function Header({ page, setPage }) {
   const { user, logout } = useAuth()
-  return (
-    <header className="header">
-      <button className="brand" onClick={() => setPage('home')} aria-label="Cinder-Rift home">
-        <img src="/img/logo-horizontal.png" alt="Cinder-Rift — The Cobalt Addiction" />
-      </button>
-
-      <nav className="nav">
-        {navItems.map((n) => {
-          const Icon = icons[n.icon]
-          return (
-            <button key={n.id} className={`nav-item ${page === n.id ? 'active' : ''}`} onClick={() => setPage(n.id)}>
-              <Icon size={20} /> <span>{n.label}</span>
-            </button>
-          )
-        })}
-      </nav>
-
-      <div className="userbox">
-        <button className="profile" onClick={() => setPage('profilo')}>
-          <img src={user.avatar} alt="" />
-          <span><strong>{user.name}</strong><small>Livello {user.level}</small></span>
-        </button>
-        <div className="credits" title="Saldo crediti (sempre visibile)">
-          <Coins size={22} color="#44C3F4" />
-          <b>{credits.toLocaleString('it-IT')}</b>
-          <button className="plus" onClick={() => setPage('negozio')} aria-label="Acquista crediti"><Plus size={16} /></button>
-        </div>
-        <button className="icon-btn" onClick={() => setPage('impostazioni')} aria-label="Impostazioni"><Settings size={22} /></button>
-        <button className="icon-btn" onClick={logout} aria-label="Esci" title="Esci"><LogOut size={22} /></button>
-      </div>
-    </header>
-  )
+  return <header className="header">
+    <button className="brand" onClick={() => setPage('home')} aria-label="Cinder-Rift home"><img src="/img/logo-horizontal.png" alt="Cinder-Rift" /></button>
+    <nav className="nav" aria-label="Navigazione principale">{navItems.map((item) => {
+      const Icon = icons[item.icon]
+      return <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`} aria-current={page === item.id ? 'page' : undefined} onClick={() => setPage(item.id)}><Icon size={18} /><span>{item.label}</span></button>
+    })}</nav>
+    <div className="userbox">
+      <button className="profile" onClick={() => setPage('profilo')} aria-label="Apri profilo">{user.avatar ? <img src={user.avatar} alt="" onError={(e) => { e.currentTarget.style.display = 'none' }} /> : <UserRound size={28} />}<span><strong>{user.name}</strong><small>{user.rankingPoints ?? '—'} punti classifica</small></span></button>
+      <button className="icon-btn" onClick={() => setPage('impostazioni')} aria-label="Impostazioni"><Settings size={22} /></button>
+      <button className="icon-btn" onClick={logout} aria-label="Esci"><LogOut size={22} /></button>
+    </div>
+  </header>
 }

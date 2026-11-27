@@ -2,23 +2,29 @@
 
 ## Contesto e fonti
 
-- I backend F01 (autenticazione e profili) e F05 (mazzi) sono implementati
+- I backend F01 (autenticazione e profili), F04 (catalogo e collezione),
+  F05 (mazzi), F07 (orchestrazione PvE), F13 (amicizie) e le scritture catalogo F10 sono implementati
   in `springboot_app/app/` con Java 21,
   Spring Boot 4.1.2, Spring Security e JWT locali; Compose prevede PostgreSQL 18.
-  Il frontend React e la relativa integrazione F01 sono ancora da avviare.
-  I contratti correnti sono in `docs/BackEnd/accesso-utenti.md` e
-  `docs/BackEnd/gestione-mazzi.md`; Flyway applica V1–V11,
-  incluso il set iniziale CR01 e l’utente dimostrativo. V10 crea le strutture F03;
-  catalogo e CRUD pacchetti sono implementati, senza seed dei pacchetti.
-  V10 inizializza `artwork_pull_rates` (81/10/7,5/1,5), collegata direttamente
-  da `packs.id_artwork_pull_rates`, e normalizza i quattro `cards_arts.art_code`
-  (`STANDARD`, `EXTENDED_ART`, `FULL_ART`, `ALTERNATE_ART`).
-  V11 normalizza gli slot in `pack_slots`, `slot_pull_type` e `type_pull_rate`,
-  usa percentuali `decimal(7,4)` anche per gli artwork e aggiunge `packs.is_acquirable`.
-  Non inserisce tipi o pacchetti; le distribuzioni referenziate sono immutabili e i totali
-  per rarità sono verificati al commit. V1–V10 restano immutate.
-  Showcase e livelli di effetti speciali sono esclusi. Acquisto, apertura e
-  avanzamento mercy restano rinviati; contratto in `docs/BackEnd/acquisto-pacchetti.md`.
+  Il frontend React in `cinder-rift/` usa F01, F04, F05 e F07 reali;
+  il risultato PvE è consultabile in memoria, senza storico persistito.
+  I contratti correnti sono in `docs/BackEnd/accesso-utenti.md`,
+  `docs/BackEnd/gestione-mazzi.md`, `docs/BackEnd/collezione-carte.md`
+  e `docs/BackEnd/app-battaglie-api.md`; Flyway applica undici script: V1–V8 e V11–V13.
+  V3 contiene lo schema completo carte/arti e V5 il seed definitivo CR01 con artwork
+  `STANDARD` e URL delle illustrazioni; gli ID carta sono generati dal database.
+  V11 crea le amicizie; il cleanup F13 è nella transazione di cancellazione account.
+  V12 crea le strutture F03, inizializza `artwork_pull_rates` (81/10/7,5/1,5)
+  con FK diretta da `packs` e vincola i quattro tipi di artwork.
+  V13 normalizza gli slot in `pack_slots`, `slot_pull_type` e `type_pull_rate`,
+  usa percentuali `decimal(7,4)` e aggiunge `packs.is_acquirable`.
+  Catalogo e CRUD pacchetti sono implementati, senza seed dei pacchetti o dei tipi;
+  distribuzioni referenziate immutabili e totali per rarità verificati al commit.
+  Showcase ed effetti speciali sono esclusi. Acquisto, apertura e avanzamento mercy
+  restano rinviati; contratto in `docs/BackEnd/acquisto-pacchetti.md`.
+  V1–V8 e V11 di `dev` restano inalterate; la cronologia precedente al cleanup
+  richiede una conversione separata. Frontend F13 e F06 restano da completare.
+  Allineamento ai sorgenti del 2026-11-27; stato e limiti in `docs/README.md`.
 - Leggi [README](README.md), [linee guida](Linee-Guida-e-Regole.md) e
   [indice della documentazione](docs/README.md) prima di intervenire.
 - Per ogni attività consulta le pagine pertinenti di `docs/Digital/`,

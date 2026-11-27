@@ -331,16 +331,18 @@ class BattleFlowDatabaseTests {
     @Test
     void migratedInitialCollectionCanProduceACompletePlayableBattleSnapshot() throws Exception {
         var rows = jdbc.sql("""
-                SELECT c.id, a.id_art, c.code, t.code AS type
+                SELECT c.id, a.id_art, t.code AS type
                 FROM cards c JOIN cards_arts a ON a.id_card=c.id
                 JOIN card_types t ON t.id=c.id_type
-                WHERE c.code LIKE 'CR01-%' AND a.art_code='STANDARD' ORDER BY c.code
+                JOIN expansions e ON e.id=c.id_expansion
+                WHERE e.code='CR01' AND a.art_code='STANDARD' ORDER BY c.energy_cost, c.id
                 """).query((row, index) -> new Object[]{row.getInt("id"), row.getInt("id_art"),
-                        row.getString("code"), row.getString("type")}).list();
+                        row.getString("type")}).list();
+        assertThat(rows).hasSize(30);
         jdbc.sql("DELETE FROM decks_cards WHERE id_deck=:deck").param("deck", deckId).update();
         int creature = 0;
         for (Object[] row : rows) {
-            String destination = "EQUIPMENT".equals(row[3]) ? "EQUIPMENT" : "ROUND" + (creature++ / 5 + 1);
+            String destination = "EQUIPMENT".equals(row[2]) ? "EQUIPMENT" : "ROUND" + (creature++ / 5 + 1);
             jdbc.sql("""
                     INSERT INTO collections(id_user,id_card,id_card_art,owned_replica,tradable_replica)
                     VALUES (:user,:card,:art,1,1)

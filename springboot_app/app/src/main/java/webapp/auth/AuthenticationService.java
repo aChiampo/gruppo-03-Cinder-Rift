@@ -163,6 +163,7 @@ class AuthenticationService {
         Instant now = clock.instant();
         accounts.revokeAllRefreshTokens(userId, now);
         accounts.deletePasswordResetTokens(userId);
+        accounts.deleteFriendships(userId);
         accounts.markDeleted(userId);
     }
 

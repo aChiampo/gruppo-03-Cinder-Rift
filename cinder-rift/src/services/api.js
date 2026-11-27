@@ -1,51 +1,51 @@
-// Wrapper unico per le chiamate al backend con fetch API.
-const BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api').replace(/\/$/, '')
+const BASE_URL = (import.meta.env?.VITE_API_URL || '/api').replace(/\/$/, '')
 const TIMEOUT_MS = 10000
 
 export class ApiError extends Error {
-  constructor(message, status, data) {
+  constructor(message, status = 0, data = null) {
     super(message)
     this.name = 'ApiError'
-    this.status = status // 0 = nessuna risposta dal server
+    this.status = status
     this.data = data
   }
 }
 
-// Chiamato quando il backend risponde 401 a una richiesta autenticata (token scaduto o non valido).
-let onUnauthorized = null
-export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn }
+let sessionHandlers = {}
+export const setSessionHandlers = (handlers = {}) => { sessionHandlers = handlers }
 
-export async function apiFetch(path, { method = 'GET', body, token, headers = {}, signal } = {}) {
+/** Sends a documented request and retries a rejected Bearer once after renewal. */
+export async function apiFetch(path, { method = 'GET', body, token, headers = {}, signal, retry = true } = {}) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
-  signal?.addEventListener('abort', () => controller.abort())
-
-  let res
+  const abort = () => controller.abort()
+  if (signal?.aborted) abort()
+  signal?.addEventListener('abort', abort, { once: true })
+  const timer = setTimeout(abort, TIMEOUT_MS)
+  let res, data
   try {
     res = await fetch(`${BASE_URL}${path}`, {
-      method,
-      signal: controller.signal,
-      credentials: 'include',
-      headers: {
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      method, signal: controller.signal, credentials: 'include',
+      headers: { Accept: 'application/json, application/problem+json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     })
-  } catch (err) {
-    throw new ApiError(
-      err.name === 'AbortError' ? 'Il server non risponde. Riprova tra poco.' : 'Server non raggiungibile. Riprova più tardi.',
-      0,
-    )
+    const content = await res.text()
+    try { data = content ? JSON.parse(content) : null } catch { data = null }
+    if (res.ok && res.status !== 204 && data === null) throw new ApiError('Risposta del server non valida.', 502)
+  } catch (error) {
+    if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError')
+    if (error instanceof ApiError) throw error
+    throw new ApiError(controller.signal.aborted ? 'Tempo di attesa esaurito. Verifica lo stato prima di riprovare.' : 'Server non raggiungibile. Riprova più tardi.')
   } finally {
     clearTimeout(timer)
+    signal?.removeEventListener('abort', abort)
   }
-
-  const data = await res.json().catch(() => null) // 204 / corpo vuoto -> null
+  if (res.status === 401 && token && retry && sessionHandlers.renew) {
+    const nextToken = await sessionHandlers.renew(token)
+    if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError')
+    return apiFetch(path, { method, body, token: nextToken, headers, signal, retry: false })
+  }
   if (!res.ok) {
-    if (res.status === 401 && token) onUnauthorized?.()
-    throw new ApiError(data?.message || `Errore ${res.status}`, res.status, data)
+    if (res.status === 401 && token) sessionHandlers.clear?.()
+    throw new ApiError(data?.detail || data?.message || data?.title || `Richiesta non riuscita (HTTP ${res.status}).`, res.status, data)
   }
   return data
 }

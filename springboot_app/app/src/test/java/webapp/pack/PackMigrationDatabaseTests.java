@@ -15,7 +15,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import static org.assertj.core.api.Assertions.*;
 
-/** Exercises installation, V9 upgrade and ownership/mercy constraints in disposable schemas. */
+/** Exercises installation, V11 upgrade and ownership/mercy constraints in disposable schemas. */
 @SpringBootTest(properties = {"app.security.session-token-cleanup-cron=-",
         "app.security.password-reset-token-cleanup-cron=-"})
 class PackMigrationDatabaseTests {
@@ -53,9 +53,9 @@ class PackMigrationDatabaseTests {
 
     @Test
     void installsOnEmptyDatabaseWithoutPackageSeedAndDoesNotRerun() {
-        assertThat(target("10").migrate().migrationsExecuted).isEqualTo(10);
+        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(11);
         assertEmptyPackageTables();
-        assertThat(target("10").migrate().migrationsExecuted).isZero();
+        assertThat(target("13").migrate().migrationsExecuted).isZero();
         assertThat(jdbc.sql("SELECT data_type FROM information_schema.columns WHERE table_schema = :schema "
                 + "AND table_name = 'packs' AND column_name = 'pack_description'")
                 .param("schema", schema).query(String.class).single()).isEqualTo("jsonb");
@@ -65,18 +65,31 @@ class PackMigrationDatabaseTests {
     }
 
     @Test
-    void upgradesV9WithoutChangingPlayersBalancesCardsOrCollection() {
-        target("9").migrate();
+    void upgradesDevV11ThroughV13WithoutChangingPlayersCardsOwnershipOrFriendships() {
+        target("11").migrate();
         jdbc.sql("UPDATE inventory SET cobalt_shards = 123, rift_cores = 45, scraps = 67").update();
+        int friendId = jdbc.sql("""
+                INSERT INTO users (nickname, hash_password, email, id_role)
+                SELECT 'Migration friend', hash_password, 'migration-friend@example.invalid', id_role
+                FROM users ORDER BY id LIMIT 1 RETURNING id
+                """).query(Integer.class).single();
+        jdbc.sql("""
+                INSERT INTO friendships (user_a_id, user_b_id, requested_by, status, accepted_at)
+                SELECT id, :friendId, id, 'accepted', now() FROM users WHERE id <> :friendId
+                """).param("friendId", friendId).update();
         String before = snapshot();
-        assertThat(target("10").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(target("12").migrate().migrationsExecuted).isEqualTo(1);
         assertThat(snapshot()).isEqualTo(before);
         assertEmptyPackageTables();
+        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(snapshot()).isEqualTo(before);
+        assertEmptyPackageTables();
+        assertThat(target("13").migrate().migrationsExecuted).isZero();
     }
 
     @Test
     void enforcesArtworkRatesAndDirectPackReference() {
-        target("10").migrate();
+        target("12").migrate();
         for (String values : new String[]{"-1, 101, 0, 0", "101, 0, 0, -1"}) {
             assertThatThrownBy(() -> jdbc.sql("INSERT INTO artwork_pull_rates "
                     + "(standard, extended_art, full_art, alternate_art) VALUES (" + values + ")").update())
@@ -97,11 +110,11 @@ class PackMigrationDatabaseTests {
     }
 
     @Test
-    void normalizesLegacyArtCodesPreservingArtworkIdentitiesAndEnforcesFourTypes() {
-        target("9").migrate();
-        jdbc.sql("INSERT INTO cards_arts (id_card, art_code) SELECT min(id), 'ALTERNATE' FROM cards").update();
+    void preservesSeededArtworkIdentitiesAndEnforcesFourTypes() {
+        target("11").migrate();
+        jdbc.sql("INSERT INTO cards_arts (id_card, art_code) SELECT min(id), 'ALTERNATE_ART' FROM cards").update();
         String before = snapshot();
-        target("10").migrate();
+        target("12").migrate();
         assertThat(snapshot()).isEqualTo(before);
         assertThat(jdbc.sql("SELECT DISTINCT art_code FROM cards_arts ORDER BY art_code").query(String.class).list())
                 .containsExactly("ALTERNATE_ART", "STANDARD");
@@ -119,7 +132,7 @@ class PackMigrationDatabaseTests {
 
     @Test
     void enforcesPositiveOwnedQuantitiesAndKeepsMercyAfterLastPackage() {
-        target("10").migrate();
+        target("12").migrate();
         int packId = createPack();
         assertThatThrownBy(() -> jdbc.sql("UPDATE packs SET mercy_threshold = 0 WHERE id = :id")
                 .param("id", packId).update()).hasMessageContaining("packs_mercy_threshold_check");
@@ -148,7 +161,7 @@ class PackMigrationDatabaseTests {
 
     @Test
     void enforcesOwnershipAndMercyForeignKeysAndUniquePairs() {
-        target("10").migrate();
+        target("12").migrate();
         int packId = createPack();
         assertThatThrownBy(() -> jdbc.sql("INSERT INTO inventory_packs VALUES (2147483647, :id, 1)")
                 .param("id", packId).update()).hasMessageContaining("inventory_packs_id_inventory_fk");
@@ -170,13 +183,13 @@ class PackMigrationDatabaseTests {
     }
 
     @Test
-    void upgradesV10PreservingPacksAndArtworkRatesWithFourDecimalPlaces() {
-        target("10").migrate();
+    void upgradesV12PreservingPacksAndArtworkRatesWithFourDecimalPlaces() {
+        target("12").migrate();
         int id = createPack();
         String before = snapshot();
-        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(target("13").migrate().migrationsExecuted).isEqualTo(1);
         assertThat(snapshot()).isEqualTo(before);
-        assertThat(target("11").migrate().migrationsExecuted).isZero();
+        assertThat(target("13").migrate().migrationsExecuted).isZero();
         assertThat(jdbc.sql("SELECT is_acquirable FROM packs WHERE id = :id")
                 .param("id", id).query(Boolean.class).single()).isFalse();
         assertThat(jdbc.sql("SELECT pack_price FROM packs WHERE id = :id")
@@ -201,11 +214,11 @@ class PackMigrationDatabaseTests {
 
     @Test
     void refusesToDiscardNonEmptyLegacySlotsAndRollsBackTheUpgrade() {
-        target("10").migrate();
+        target("12").migrate();
         int id = createPack();
         jdbc.sql("UPDATE packs SET slot_pulls = '{\"legacy\":true}'::jsonb WHERE id = :id")
                 .param("id", id).update();
-        assertThatThrownBy(() -> target("11").migrate()).hasStackTraceContaining("requires an explicit mapping");
+        assertThatThrownBy(() -> target("13").migrate()).hasStackTraceContaining("requires an explicit mapping");
         assertThat(jdbc.sql("SELECT slot_pulls::text FROM packs WHERE id = :id")
                 .param("id", id).query(String.class).single()).isEqualTo("{\"legacy\": true}");
         assertThat(jdbc.sql("SELECT count(*) FROM information_schema.tables WHERE table_schema = :schema "
@@ -214,7 +227,7 @@ class PackMigrationDatabaseTests {
 
     @Test
     void validatesCrossRowTotalsAtCommitIncludingEmptyAndReassignedProfiles() throws Exception {
-        target("11").migrate();
+        target("13").migrate();
         assertThatThrownBy(() -> transaction(() -> jdbc.sql(
                 "INSERT INTO slot_pull_type (description) VALUES ('Empty') RETURNING id")
                 .query(Integer.class).single())).hasMessageContaining("must total 100.0000");
@@ -241,7 +254,7 @@ class PackMigrationDatabaseTests {
 
     @Test
     void enforcesRarityReferencesUniquenessAndProbabilityRanges() throws Exception {
-        target("11").migrate();
+        target("13").migrate();
         int id = createType("98.9999", "1.0001");
         assertThat(jdbc.sql("SELECT probability FROM type_pull_rate t JOIN rarities r ON r.id = t.id_rarity "
                 + "WHERE t.id_slot_pull_type = :id AND r.code = 'RARE'")
@@ -268,9 +281,9 @@ class PackMigrationDatabaseTests {
 
     @Test
     void preservesRepeatedSlotsAndFreezesReferencedDistributions() throws Exception {
-        target("10").migrate();
+        target("12").migrate();
         int packId = createPack();
-        target("11").migrate();
+        target("13").migrate();
         int type = createType("98.9999", "1.0001");
         jdbc.sql("INSERT INTO pack_slots VALUES (:pack, 1, :type), (:pack, 2, :type)")
                 .param("pack", packId).param("type", type).update();
@@ -350,7 +363,13 @@ class PackMigrationDatabaseTests {
                     'users', (SELECT jsonb_agg(to_jsonb(u) ORDER BY u.id) FROM users u),
                     'inventory', (SELECT jsonb_agg(to_jsonb(i) ORDER BY i.id) FROM inventory i),
                     'cards', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.id) FROM cards c),
-                    'artworks', (SELECT jsonb_agg(to_jsonb(a) - 'art_code' ORDER BY a.id_art) FROM cards_arts a),
+                    'artworks', (SELECT jsonb_agg(to_jsonb(a) ORDER BY a.id_art) FROM cards_arts a),
+                    'friendships', (SELECT jsonb_agg(to_jsonb(f) ORDER BY f.user_a_id, f.user_b_id)
+                        FROM friendships f),
+                    'effects', (SELECT jsonb_agg(to_jsonb(e) ORDER BY e.card_id, e.execution_order)
+                        FROM card_effects e),
+                    'decks', (SELECT jsonb_agg(to_jsonb(d) ORDER BY d.id) FROM decks d),
+                    'deckCards', (SELECT jsonb_agg(to_jsonb(d) ORDER BY d.id) FROM decks_cards d),
                     'collection', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.id_user, c.id_card, c.id_card_art)
                         FROM collections c))::text
                 """).query(String.class).single();

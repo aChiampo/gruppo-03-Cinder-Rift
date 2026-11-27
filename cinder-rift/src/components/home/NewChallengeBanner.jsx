@@ -7,10 +7,10 @@ export default function NewChallengeBanner({ onClick }) {
       <img className="cta-r" src="/img/art-radioattivi.jpg" alt="" />
       <div className="hero-shade" />
       <div className="cta-body">
-        <h2>PRONTO A UNA NUOVA SFIDA?</h2>
-        <p>Metti alla prova il tuo mazzo contro altri giocatori e scala la classifica!</p>
+        <h2>PRONTO A UNA NUOVA BATTAGLIA?</h2>
+        <p>Scegli il tuo mazzo e affronta la campagna.</p>
       </div>
-      <button className="btn-primary" onClick={onClick}><Swords size={18} /> NUOVA SFIDA <ArrowRight size={18} /></button>
+      <button className="btn-primary" onClick={onClick}><Swords size={18} /> GIOCA <ArrowRight size={18} /></button>
     </section>
   )
 }

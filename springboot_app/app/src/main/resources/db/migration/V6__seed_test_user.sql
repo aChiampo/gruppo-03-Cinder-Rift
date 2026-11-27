@@ -14,8 +14,7 @@ SELECT u.id, c.id, a.id_art, 1, 1
 FROM users u
 CROSS JOIN cards c
 JOIN expansions e ON e.id = c.id_expansion
-JOIN cards_arts a ON a.id_card = c.id AND a.art_code = 'default'
-WHERE u.email = 'test@email.com' AND e.code = 'CR01'
-  AND c.code BETWEEN 'CR01-001' AND 'CR01-030';
+JOIN cards_arts a ON a.id_card = c.id AND a.art_code = 'STANDARD'
+WHERE u.email = 'test@email.com' AND e.code = 'CR01';
 
 -- Sessions and password-reset tokens are created by the authentication flows.

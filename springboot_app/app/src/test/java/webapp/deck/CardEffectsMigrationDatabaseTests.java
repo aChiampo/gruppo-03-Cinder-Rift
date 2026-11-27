@@ -62,29 +62,37 @@ class CardEffectsMigrationDatabaseTests {
         assertThat(count("effects")).isEqualTo(3);
         assertThat(count("card_effects")).isEqualTo(7);
         assertThat(jdbc.sql("SELECT count(DISTINCT card_id) FROM card_effects").query(Integer.class).single()).isEqualTo(5);
-        assertSeededEffect("CR01-006", "ATTACK_BONUS", 1, 1);
-        assertSeededEffect("CR01-007", "STARTING_DEFENSE_MODIFIER", 2, 1);
-        assertSeededEffect("CR01-028", "FIRST_EXCHANGE_ATTACK_BONUS", 2, 1);
-        assertSeededEffect("CR01-029", "ATTACK_BONUS", 2, 1);
-        assertSeededEffect("CR01-029", "STARTING_DEFENSE_MODIFIER", -1, 2);
-        assertSeededEffect("CR01-030", "ATTACK_BONUS", 1, 1);
-        assertSeededEffect("CR01-030", "STARTING_DEFENSE_MODIFIER", 2, 2);
+        assertSeededEffect(cardId("Pulse Blade"), "ATTACK_BONUS", 1, 1);
+        assertSeededEffect(cardId("Recovery Armor"), "STARTING_DEFENSE_MODIFIER", 2, 1);
+        assertSeededEffect(cardId("Breach Capacitor"), "FIRST_EXCHANGE_ATTACK_BONUS", 2, 1);
+        assertSeededEffect(cardId("Overdrive Harness"), "ATTACK_BONUS", 2, 1);
+        assertSeededEffect(cardId("Overdrive Harness"), "STARTING_DEFENSE_MODIFIER", -1, 2);
+        assertSeededEffect(cardId("Bastion Rig"), "ATTACK_BONUS", 1, 1);
+        assertSeededEffect(cardId("Bastion Rig"), "STARTING_DEFENSE_MODIFIER", 2, 2);
         assertThat(migration("8").migrate().migrationsExecuted).isZero();
     }
 
     @Test
-    void upgradeFromV6PreservesCardsAndUsesGeneratedEffectIds() {
+    void usesGeneratedCardAndEffectIdsDespiteExistingRowsAndSequenceGaps() {
+        migration("4").migrate();
+        jdbc.sql("INSERT INTO cards (name) VALUES ('Discarded identity')").update();
+        jdbc.sql("DELETE FROM cards WHERE name = 'Discarded identity'").update();
+        int unrelated = jdbc.sql("INSERT INTO cards (name) VALUES ('Pulse Blade') RETURNING id")
+                .query(Integer.class).single();
         migration("6").migrate();
-        int sentinel = jdbc.sql("SELECT id FROM cards WHERE code = 'CR01-001'").query(Integer.class).single();
+        assertThat(cardId("Pulse Blade")).isGreaterThan(unrelated);
+        int sentinel = cardId("Sentinel K-17");
         assertThat(migration("7").migrate().migrationsExecuted).isEqualTo(1);
         jdbc.sql("INSERT INTO effects (code, description) VALUES ('CUSTOM_TEST', 'Existing effect')").update();
         assertThat(migration("8").migrate().migrationsExecuted).isEqualTo(1);
-        assertThat(count("cards")).isEqualTo(30);
+        assertThat(count("cards")).isEqualTo(31);
         assertThat(count("collections")).isEqualTo(30);
-        assertThat(jdbc.sql("SELECT id FROM cards WHERE code = 'CR01-001'").query(Integer.class).single()).isEqualTo(sentinel);
+        assertThat(cardId("Sentinel K-17")).isEqualTo(sentinel);
         assertThat(jdbc.sql("SELECT id FROM effects WHERE code = 'ATTACK_BONUS'").query(Integer.class).single()).isGreaterThan(1);
-        assertSeededEffect("CR01-006", "ATTACK_BONUS", 1, 1);
+        assertSeededEffect(cardId("Pulse Blade"), "ATTACK_BONUS", 1, 1);
         assertThat(count("card_effects")).isEqualTo(7);
+        assertThat(jdbc.sql("SELECT count(*) FROM card_effects WHERE card_id = :id")
+                .param("id", unrelated).query(Integer.class).single()).isZero();
     }
 
     @Test
@@ -126,15 +134,22 @@ class CardEffectsMigrationDatabaseTests {
         assertThat(count("card_effects")).isEqualTo(7);
     }
 
+    private int cardId(String name) {
+        return jdbc.sql("""
+                SELECT c.id FROM cards c JOIN expansions e ON e.id = c.id_expansion
+                WHERE c.name = :name AND e.code = 'CR01'
+                """).param("name", name).query(Integer.class).single();
+    }
+
     private int count(String table) {
         return jdbc.sql("SELECT count(*) FROM " + table).query(Integer.class).single();
     }
 
-    private void assertSeededEffect(String card, String effect, int amount, int order) {
+    private void assertSeededEffect(int card, String effect, int amount, int order) {
         var rows = jdbc.sql("""
                 SELECT (ce.parameters ->> 'amount')::integer AS amount, ce.execution_order
-                FROM card_effects ce JOIN cards c ON c.id = ce.card_id JOIN effects e ON e.id = ce.effect_id
-                WHERE c.code = :card AND e.code = :effect
+                FROM card_effects ce JOIN effects e ON e.id = ce.effect_id
+                WHERE ce.card_id = :card AND e.code = :effect
                 """).param("card", card).param("effect", effect)
                 .query((row, number) -> java.util.List.of(row.getInt("amount"), row.getInt("execution_order"))).list();
         assertThat(rows).containsExactly(java.util.List.of(amount, order));

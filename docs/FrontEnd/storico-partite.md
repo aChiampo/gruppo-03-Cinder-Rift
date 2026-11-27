@@ -8,6 +8,8 @@ Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al 
 
 ## Obiettivo e decisioni note
 
+Chiarimento del **2026-11-23** dall'ispezione dei sorgenti: il [visualizzatore PvE F07](sfide-simulazione.md#risultato-della-sessione) consente già di riaprire l'ultimo risultato in memoria. Il ricaricamento lo elimina; non esistono elenco o recupero persistito delle partite. La scheda Storico mostra una sezione indisponibile e F08 resta non implementata.
+
 - Mostrare le sfide giocate e i risultati disponibili all'utente.
 - Consentire la consultazione del dettaglio della simulazione.
 
