@@ -77,9 +77,6 @@ Table ROUND_CONFIGURATIONS {
 Table CARDS {
   id int [pk, not null, increment]
   name varchar
-  code varchar [unique]
-  transfer_and_discard varchar
-  duration varchar
   flavor_text varchar
   description varchar
   id_type int

@@ -3,7 +3,7 @@
 ID funzionalità: F07; dipendenze F01, F05 e F08.
 Specifica: flusso PvE, strategia **L2 + T2**, transazione di snapshot e budget 8/9/10 secondi confermati dall'utente.
 Implementazione applicativa: disponibile nei sorgenti correnti e chiamata da React, con visualizzatore del risultato della sessione. Responsabile: **DA DEFINIRE**.
-Ultimo aggiornamento significativo: **2026-11-23**, allineamento documentale ai sorgenti richiesto dall'utente. L'implementazione L2 + T2, snapshot `REPEATABLE READ`, budget 8/9/10 secondi, regole F05 condivise e riparazione del seed V9 risale al 2026-11-20.
+Ultimo aggiornamento significativo: **2026-11-27**, allineamento al seed V5 definitivo e alla rimozione di V9/V10. L’implementazione L2 + T2, snapshot `REPEATABLE READ`, budget 8/9/10 secondi e regole F05 condivise risale al 2026-11-20. Endpoint e payload applicativi e interni restano invariati.
 Fonti: decisioni dell'utente nella conversazione del 2026-11-19/20; [PR #36](https://github.com/aChiampo/gruppo-03-Cinder-Rift/pull/36), revisione `7018b4f2a1f0e1bb33d5d0afc586e4170079451d`.
 Verifica applicativa: test locali di orchestrazione con PostgreSQL e doppio HTTP del motore superati; verifiche finali della porzione corrente riportate sotto, distinte dalle evidenze precedenti.
 
@@ -13,7 +13,7 @@ Descrivere l'orchestrazione di una battaglia PvE nel flusso `frontend → spring
 
 Questa pagina approfondisce la porzione applicativa di [F07 — Sfide e simulazione](sfide-simulazione.md). Il documento [API delle battaglie per il FrontEnd](app-battaglie-api.md) è l'unico riferimento canonico di endpoint, header, payload e risposte HTTP di questa porzione. Qui sono definiti flusso server, concorrenza, dipendenze e decisioni aperte, senza duplicare i payload.
 
-La cronologia locale include la PR #36 con `786707a`, il merge `ec6a5dc` e l'orchestrazione applicativa di `73ad701`. I sorgenti correnti includono orchestrazione in `springboot_app/app`, deadline cooperative nel motore, validatore condiviso F05 e migrazione correttiva V9. React invia il mazzo e mostra il risultato secondo il [comportamento FrontEnd](../FrontEnd/sfide-simulazione.md); non persiste il report.
+La cronologia locale include la PR #36 con `786707a`, il merge `ec6a5dc` e l'orchestrazione applicativa di `73ad701`. I sorgenti correnti includono orchestrazione in `springboot_app/app`, deadline cooperative nel motore, validatore condiviso F05 e dati iniziali già corretti da V5. V3 definisce lo schema completo delle carte; V8 collega gli effetti tramite i `cards.id` generati, risolti per nome ed espansione CR01, senza codici carta o ID numerici prefissati. V9/V10 sono rimosse. [Verifica della riscrittura](../../springboot_app/app/README.md#verifica-della-riscrittura-del-2026-11-27). React invia il mazzo e mostra il risultato secondo il [comportamento FrontEnd](../FrontEnd/sfide-simulazione.md); non persiste il report.
 
 ## API interna del motore implementata
 
@@ -275,7 +275,7 @@ Per gli scenari di crash e perdita di sessione DB valgono i limiti L2 + T2 accet
 
 La revisione della PR dichiara 25 test JUnit superati il 2026-11-19. È un'evidenza riportata dall'autore, non una nuova esecuzione di questa attività né una verifica dell'integrazione applicativa.
 
-Verifica corrente dell'orchestrazione, **2026-11-20**, copia di lavoro su base `83262dd`: **212 test applicativi** e **49 del motore** superati con JDK 21.0.11, PostgreSQL 18.6 isolato e H2 per la campagna. JAR prodotti; provato il flusso HTTP fra applicazione e motore reali con JWT F01 e mazzo CR01 migrato: `200`, 216 righe, esito `DRAW`; verificati anche evento inattivo `409`, stage sconosciuto `404` e presenza della rotta OpenAPI. [Report con comandi, ambiente, copertura e limiti](../report/2026-11-20-orchestrazione-pve.md). Integrazione React, deploy delle nuove immagini e recupero forte dopo guasti non verificati.
+Verifica corrente dell'orchestrazione, **2026-11-20**, copia di lavoro su base `83262dd`: **212 test applicativi** e **49 del motore** superati con JDK 21.0.11, PostgreSQL 18.6 isolato e H2 per la campagna. JAR prodotti; provato il flusso HTTP fra applicazione e motore reali con JWT F01 e mazzo CR01 migrato: `200`, 216 righe, esito `DRAW`; verificati anche evento inattivo `409`, stage sconosciuto `404` e presenza della rotta OpenAPI. [Report con comandi, ambiente, copertura e limiti](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/73ad701a20b4fbd3e540689e92b5569a4c1e4da0/docs/report/2026-11-20-orchestrazione-pve.md). Integrazione React, deploy delle nuove immagini e recupero forte dopo guasti non verificati.
 
 Verifica precedente degli effetti, **2026-11-20**: `mvnw.cmd clean test -q` con JDK 21.0.11 su Windows ha superato **45 test del motore** e **139 test applicativi**, senza fallimenti, errori o casi saltati. Il motore usa H2 per la campagna; la suite applicativa usa PostgreSQL **18.6** in un container isolato. Le prove coprono ordine equipaggiamento/creatura, attivazione unica, scadenza al primo scambio, copie e round indipendenti, danni simultanei, nessuna nuova entrata dopo la fine del round, payload HTTP, installazione V1–V8, aggiornamento da V6 e vincoli SQL. Confrontate inoltre le 60 occorrenze di carte nelle fixture con gli effetti del database migrato. Quella verifica non eseguiva l'orchestrazione applicativa PvE o il browser.
 

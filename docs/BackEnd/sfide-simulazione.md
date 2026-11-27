@@ -4,7 +4,7 @@ ID: F07 · Perimetro: confermato; specifica in approfondimento.
 Implementazione: endpoint interno del motore, orchestrazione applicativa PvE e client React disponibili; funzionalità complete PvP e persistenza da realizzare. Responsabile: DA DEFINIRE (Software Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
 Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo il 2026-11-20, implementazione applicativa PvE e completamento del validatore F05 su richiesta dell'utente. [Verifiche applicative e del motore](../report/2026-11-20-orchestrazione-pve.md); browser, distribuzione e bilanciamento definitivo restano da verificare.
+Ultimo aggiornamento significativo il 2026-11-20, implementazione applicativa PvE e completamento del validatore F05 su richiesta dell'utente. [Verifiche applicative e del motore](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/73ad701a20b4fbd3e540689e92b5569a4c1e4da0/docs/report/2026-11-20-orchestrazione-pve.md); browser, distribuzione e bilanciamento definitivo restano da verificare.
 Fonte dati: [specifica canonica v1.1](Database/database-schema-v1.1.md#storico-battaglie).
 
 ## Obiettivo e decisioni note

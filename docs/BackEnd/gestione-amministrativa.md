@@ -42,6 +42,8 @@ Le rotte richiedono Bearer JWT e ruolo `ADMIN`; senza autenticazione rispondono 
 | `PUT /api/admin/cards/{cardId}` | Sostituisce la definizione e le varianti di una carta attiva non utilizzata | `200` con dettaglio F04 |
 | `DELETE /api/admin/cards/{cardId}` | Cancella logicamente una carta attiva non utilizzata | `204` |
 
+La riscrittura del **2026-11-27** non modifica il payload amministrativo. `cards.code`, `transfer_and_discard` e `duration` non erano campi del contratto; `flavor_text` resta persistito ma non è gestibile tramite queste rotte.
+
 POST e PUT ricevono `name`, `description`, `typeId`, `energyCost`, `power`, `rarityId`, `attack`, `defense`, `factionId`, `expansionId` e `artworks`. `name` è obbligatorio e non vuoto; `artworks` è obbligatorio e può essere vuoto. Ogni variante contiene `artCode` obbligatorio e `imageUrl` facoltativo. Gli ID di riferimento facoltativi devono essere positivi e riferirsi a voci esistenti non cancellate. Il payload non modifica gli effetti delle carte.
 
 Parametri non validi, riferimenti sconosciuti e codici arte duplicati producono `400`; carta assente o cancellata produce `404` su PUT/DELETE; URL immagine duplicati e carte già presenti in collezioni o mazzi producono `409`. PUT/DELETE acquisiscono il lock della carta nella transazione. La conversione delle copie e la pulizia dei futuri scambi non sono implementate da queste rotte. Le risposte di dettaglio seguono [F04](collezione-carte.md#risposta-catalogo).

@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Verifies image assignment and legacy code conversion without changing ownership. */
+/** Verifies final V5 artwork and preservation through later migrations. */
 @SpringBootTest(properties = {"app.security.session-token-cleanup-cron=-",
         "app.security.password-reset-token-cleanup-cron=-"})
 class CardArtworkMigrationDatabaseTests {
@@ -42,16 +42,16 @@ class CardArtworkMigrationDatabaseTests {
 
     @Test
     void freshInstallationAssignsAllImagesAndDoesNotRerun() {
-        assertThat(target("10").migrate().migrationsExecuted).isEqualTo(10);
+        assertThat(target("5").migrate().migrationsExecuted).isEqualTo(5);
         assertArtwork();
-        assertThat(target("10").migrate().migrationsExecuted).isZero();
+        assertThat(target("5").migrate().migrationsExecuted).isZero();
     }
 
     @Test
-    void upgradeFromV9PreservesArtworkIdentitiesPlayersAndOwnership() {
-        target("9").migrate();
+    void laterMigrationsPreserveArtworkIdentitiesPlayersAndOwnership() {
+        target("6").migrate();
         String before = snapshot();
-        assertThat(target("10").migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(3);
         assertThat(snapshot()).isEqualTo(before);
         assertArtwork();
     }
@@ -61,7 +61,9 @@ class CardArtworkMigrationDatabaseTests {
                 .containsExactly("STANDARD");
         assertThat(jdbc.sql("""
                 SELECT count(*) FROM cards_arts ca JOIN cards c ON c.id = ca.id_card
-                WHERE c.code LIKE 'CR01-%' AND ca.art_code = 'STANDARD'
+                JOIN expansions e ON e.id = c.id_expansion
+                WHERE e.code = 'CR01' AND ca.art_code = 'STANDARD'
+                  AND ca.source_image IS NOT NULL
                   AND ca.url_card_art LIKE '/img/cards/%.webp'
                 """).query(Integer.class).single()).isEqualTo(30);
         assertThat(jdbc.sql("SELECT url_card_art FROM cards_arts ORDER BY url_card_art")
@@ -74,7 +76,7 @@ class CardArtworkMigrationDatabaseTests {
                     'users', (SELECT jsonb_agg(to_jsonb(u) ORDER BY u.id) FROM users u),
                     'inventory', (SELECT jsonb_agg(to_jsonb(i) ORDER BY i.id) FROM inventory i),
                     'cards', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.id) FROM cards c),
-                    'artworks', (SELECT jsonb_agg(to_jsonb(a) - 'art_code' - 'url_card_art'
+                    'artworks', (SELECT jsonb_agg(to_jsonb(a)
                         ORDER BY a.id_art) FROM cards_arts a),
                     'collection', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.id_user, c.id_card, c.id_card_art)
                         FROM collections c))::text

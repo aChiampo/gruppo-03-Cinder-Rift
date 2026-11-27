@@ -423,7 +423,7 @@ Costruzione e validazione dell’URL HTTPS di recupero sono rinviate insieme all
 
 ### Verifica corrente del 2026-11-13
 
-Sulla copia di lavoro con base `97200d9`, Windows e JDK 21.0.11, la suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test su PostgreSQL 18.6**, senza fallimenti, errori o casi saltati, e ha prodotto il JAR. La prova include cancellazione account, JWT reali, bootstrap/cookie/header CSRF, profili, recupero password, rollback, concorrenza e mazzi. Il database era un container isolato rimosso al termine; l’avvio dell’applicazione tramite Compose e il browser non sono verificati. [Report corrente con correzioni, ambiente e limiti](../report/2026-11-13-revisione-stato-sviluppo.md).
+Sulla copia di lavoro con base `97200d9`, Windows e JDK 21.0.11, la suite completa `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify` ha superato **118 test su PostgreSQL 18.6**, senza fallimenti, errori o casi saltati, e ha prodotto il JAR. La prova include cancellazione account, JWT reali, bootstrap/cookie/header CSRF, profili, recupero password, rollback, concorrenza e mazzi. Il database era un container isolato rimosso al termine; l’avvio dell’applicazione tramite Compose e il browser non sono verificati. [Report corrente con correzioni, ambiente e limiti](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/6208de547e9c1d6d69a9021e0d0ef1a2add9beba/docs/report/2026-11-13-revisione-stato-sviluppo.md).
 
 Le sezioni seguenti conservano le evidenze precedenti; i loro limiti non sostituiscono il risultato corrente.
 

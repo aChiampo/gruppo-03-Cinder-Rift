@@ -10,9 +10,10 @@
   il risultato PvE è consultabile in memoria, senza storico persistito.
   I contratti correnti sono in `docs/BackEnd/accesso-utenti.md` e
   `docs/BackEnd/gestione-mazzi.md`, `docs/BackEnd/collezione-carte.md`
-  e `docs/BackEnd/app-battaglie-api.md`; Flyway applica V1–V11,
+  e `docs/BackEnd/app-battaglie-api.md`; Flyway applica nove script, V1–V8 e V11,
   inclusi set CR01, utente dimostrativo, effetti, artwork `STANDARD`, URL delle illustrazioni e amicizie. Il cleanup amicizie è nella transazione di cancellazione account; frontend F13 e F06 restano da completare.
-  Allineamento ai sorgenti del 2026-11-24; stato e limiti in `docs/README.md`.
+  V3 contiene lo schema completo carte/arti e V5 il seed definitivo; gli ID carta sono generati dal database.
+  Allineamento ai sorgenti del 2026-11-27; stato e limiti in `docs/README.md`.
 - Leggi [README](README.md), [linee guida](Linee-Guida-e-Regole.md) e
   [indice della documentazione](docs/README.md) prima di intervenire.
 - Per ogni attività consulta le pagine pertinenti di `docs/Digital/`,

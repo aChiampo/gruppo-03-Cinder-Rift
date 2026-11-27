@@ -19,7 +19,7 @@ Ultimo aggiornamento significativo: 2026-11-22, disponibilità delle illustrazio
 
 ## Illustrazioni dimostrative disponibili
 
-Aggiornamento del **2026-11-22**, su richiesta dell'utente: le illustrazioni centrali delle 30 carte CR01 fornite nella cartella locale `Carte/` sono ritagliate e pubblicate nel frontend come WebP lossless. I nomi stampati corrispondono al seed V5; V10 collega gli asset alle arti `default` esistenti. Il retro comune è escluso. Si tratta di materiali del set dimostrativo: l'estrazione non certifica approvazione definitiva dei contenuti, bilanciamento o licenze. [Asset e associazioni F04](../BackEnd/collezione-carte.md#immagini-del-set-cr01) · [Verifiche dei ritagli](../FrontEnd/collezione-carte.md#immagini-del-set-cr01).
+Aggiornamento del **2026-11-22**, su richiesta dell'utente: le illustrazioni centrali delle 30 carte CR01 fornite nella cartella locale `Carte/` sono ritagliate e pubblicate nel frontend come WebP lossless. I nomi stampati corrispondono al seed V5; Dal 2026-11-27 V5 crea direttamente le arti `STANDARD` con gli URL degli asset, usando gli ID generati delle carte. Il retro comune è escluso. Si tratta di materiali del set dimostrativo: l'estrazione non certifica approvazione definitiva dei contenuti, bilanciamento o licenze. [Asset e associazioni F04](../BackEnd/collezione-carte.md#immagini-del-set-cr01) · [Verifiche dei ritagli](../FrontEnd/collezione-carte.md#immagini-del-set-cr01).
 
 ## Da definire
 

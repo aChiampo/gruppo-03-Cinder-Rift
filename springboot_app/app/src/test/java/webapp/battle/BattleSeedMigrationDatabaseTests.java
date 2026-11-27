@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import static org.assertj.core.api.Assertions.*;
 
-/** V9 works on empty databases and preserves customizations when upgrading existing catalogs. */
+/** V3 defines the complete card schema and V5 seeds usable battle data immediately. */
 @SpringBootTest(properties = {"app.security.session-token-cleanup-cron=-",
         "app.security.password-reset-token-cleanup-cron=-"})
 class BattleSeedMigrationDatabaseTests {
@@ -44,35 +44,59 @@ class BattleSeedMigrationDatabaseTests {
     }
 
     @Test
-    void freshDatabaseHasUsableFactionSnapshotsAndEquipmentEnergy() {
-        assertThat(target("9").migrate().migrationsExecuted).isEqualTo(9);
+    void v3DefinesTheCompleteCardAndArtworkSchema() {
+        target("3").migrate();
         assertThat(jdbc.sql("""
-                SELECT count(*) FROM cards c JOIN card_types t ON t.id=c.id_type
-                WHERE t.code='CREATURE' AND c.id_faction IS NOT NULL
-                """).query(Integer.class).single()).isEqualTo(25);
+                SELECT column_name FROM information_schema.columns
+                WHERE table_schema = :schema AND table_name = 'cards'
+                """).param("schema", schema).query(String.class).list()).containsExactlyInAnyOrder(
+                        "id", "name", "description", "flavor_text", "id_type", "energy_cost", "power",
+                        "id_rarity", "value_atk", "value_def", "id_faction", "id_expansion", "is_deleted");
         assertThat(jdbc.sql("""
-                SELECT count(*) FROM cards c JOIN card_types t ON t.id=c.id_type
-                WHERE t.code='EQUIPMENT' AND c.energy_cost=0
-                """).query(Integer.class).single()).isEqualTo(5);
-        assertThat(jdbc.sql("SELECT f.code FROM cards c JOIN factions f ON f.id=c.id_faction WHERE c.code='CR01-003'")
-                .query(String.class).single()).isEqualTo("RAD");
-        assertThat(target("9").migrate().migrationsExecuted).isZero();
+                SELECT is_identity FROM information_schema.columns
+                WHERE table_schema = :schema AND table_name = 'cards' AND column_name = 'id'
+                """).param("schema", schema).query(String.class).single()).isEqualTo("YES");
+        assertThat(jdbc.sql("""
+                SELECT count(*) FROM information_schema.columns
+                WHERE table_schema = :schema AND table_name = 'cards_arts' AND column_name = 'source_image'
+                """).param("schema", schema).query(Integer.class).single()).isEqualTo(1);
     }
 
     @Test
-    void upgradePreservesNonNullValuesUnrelatedCardsIdsAndOwnership() {
-        target("8").migrate();
-        int sentinel = jdbc.sql("SELECT id FROM cards WHERE code='CR01-001'").query(Integer.class).single();
-        jdbc.sql("UPDATE cards SET id_faction=(SELECT id FROM factions WHERE code='SAP') WHERE code='CR01-001'").update();
-        jdbc.sql("UPDATE cards SET energy_cost=4 WHERE code='CR01-006'").update();
-        int unrelated = jdbc.sql("INSERT INTO cards(code,name) VALUES ('CUSTOM-F07','Unrelated') RETURNING id")
+    void v5HasUsableFactionSnapshotsAndEquipmentEnergy() {
+        assertThat(target("5").migrate().migrationsExecuted).isEqualTo(5);
+        assertThat(jdbc.sql("""
+                SELECT f.code FROM cards c JOIN card_types t ON t.id = c.id_type
+                JOIN factions f ON f.id = c.id_faction WHERE t.code = 'CREATURE'
+                """).query(String.class).list()).hasSize(25)
+                .containsOnly("CYB", "SAP", "RAD", "ALN", "CLT");
+        assertThat(jdbc.sql("""
+                SELECT count(*) FROM cards c JOIN card_types t ON t.id = c.id_type
+                JOIN factions f ON f.id = c.id_faction
+                WHERE t.code = 'EQUIPMENT' AND c.energy_cost = 0 AND f.code = 'NEUTRAL'
+                """).query(Integer.class).single()).isEqualTo(5);
+        assertThat(target("5").migrate().migrationsExecuted).isZero();
+    }
+
+    @Test
+    void laterMigrationsPreserveCustomizationsGeneratedIdsAndOwnership() {
+        target("5").migrate();
+        int sentinel = jdbc.sql("SELECT id FROM cards WHERE name = 'Sentinel K-17'")
                 .query(Integer.class).single();
-        assertThat(target("9").migrate().migrationsExecuted).isEqualTo(1);
-        assertThat(jdbc.sql("SELECT id FROM cards WHERE code='CR01-001'").query(Integer.class).single()).isEqualTo(sentinel);
-        assertThat(jdbc.sql("SELECT f.code FROM cards c JOIN factions f ON f.id=c.id_faction WHERE c.id=:id")
+        jdbc.sql("UPDATE cards SET id_faction = (SELECT id FROM factions WHERE code = 'SAP') WHERE id = :id")
+                .param("id", sentinel).update();
+        int equipment = jdbc.sql("SELECT id FROM cards WHERE name = 'Pulse Blade'").query(Integer.class).single();
+        jdbc.sql("UPDATE cards SET energy_cost = 4 WHERE id = :id").param("id", equipment).update();
+        int unrelated = jdbc.sql("INSERT INTO cards (name) VALUES ('Unrelated') RETURNING id")
+                .query(Integer.class).single();
+        assertThat(unrelated).isGreaterThan(jdbc.sql("SELECT max(id) FROM cards WHERE id <> :id")
+                .param("id", unrelated).query(Integer.class).single());
+        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(4);
+        assertThat(jdbc.sql("SELECT f.code FROM cards c JOIN factions f ON f.id = c.id_faction WHERE c.id = :id")
                 .param("id", sentinel).query(String.class).single()).isEqualTo("SAP");
-        assertThat(jdbc.sql("SELECT energy_cost FROM cards WHERE code='CR01-006'").query(Integer.class).single()).isEqualTo(4);
-        assertThat(jdbc.sql("SELECT count(*) FROM cards WHERE id=:id AND id_faction IS NULL AND energy_cost IS NULL")
+        assertThat(jdbc.sql("SELECT energy_cost FROM cards WHERE id = :id")
+                .param("id", equipment).query(Integer.class).single()).isEqualTo(4);
+        assertThat(jdbc.sql("SELECT count(*) FROM cards WHERE id = :id AND id_faction IS NULL AND energy_cost IS NULL")
                 .param("id", unrelated).query(Integer.class).single()).isEqualTo(1);
         assertThat(jdbc.sql("SELECT count(*) FROM collections").query(Integer.class).single()).isEqualTo(30);
         assertThat(jdbc.sql("SELECT count(*) FROM card_effects").query(Integer.class).single()).isEqualTo(7);

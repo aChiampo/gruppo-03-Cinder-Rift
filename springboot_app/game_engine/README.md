@@ -48,7 +48,7 @@ Lo stage 3 richiede l'evento `BLOOD_MOON`. L'applicazione usa H2 in memoria e cr
 
 ## API dimostrativa PvE
 
-Verifica dell'orchestrazione del **2026-11-20**: **49 test del motore** superati con JDK 21.0.11 e H2, inclusi rifiuto di deadline scadute/malformate e interruzione tra scambi. La suite applicativa ha superato **212 test** su PostgreSQL 18.6 isolato. Verificato anche il flusso fra JAR reali, senza integrare il browser o distribuire nuove immagini sullo stack dell'utente. [Report storico](../../docs/report/2026-11-20-orchestrazione-pve.md). La successiva verifica del motore del 2026-11-22 è descritta nella sezione Campagna; nessuna nuova esecuzione JUnit nella revisione documentale del 2026-11-23.
+Verifica dell'orchestrazione del **2026-11-20**: **49 test del motore** superati con JDK 21.0.11 e H2, inclusi rifiuto di deadline scadute/malformate e interruzione tra scambi. La suite applicativa ha superato **212 test** su PostgreSQL 18.6 isolato. Verificato anche il flusso fra JAR reali, senza integrare il browser o distribuire nuove immagini sullo stack dell'utente. [Report storico](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/73ad701a20b4fbd3e540689e92b5569a4c1e4da0/docs/report/2026-11-20-orchestrazione-pve.md). La successiva verifica del motore del 2026-11-22 è descritta nella sezione Campagna; nessuna nuova esecuzione JUnit nella revisione documentale del 2026-11-23.
 
 L'API interna del motore è implementata dalla PR #36, integrata in `dev` con `786707a`. Payload, validazione dimostrativa, risposta ed errori sono descritti esclusivamente nella [specifica BackEnd del motore](../../docs/BackEnd/app-battaglie.md#api-interna-del-motore-implementata).
 
@@ -78,7 +78,7 @@ Verifica storica del **2026-11-20**, dopo l'introduzione degli effetti: `mvnw.cm
 
 Verifica precedente del **2026-11-20**, prima del modello di effetti: `mvnw.cmd clean test -q` con JDK 21.0.11 su Windows, **35 test JUnit, 0 fallimenti, 0 errori e 0 saltati**. La suite comprende ID numerici, statistiche ricevute senza lookup, copie indipendenti, struttura degli snapshot, composizione dei due mazzi e modificatori degli equipaggiamenti. Controllati separatamente i valori delle creature rispetto a V5, i vincoli di composizione, i percorsi degli stage e gli esempi JSON del contratto. La verifica resta locale con H2; non esegue l'orchestrazione applicativa o PostgreSQL.
 
-La verifica Docker del **2026-11-16** ha superato **19 test** nello stage Java del build, costruito l'immagine e rilevato il servizio sano su `8083` nello stack Compose isolato, con menu disabilitato e filesystem in sola lettura. [Evidenze e limiti](../../docs/report/2026-11-16-verifica-docker-compose.md). Questa evidenza resta distinta dalla suite eseguita il 2026-11-19.
+La verifica Docker del **2026-11-16** ha superato **19 test** nello stage Java del build, costruito l'immagine e rilevato il servizio sano su `8083` nello stack Compose isolato, con menu disabilitato e filesystem in sola lettura. [Evidenze e limiti](https://github.com/aChiampo/gruppo-03-Cinder-Rift/blob/400ceeb0a81aca58d7abd6baff355f60baf2c12c/docs/report/2026-11-16-verifica-docker-compose.md). Questa evidenza resta distinta dalla suite eseguita il 2026-11-19.
 
 Il POM dichiara Java 21 e Spring Boot 4.1.2. La configurazione predefinita usa H2; il driver PostgreSQL è incluso come dipendenza runtime.
 

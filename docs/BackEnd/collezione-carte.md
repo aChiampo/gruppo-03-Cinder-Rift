@@ -2,7 +2,7 @@
 
 ID: F04 · Perimetro: confermato; contratto HTTP implementato.
 Implementazione: controller, servizi e repository JDBC disponibili; catalogo e collezione React collegati. Otto test API superati il 2026-11-21; verifiche frontend e client contro Spring del 2026-11-22 descritte sotto.
-Ultimo aggiornamento significativo: 2026-11-22, su richiesta dell'utente di collegare React alle API esistenti e pubblicare le illustrazioni delle 30 carte CR01 tramite V10, allineando documentazione e verifiche. Il contratto backend resta invariato. Contratto iniziale: 2026-11-15; importazione del branch `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
+Ultimo aggiornamento significativo: 2026-11-27, riscrittura approvata dello schema V3 e del seed V5 con ID generati e arti definitive, rimozione dei tre campi carta e delle migrazioni V9/V10. Il contratto HTTP backend resta invariato. Contratto iniziale: 2026-11-15; importazione del branch `feature/api-collezione-catalogo`: 2026-11-21. Schema persistente: [database v1.1](Database/database-schema-v1.1.md).
 
 ## Obiettivo e decisioni note
 
@@ -46,6 +46,8 @@ I parametri sono facoltativi e combinabili su entrambe le rotte.
 Gli intervalli devono avere limiti non negativi e il minimo non può superare il massimo. L'ordinamento tratta i valori nulli come ultimi e usa l'ID carta come spareggio stabile; nella collezione usa anche l'ID della variante.
 
 ### Risposta catalogo
+
+La riscrittura delle migrazioni del **2026-11-27** non cambia richieste o risposte HTTP. I campi rimossi `cards.code`, `transfer_and_discard` e `duration` non facevano parte dei payload; `flavor_text` resta nel database e non è esposto. Le proprietà `code` nei riferimenti di tipo, fazione, rarità ed espansione restano valide: appartengono ai relativi cataloghi, non a `cards`.
 
 Ogni elemento contiene `id`, `name`, `faction`, `rarity`, `energyCost`, `attack`, `defense`, `power`, `type`, `expansion` e `artworks`. Un riferimento ha `id`, `code` e `name`; statistiche e riferimenti opzionali possono essere `null`. Ogni elemento di `artworks` contiene `cardArtId`, `artCode` e `imageUrl`, che può essere `null`.
 
@@ -165,11 +167,11 @@ Nella copia di lavoro di `test-connessione` con base `9e0dd83` e modifiche non c
 
 ## Immagini del set CR01
 
-Aggiornamento del **2026-11-24**. La migrazione [V10](../../springboot_app/app/src/main/resources/db/migration/V10__set_initial_card_art_urls.sql) converte il codice legacy `default` in `STANDARD` conservando gli identificativi e assegna alle arti `STANDARD` delle 30 carte CR01 gli URL `/img/cards/<nome-carta>.webp`, risolvendo la carta tramite nome esatto e codice editoriale. Sostituisce anche eventuali URL precedenti su queste arti; varianti diverse, carte con nome/codice non corrispondenti e carte esterne al set restano escluse. Conserva ID, `source_image` e riferimenti di collezioni e mazzi; non modifica lo schema o i DTO.
+Aggiornamento del **2026-11-27**. [V3](../../springboot_app/app/src/main/resources/db/migration/V3__create_f05_cards_and_decks_schema.sql) definisce lo schema completo delle carte e delle arti. [V5](../../springboot_app/app/src/main/resources/db/migration/V5__seed_initial_card_set.sql) crea direttamente le 30 carte CR01 e le arti `STANDARD` con URL `/img/cards/<nome-carta>.webp`, usando gli ID generati restituiti dall’inserimento delle carte. `source_image` conserva il nome originale. Non sono presenti `cards.code`, `transfer_and_discard` o `duration`; `flavor_text` rimane nello schema. V9/V10 sono rimosse e non servono riparazioni successive del seed.
 
 I 30 file in [public/img/cards](../../cinder-rift/public/img/cards/) contengono soltanto l'illustrazione centrale ritagliata dagli originali forniti nella cartella locale `Carte/`, con nomi stampati verificati contro il seed V5. Sono WebP lossless, senza ridimensionamento o rigenerazione dell'illustrazione; cornici, pannelli del titolo, statistiche e testi sono esclusi. Il retro comune non rappresenta una carta e non entra nella migrazione. Gli originali restano esterni al repository; `source_image` ne conserva il nome originale.
 
-Flyway applica V10 al normale avvio del backend su un database a V9, senza reset o modifica delle migrazioni precedenti. Gli URL sono relativi all'origine del frontend: Vite e Nginx servono gli asset da `/img/cards/`. Ricostruire e distribuire anche il frontend con i nuovi file; il backend non serve queste immagini. Per controlli ed esiti correnti vedere la [verifica degli asset](../FrontEnd/collezione-carte.md#immagini-del-set-cr01).
+La catena riscritta V1–V8 e V11 è destinata a un database nuovo; non aggiorna automaticamente una vecchia cronologia Flyway. Gli URL sono relativi all’origine del frontend: Vite e Nginx servono gli asset da `/img/cards/`. Ricostruire e distribuire anche il frontend con i file; il backend non serve queste immagini. La ricreazione del database applicativo resta un’operazione separata. Le verifiche datate sotto precedono questa riscrittura.
 
 Verifica locale del **2026-11-22**, copia di lavoro di `test-connessione`: il test `RoundConfigurationMigrationDatabaseTests` passa con JDK 21.0.11 e PostgreSQL 18.6 in un container temporaneo dedicato. Flyway applica V1–V10 su schema vuoto e non applica ulteriori migrazioni al secondo avvio. Comando dalla cartella backend, con le variabili di prova documentate: `mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" "-Dtest=RoundConfigurationMigrationDatabaseTests" test`.
 

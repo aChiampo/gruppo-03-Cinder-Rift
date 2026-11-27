@@ -43,13 +43,13 @@ class FriendshipMigrationDatabaseTests {
 
     @Test
     void freshInstallationAndRepeatStartup() {
-        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(11);
+        assertThat(target("11").migrate().migrationsExecuted).isEqualTo(9);
         assertThat(target("11").migrate().migrationsExecuted).isZero();
     }
 
     @Test
-    void upgradeFromV10PreservesExistingProfilesAndCards() {
-        target("10").migrate();
+    void upgradeFromV8PreservesExistingProfilesAndCards() {
+        target("8").migrate();
         int people = count("users"), cards = count("cards");
         assertThat(target("11").migrate().migrationsExecuted).isEqualTo(1);
         assertThat(count("users")).isEqualTo(people);

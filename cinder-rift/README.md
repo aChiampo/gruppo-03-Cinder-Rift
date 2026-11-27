@@ -50,7 +50,7 @@ Verifica frontend: **54 test superati**, build Vite riuscita. Il browser non è 
 
 Aggiornamento del **2026-11-22**, su richiesta dell'utente: le 30 illustrazioni centrali del set CR01 sono ritagliate dagli originali `Carte/` e salvate come WebP lossless in [public/img/cards](public/img/cards/), con nomi descrittivi distinti. Il retro comune è escluso. I file conservano i pixel del ritaglio originale senza ridimensionamento; non contengono cornici, pannelli dei nomi, statistiche o testi di gioco.
 
-`npm run build` copia i file in `dist/img/cards/`. La migrazione backend V10 collega le arti esistenti agli URL della stessa origine `/img/cards/<nome-carta>.webp`; distribuire insieme backend aggiornato e frontend ricostruito. Il componente F04 legge già `imageUrl` e conserva il segnaposto per immagini assenti o non caricabili. [Associazione e aggiornamento dei dati](../docs/BackEnd/collezione-carte.md#immagini-del-set-cr01).
+`npm run build` copia i file in `dist/img/cards/`. Dal 2026-11-27 la migrazione backend V5 crea direttamente le arti `STANDARD` con gli URL della stessa origine `/img/cards/<nome-carta>.webp`, usando gli ID generati delle carte. V9/V10 sono rimosse e la catena V1–V8 e V11 richiede un database nuovo; distribuire insieme backend aggiornato e frontend ricostruito. Il componente F04 legge già `imageUrl` e conserva il segnaposto per immagini assenti o non caricabili. [Associazione e aggiornamento dei dati](../docs/BackEnd/collezione-carte.md#immagini-del-set-cr01).
 
 ## Verifiche
 
