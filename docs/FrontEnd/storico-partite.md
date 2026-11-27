@@ -1,32 +1,19 @@
 # Consultazione dello storico
 
-ID: F08 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
-Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: 2026-11-09, allineamento dei riferimenti al regolamento Versione 2.1 su richiesta dell’utente. Verifiche applicative: non eseguite.
+ID: F08 · Perimetro: confermato; endpoint backend PvP implementato, interfaccia frontend non integrata.
+Implementazione: il backend persiste e restituisce lo storico Ranked/Friendly; non esiste ancora la chiamata React o la schermata di consultazione. Responsabile: DA DEFINIRE (Web Developer).
+Ultimo aggiornamento significativo: **2026-11-27**, allineamento al contratto F08 disponibile.
 
-## Obiettivo e decisioni note
+## Comportamento frontend da realizzare
 
-Chiarimento del **2026-11-23** dall'ispezione dei sorgenti: il [visualizzatore PvE F07](sfide-simulazione.md#risultato-della-sessione) consente già di riaprire l'ultimo risultato in memoria. Il ricaricamento lo elimina; non esistono elenco o recupero persistito delle partite. La scheda Storico mostra una sezione indisponibile e F08 resta non implementata.
+La UI dovrà chiamare `GET /api/battles/history` con il Bearer JWT della sessione F01. Il backend restituisce l'array delle partite PvP dell'utente; il parametro facoltativo `mode` filtra per modalità. L'API non offre paginazione. Campi, ordinamento, autorizzazioni e semantica dei dati sono definiti nel [contratto canonico BackEnd F08](../BackEnd/storico-partite.md), senza duplicarli qui.
 
-- Mostrare le sfide giocate e i risultati disponibili all'utente.
-- Consentire la consultazione del dettaglio della simulazione.
+La schermata dovrà prevedere stati di caricamento, lista vuota ed errore, e presentare i dati autorevoli del report. La specifica non sceglie layout, accessibilità visiva o controlli di filtro, che restano da definire nell'implementazione UI.
 
-## Implicazioni della proposta di regolamento
-
-- La [sezione 14 — Resoconto della partita](../Digital/regolamento-base.md#14-resoconto-della-partita) propone il contenuto da rendere consultabile. La presentazione dovrà distinguere il risultato della partita, i round e i singoli scambi di attacco, dopo la conferma dei requisiti.
-- Il client mostrerà i dati autorevoli forniti dal [contratto canonico BackEnd di F08](../BackEnd/storico-partite.md), ancora da definire, senza ricostruire un risultato indipendente della partita.
-- Il riferimento al regolamento non approva un layout, un formato degli eventi o un meccanismo di riproduzione della partita.
-
-## Da definire
-
-- Filtri, paginazione, struttura del dettaglio e stati dell'interfaccia.
-- Presentazione accessibile del resoconto, stati vuoto/caricamento/errore e gestione di eventuali dati non disponibili secondo il contratto BackEnd.
+Lo storico copre le partite Ranked e Friendly PvP, non le simulazioni PvE: il report PvE resta disponibile solo in memoria nella sessione F07. Il risultato PvP restituisce `rankingDelta = 0`; non mostrare Elo, classifica o ricompense.
 
 ## Collegamenti
 
-- [Servizio storico](../BackEnd/storico-partite.md)
-- [Sfide](sfide-simulazione.md)
-- [Regolamento e resoconto proposto](../Digital/regolamento-base.md#14-resoconto-della-partita)
+- [Servizio storico F08](../BackEnd/storico-partite.md)
+- [Sfide F07](sfide-simulazione.md)
 - [Indice FrontEnd](README.md)

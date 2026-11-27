@@ -1,49 +1,55 @@
 # Sfide tra utenti
 
-ID: F07 · Perimetro: confermato; specifica in approfondimento.
-Implementazione: campagna PvE e visualizzatore del risultato React disponibili; sfide PvP e storico persistito non implementati. Responsabile: DA DEFINIRE (Web Developer).
-Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Fonte dell'approfondimento: regolamento Versione 2.1, proposta per il prototipo e le prove di bilanciamento; integrazione documentale approvata, regole definitive da confermare.
-Ultimo aggiornamento significativo: **2026-11-23**, allineamento richiesto dall'utente al codice corrente. Verifica frontend: 54 test e build superati; browser integrato non verificato in questa revisione.
-
-## Obiettivo e decisioni note
-
-- Consentire invio e accettazione di una sfida con scelta dei rispettivi mazzi.
-- Mostrare il risultato prodotto dalla simulazione server e collegarlo allo storico.
-
-## Implicazioni della proposta di regolamento
-
-- La Versione 2.1 descrive la [preparazione della partita](../Digital/regolamento-base.md#8-preparazione-della-partita) e il [combattimento automatico](../Digital/regolamento-base.md#10-combattimento): la proposta non prevede decisioni manuali durante la partita.
-- L'interfaccia dovrà distinguere partita, round e scambi di attacco e rappresentare risultati e pareggi secondo le condizioni proposte di [fine round](../Digital/regolamento-base.md#12-conclusione-del-round) e [fine partita](../Digital/regolamento-base.md#13-conclusione-della-partita), dopo la loro conferma.
-- Il risultato autorevole e gli stati tecnici dipendono dal [contratto canonico BackEnd di F07](../BackEnd/sfide-simulazione.md). La porzione PvE è documentata nel riferimento API collegato sotto; il contratto completo PvP resta da definire. La proposta non conferma animazioni, aggiornamenti in tempo reale o canali di comunicazione.
+ID: F07 · Perimetro: confermato; flusso PvE client implementato, client PvP da realizzare.
+Implementazione: React usa il backend PvE e conserva l'ultimo report in memoria; il backend espone coda Ranked e sfide Amichevoli, ma il frontend non ha ancora chiamate o schermate PvP. Responsabile: DA DEFINIRE (Web Developer).
+Ultimo aggiornamento significativo: **2026-11-27**, flussi client documentati in base al contratto backend corrente.
 
 ## Integrazione PvE implementata
 
-Per endpoint, header, payload, codici di errore e vincoli temporali usare esclusivamente [API delle battaglie per il FrontEnd](../BackEnd/app-battaglie-api.md). `BattleScreen` e `battleService` chiamano l'endpoint applicativo con la sessione F01; questa pagina descrive soltanto il client. Orchestrazione, validazione, pulizia del resoconto, lock e recupero sono definiti in [App battaglie](../BackEnd/app-battaglie.md).
+Per endpoint, header, payload, codici di errore e vincoli temporali usare esclusivamente [API delle battaglie PvE](../BackEnd/app-battaglie-api.md). `BattleScreen` e `battleService` chiamano l'endpoint applicativo con la sessione F01; questa pagina descrive soltanto il client. Orchestrazione, validazione, pulizia del resoconto, lock e recupero sono definiti in [App battaglie](../BackEnd/app-battaglie.md).
 
-- La schermata carica i mazzi dell'utente e richiede il codice stage, con `stage_01` come esempio; non esiste ancora una scoperta automatica degli stage.
-- Durante l'invio mostra l'attesa e impedisce un nuovo avvio dalla stessa schermata.
-- Al successo apre il risultato dedicato; non mostra una sezione di suggerimenti tutorial.
-- Conflitti, validazione ed errori di servizio vengono mostrati secondo le risposte documentate; le violazioni `422` restano visibili.
-- Dopo errori di trasporto informa l'utente senza ripetere automaticamente il POST.
+La schermata carica i mazzi dell'utente, richiede lo stage, mostra l'attesa e impedisce un nuovo avvio dalla stessa schermata. Al successo apre `BattleResultScreen`; il report è navigabile e riproducibile localmente, ma si perde al ricaricamento o all'uscita. Questo risultato in memoria non è lo storico F08.
 
-## Risultato della sessione
+## Flusso client PvP da implementare
 
-`BattleResultScreen` usa `outcome` come esito autorevole della partita. `parseBattleReport` interpreta i marcatori riconosciuti del log corrente per mostrare round, creature, equipaggiamenti, statistiche e scambi simultanei; non deduce il vincitore della partita dai nomi. Dati mancanti, ambigui o non riconosciuti restano indisponibili e il log originale è sempre consultabile. Le immagini facoltative F04 non sostituiscono le statistiche del report. Questo adattatore dipende dal formato testuale del motore: non esiste ancora un contratto di eventi strutturati.
+Le API richiedono Bearer JWT F01 e derivano l'utente dal token. Il browser chiama l'applicazione, mai direttamente `game_engine`. Le sequenze seguenti descrivono il contratto disponibile; non attestano componenti React esistenti. Per payload e codici autorevoli vedere [contratto BackEnd F07](../BackEnd/sfide-simulazione.md).
 
-La navigazione `#risultato-battaglia?round=1&scambio=2` seleziona un punto del report in memoria. I controlli consentono avanzamento, ritorno, selezione round e replay locale; non effettuano nuove simulazioni. Home e Campagna riaprono l'ultimo risultato, che viene perso al ricaricamento o all'uscita. Senza risultato la pagina invita a tornare alla campagna. Questa vista appartiene a F07 e non implementa lo storico F08.
+### Coda Ranked
 
-Verifica del **2026-11-23**: 54 test frontend superati e build riuscita. Coperti parser, log incompleti/ambigui, navigazione, rendering e servizi; test con fixture e HTTP simulato, senza verifica browser o nuova integrazione con Spring. [Evidenze e limiti](../report/2026-11-23-allineamento-documentazione.md).
+1. Selezionare un mazzo e inviare `POST /api/pvp/queue` con `{"deckId": 17}`.
+2. Se la risposta è `202`, il body contiene `ticketId`, `status: "WAITING"` e nessun `battle`. Conservare l'ID e interrogare `GET /api/pvp/queue/{ticketId}` per il polling.
+3. `GET` restituisce `200` con `WAITING`, `MATCHED` o `CANCELLED`. Quando `MATCHED`, il campo `battle` contiene il report persistito; presentarlo all'utente senza ricostruire il risultato dal solo stato.
+4. Se `POST` trova e completa subito un match, restituisce direttamente `200` con `status: "MATCHED"` e `battle`, senza necessità di polling.
+5. Per interrompere l'attesa inviare `DELETE /api/pvp/queue/{ticketId}`. Se ancora `WAITING`, la risposta `200` ha stato `CANCELLED`; se il ticket è già stato preso o abbinato, gestire `409` e leggere lo stato con `GET`.
 
-## Da definire
+In caso di errore del motore, la richiesta che ha avviato il match fallisce: il ticket del chiamante passa a `CANCELLED` e quello dell'avversario torna `WAITING`. Il client deve mostrare l'errore e consentire una nuova iscrizione; il backend non definisce retry automatici o un intervallo di polling.
 
-- Ricerca degli avversari, invio/accettazione e stati delle sfide PvP.
-- Recupero persistito del risultato, eventi strutturati, scoperta stage e criteri di accessibilità; verifica browser della rappresentazione e del replay.
+### Sfide Amichevoli
+
+1. Scegliere un amico con relazione accettata (F13 lo espone nell'elenco `friends`) e inviare `POST /api/pvp/challenges` con `{"opponentUserId": 24, "deckId": 17}`. `201` restituisce la sfida `PENDING`.
+2. Usare `GET /api/pvp/challenges` per ricevere `{ "incoming": [...], "outgoing": [...] }`; gli elenchi contengono le sfide pendenti in entrata e in uscita.
+3. Interrogare `GET /api/pvp/challenges/{challengeId}` per il polling. Entrambi i partecipanti possono leggere la sfida; dopo l'accettazione il body include anche `battle`.
+4. L'opponent sceglie il proprio mazzo e invia `POST /api/pvp/challenges/{challengeId}/accept` con `{"deckId": 31}`. Il `200` restituisce lo stato `COMPLETED` e il report `FRIENDLY`.
+5. L'opponent può rifiutare inviando `POST /api/pvp/challenges/{challengeId}/decline` senza body: risposta `200`, stato `DECLINED`. Il challenger usa la stessa rotta per annullare la propria sfida: risposta `200`, stato `CANCELLED`.
+
+Auto-sfida produce `400`; un utente non amico o non partecipante non può accedere alle operazioni protette (`403`); ID inesistente produce `404`; transizioni non più valide producono `409`; mazzi non giocabili producono `422`. Una chiamata al motore fallita durante l'accettazione lascia la sfida `PENDING`, senza report, e il client può mostrare l'errore senza simulare un esito.
+
+Il polling è HTTP; il backend non dichiara un intervallo o una strategia di backoff da imporre al client. Non ci sono WebSocket o SSE. I payload non comprendono snapshot inviati dal browser: il server valida e fotografa i mazzi selezionati.
+
+## Report e storico
+
+Il report PvP è contenuto in `battle` ed è una voce F08 con `mode`, `playerAId`, `playerBId`, `winnerId`, `outcome`, `deckASnapshot`, `deckBSnapshot`, `battleLog`, `rankingDelta` e `createdAt` (oltre all'ID). Ranked e Friendly persistono; `rankingDelta` è fisso a `0`, senza Elo, classifica o ricompense.
+
+Il client F08 resta da implementare. L'API `GET /api/battles/history` restituisce un array per l'utente autenticato, con filtro facoltativo `mode` e senza paginazione; il contratto canonico è in [Storico F08](../BackEnd/storico-partite.md). Le simulazioni PvE non vengono salvate in questo storico.
+
+## Risultato PvE della sessione
+
+`parseBattleReport` interpreta i marcatori riconosciuti del log corrente per mostrare round, creature, equipaggiamenti, statistiche e scambi simultanei; non deduce il vincitore dai nomi. Dati mancanti, ambigui o non riconosciuti restano indisponibili e il log originale è sempre consultabile. La navigazione del risultato e il replay sono locali e non effettuano nuove simulazioni.
 
 ## Collegamenti
 
-- [Servizio sfide](../BackEnd/sfide-simulazione.md)
-- [Regolamento Versione 2.1](../Digital/regolamento-base.md)
-- [Mazzi](gestione-mazzi.md)
-- [Storico](storico-partite.md)
+- [Servizio e contratto PvP F07](../BackEnd/sfide-simulazione.md)
+- [Storico F08](storico-partite.md)
+- [API PvE](../BackEnd/app-battaglie-api.md)
+- [Amicizie F13](amicizie.md)
 - [Indice FrontEnd](README.md)
