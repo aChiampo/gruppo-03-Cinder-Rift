@@ -1,11 +1,13 @@
 # Economia delle risorse e dei pacchetti
 
+Decisione dell’utente del **2026-11-27**: gli hold monetari F06 riservano Scaglie e non sono spendibili nell’acquisto. [Acquisto F03 implementato](../BackEnd/acquisto-pacchetti.md#acquisto-pacchetti-contratto-http) con addebito e pacchetti chiusi atomici, senza cronologia acquisti o deduplicazione. Prezzi e seed commerciale restano da definire; non sono introdotte nuove regole di assegnazione o conversione delle risorse.
+
 Aggiornamento F03 del **2026-11-26**, su decisione dell’utente: la cancellazione amministrativa di un pacchetto rimborsa le quantità ancora possedute in Scaglie (`cobalt_shards`) al `pack_price` corrente. Il prezzo originario non è registrato. Disabilitare l’acquisizione conserva il possesso; PUT e DELETE eliminano i progressi mercy relativi. [Contratto e limiti](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Restano configurabili distribuzioni per rarità e disponibilità, senza nuovi prezzi commerciali o regole di apertura; gli acquisti usano Scaglie e i prezzi del seed restano in definizione.
 
 ID: D03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Digital Strategist).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: **2026-11-26**, confermati dall’utente rimborso amministrativo in Scaglie al prezzo corrente e accredito delle carte estratte al solo possesso, senza incremento delle copie scambiabili; probabilità artwork confermate il 2026-11-24; terminologia delle risorse e garanzia mercy confermate il 2026-11-09. Verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-27**, confermata dall’utente la corrispondenza degli hold monetari F06 con le Scaglie e l’acquisto senza cronologia o deduplicazione. Rimborso amministrativo al prezzo corrente e accredito delle carte al solo possesso confermati il 2026-11-26; percentuali artwork del 2026-11-24 e terminologia economica del 2026-11-09 invariate. Verifiche dei materiali Digital: non eseguite.
 
 ## Obiettivo e decisioni note
 
@@ -26,7 +28,7 @@ Terminologia confermata dall'utente il **2026-11-09**:
 
 Le tre risorse sono concetti distinti: non vanno considerate sinonimi di un unico saldo. La definizione non stabilisce importi, tassi di conversione, risorse ammesse nei prezzi o trasferibilità fra utenti. Il recupero dai doppioni non definisce automaticamente il trattamento delle carte cancellate dal catalogo.
 
-La [specifica dell'inventario](../BackEnd/Database/database-schema-v1.1.md#inventario-e-pacchetti) associa Scaglie a `cobalt_shards`, Nuclei Rift a `rift_cores` e Rotami a `scraps`: tre saldi interi obbligatori, inizializzati a zero. Canali di acquisto della riserva premium, regole di assegnazione delle Scaglie e condizioni/quantità di recupero dei Rotami restano **DA DEFINIRE**. Prezzi, importi generici degli scambi e quantità generiche dei premi richiedono ancora una corrispondenza esplicita con le risorse.
+La [specifica dell'inventario](../BackEnd/Database/database-schema-v1.1.md#inventario-e-pacchetti) associa Scaglie a `cobalt_shards`, Nuclei Rift a `rift_cores` e Rotami a `scraps`: tre saldi interi obbligatori, inizializzati a zero. Canali di acquisto della riserva premium, regole di assegnazione delle Scaglie e condizioni/quantità di recupero dei Rotami restano **DA DEFINIRE**. Prezzi del negozio e importi monetari degli scambi usano Scaglie; le quantità generiche dei premi richiedono ancora una corrispondenza esplicita con le risorse.
 
 ## Probabilità degli artwork
 
@@ -48,7 +50,7 @@ Con soglia dieci e rarità minima epica, la decima apertura senza una precedente
 
 - Modalità di assegnazione delle Scaglie, acquisto dei Nuclei Rift e recupero dei Rotami dai doppioni.
 - Acquisti F03 in Scaglie confermati; conversioni e trasferibilità restano da definire. Nessuna equivalenza fra risorse.
-- Offerte di pacchetti, prezzi, limiti, quantità per rarità e ipotesi economiche.
+- Offerte di pacchetti, prezzi, quantità per rarità e ipotesi economiche. Nessun limite commerciale di possesso; i limiti tecnici seguono F03.
 - Costi e sostenibilità coerenti con gli obiettivi della traccia.
 - Valori iniziali di soglia e rarità per ciascun pacchetto. Sostituzione dell’ultimo slot e cancellazione dei progressi dopo PUT sono confermate.
 

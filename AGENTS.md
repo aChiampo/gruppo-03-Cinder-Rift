@@ -25,7 +25,11 @@
   F03 espone inventario e apertura atomica di 1–10 pacchetti: lock possesso NOWAIT,
   filtri cumulativi, artwork indipendente con fallback Standard e mercy sull’ultimo slot.
   La validazione delle pescate è condivisa fra POST/PUT e apertura; solo il possesso
-  delle carte aumenta. Acquisto e seed commerciale restano rinviati.
+  delle carte aumenta. Acquisto implementato con `DebitService` e `ReservationReader`
+  condivisi in `webapp.economy`; nessuna nuova migrazione, deduplicazione o cronologia
+  acquisti. Gli hold monetari F06 riservano Scaglie. Assenza completa delle tre tabelle
+  F06 significa zero hold; storage parziale o incoerente blocca la spesa. Ogni futuro
+  scrittore di hold usa il medesimo lock esclusivo utente. Seed commerciale rinviato.
   Showcase ed effetti speciali sono esclusi; contratto in `docs/BackEnd/acquisto-pacchetti.md`.
   V1–V8 e V11 di `dev` restano inalterate; la cronologia precedente al cleanup
   richiede una conversione separata. Frontend F13 e F06 restano da completare.

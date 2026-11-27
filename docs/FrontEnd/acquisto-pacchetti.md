@@ -1,19 +1,21 @@
 # Negozio delle offerte di pacchetti
 
-Aggiornamento del **2026-11-26**: seguire il [contratto F03 aggiornato](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Il catalogo restituisce un array completo senza paginazione; USER vede solo pacchetti acquisibili e ADMIN tutti. Disabilitare l’acquisizione conserva il possesso. Dopo PUT amministrativo rileggere i dati del pacchetto; dopo DELETE riallineare inventario e saldo, secondo il rimborso e la pulizia mercy definiti dal backend. Slot e probabilità restano dati autorevoli; le probabilità non vanno stimate dalle anteprime. Interfaccia e flusso di acquisto non implementati in questa attività.
+Aggiornamento acquisto del **2026-11-27**: backend disponibile secondo il [contratto canonico di acquisto](../BackEnd/acquisto-pacchetti.md#acquisto-pacchetti-contratto-http). Dopo successo usare possesso e saldi restituiti; distinguere saldo totale, prenotato e disponibile. Non applicare il limite di dieci dell’apertura alla quantità acquistata. Disabilitare invii durante la richiesta; dopo timeout non reinviare automaticamente, poiché non esistono deduplicazione, cronologia o recupero della singola richiesta. Il server applica il prezzo corrente sotto lock. Nessun componente React modificato; le note sotto descrivono lo stato precedente del backend.
+
+Aggiornamento del **2026-11-26**: seguire il [contratto F03 aggiornato](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api). Il catalogo restituisce un array completo senza paginazione; USER vede solo pacchetti acquisibili e ADMIN tutti. Disabilitare l’acquisizione conserva il possesso. Dopo PUT amministrativo rileggere i dati del pacchetto; dopo DELETE riallineare inventario e saldo, secondo il rimborso e la pulizia mercy definiti dal backend. Slot e probabilità restano dati autorevoli; le probabilità non vanno stimate dalle anteprime. Interfaccia e flusso di acquisto frontend non implementati in questa attività.
 
 ID: F03 · Perimetro: confermato; specifica sintetica.
 Implementazione: non iniziata. Responsabile: DA DEFINIRE (Web Developer).
 Fonte: traccia, risposte e chiarimenti del gruppo; le decisioni note sono riportate sotto.
-Ultimo aggiornamento significativo: **2026-11-27**, disponibilità delle API backend inventario/apertura e aggiornamento della pianificazione dell’apertura differita su richiesta e annotazioni dell’utente, oltre a catalogo per ruolo e riconciliazione amministrativa. Il [contratto canonico F03](../BackEnd/acquisto-pacchetti.md) distingue contratti backend implementati e decisioni commerciali ancora aperte. Implementazione del client e verifiche applicative: non eseguite.
+Ultimo aggiornamento significativo: **2026-11-27**, acquisto backend disponibile con Scaglie prenotate distinte dal saldo disponibile e nessun retry automatico dopo esito incerto. Inventario, catalogo e apertura backend disponibili; componenti React e verifiche frontend esclusi. Il [contratto canonico F03](../BackEnd/acquisto-pacchetti.md) definisce i payload e i vincoli server.
 
-Aggiornamento backend del **2026-11-27**: disponibili [catalogo e CRUD amministrativo F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), inventario e apertura, senza seed dei pacchetti. Il client deve seguire il contratto canonico; negozio e apertura React restano da realizzare, acquisto backend escluso.
+Stato backend del **2026-11-27**: disponibili [catalogo e CRUD amministrativo F03](../BackEnd/acquisto-pacchetti.md#catalogo-implementato-migrazione-e-api), inventario, apertura e [acquisto atomico](../BackEnd/acquisto-pacchetti.md#acquisto-pacchetti-contratto-http), senza seed dei pacchetti. Il client deve seguire il contratto canonico; negozio, acquisto e apertura React restano da realizzare.
 
 ## Obiettivo e decisioni note
 
 - Mostrare offerte ciascuna relativa a un solo pacchetto, secondo il contratto canonico F03; il pagamento approvato è in Scaglie (`cobalt_shards`), secondo il contratto canonico.
 - Distinguere Scaglie, Nuclei Rift e Rotami secondo la [terminologia economica confermata](../Digital/economia-crediti-pacchetti.md#risorse-economiche), usando i dati autorizzati dal backend senza accorpare le risorse in un unico saldo.
-- Mostrare prezzo, risorsa richiesta e dati del singolo pacchetto usando le informazioni gestite dal backoffice. I tre saldi dell'inventario sono distinti; F03 usa Scaglie; payload di acquisto ancora da definire nel contratto backend.
+- Mostrare prezzo, risorsa richiesta e dati del singolo pacchetto usando le informazioni gestite dal backoffice. I tre saldi dell'inventario sono distinti; F03 usa Scaglie; payload di acquisto disponibile nel contratto backend.
 - Collegare il risultato dell'apertura alla collezione.
 - Il percorso server di acquisto, addebito, apertura e aggiornamento della collezione è descritto nel [contratto canonico F03](../BackEnd/acquisto-pacchetti.md#percorso-acquisto-addebito-estrazione-e-collezione).
 
@@ -40,7 +42,7 @@ Percorsi, payload, ruoli, limite e codici sono nel [contratto HTTP canonico](../
 - Mostra le carte restituite direttamente dopo il commit, con rivelazione per pacchetto e slot e duplicati distinti. Non presume successi parziali del lotto.
 - Riallinea inventario e collezione usando le rispettive letture. Non genera chiavi di richiesta e non usa identificativi storici o API di recupero delle pescate: questi flussi sono esclusi su richiesta esplicita di Chiampo.
 
-Flussi di acquisto, disegno delle schermate e animazioni restano da definire; questa pianificazione non modifica componenti React.
+Integrazione frontend dell’acquisto, disegno delle schermate e animazioni restano da realizzare; questa pianificazione non modifica componenti React.
 
 ## Progresso mercy per pacchetto
 

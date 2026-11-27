@@ -198,7 +198,7 @@ Table INVENTORY {
   rift_cores int [not null, default: 0]
   scraps int [not null, default: 0]
 
-  Note: 'cobalt_shards stores Scaglie earned in the game world; rift_cores stores purchasable premium Nuclei Rift; scraps stores Rotami recoverable from duplicates. These are distinct required integer balances with default zero. Non-negative balances and integer bounds are validated by the backend. Legacy token offer, reservation and reward fields do not identify which resource they represent; that mapping is DA DEFINIRE. No cached reserved balance or movement registry is modeled. All resource writers follow the common locking protocol documented in database-schema-v1.1.md.'
+  Note: 'cobalt_shards stores Scaglie earned in the game world; rift_cores stores purchasable premium Nuclei Rift; scraps stores Rotami recoverable from duplicates. These are distinct required integer balances with default zero. Non-negative balances and integer bounds are validated by the backend. Monetary token offer and reservation fields represent cobalt_shards (Scaglie), confirmed on 2026-11-27. Generic reward fields still require a resource mapping. No cached reserved balance or movement registry is modeled. All resource writers follow the common locking protocol documented in database-schema-v1.1.md.'
 }
 
 Table ARTWORK_PULL_RATES {
@@ -504,7 +504,7 @@ Table TRADE_TOKEN_RESERVATIONS {
     (expires_at)
   }
 
-  Note: 'Current outgoing token hold for an accepted offer version. Zero amounts have no row. expires_at equals the original announcement expiry. Owner, version, positive amount, availability and release are enforced by backend transactions. Balance is not debited until completion.'
+  Note: 'Current outgoing Scaglie hold for an accepted offer version. Zero amounts have no row. expires_at equals the original announcement expiry. Owner, version, positive amount, availability and release are enforced by backend transactions. Balance is not debited until completion.'
 }
 
 Table TRADE_CARD_RESERVATIONS {

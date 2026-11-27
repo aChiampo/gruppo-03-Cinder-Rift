@@ -1,6 +1,6 @@
 # Riepilogo degli endpoint
 
-Ultimo aggiornamento significativo: **2026-11-27**, integrazione F03 con il cleanup di `dev`. F01/F04/F05/F07 sono integrati nel frontend, F13 e catalogo/CRUD F03 sono implementati nel backend. Le tre rotte inventario/apertura F03 sono BE Implemented dal 2026-11-27, con validazione condivisa POST/PUT e transazione atomica del lotto.
+Ultimo aggiornamento significativo: **2026-11-27**, acquisto F03 implementato su richiesta dell’utente con addebito Scaglie e lettore prenotazioni condivisi, senza nuova migrazione F06, deduplicazione o cronologia acquisti. F01/F04/F05/F07 sono integrati nel frontend; F13 e le nove rotte F03 sono implementati soltanto nel backend. Per F03 sono disponibili cinque rotte di catalogo/amministrazione e quattro di inventario/apertura/acquisto. Validazione condivisa POST/PUT e apertura atomica del lotto restano confermate.
 
 
 Aggiornamento del **2026-11-21**: aggiunte le sette rotte F04/F10 importate da `feature/api-collezione-catalogo`; importazione backend distinta dalla successiva integrazione React F04 del 2026-11-22.
@@ -15,7 +15,7 @@ Gli stati usano esattamente queste etichette; BE significa Backend e FE signific
 - **BE Implemented**: rotta presente nel backend, senza corrispondente chiamata nel frontend.
 - **FE Implemented**: chiamata presente nel frontend. Per tutte le rotte qui indicate esiste anche il backend; lo stato non attesta una verifica integrata o il completamento di tutti i flussi della funzionalità.
 
-Riepilogo: **54 voci**, di cui **17 Planned**, **22 BE Implemented** e **15 FE Implemented**. Payload e regole complete restano nei contratti canonici.
+Riepilogo: **55 voci**, di cui **14 Planned**, **26 BE Implemented** e **15 FE Implemented**. Payload e regole complete restano nei contratti canonici.
 
 Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consentono a `USER` e `ADMIN` di gestire soltanto le proprie relazioni. Elenchi, payload, codici HTTP e formato degli errori seguono il [contratto canonico F13](amicizie.md#contratto-tecnico-condiviso). Il cleanup amicizie è incluso nella cancellazione account F01; frontend F13 e cleanup scambi F06 restano da completare.
 
@@ -75,6 +75,7 @@ Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consenton
 | `GET /api/users/me/inventory` | Legge i tre saldi del chiamante | BE Implemented | Bearer JWT | `200`, `401`, `403`, `500`, `503` | `USER`; solo proprio inventario | [F03 — Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) |
 | `GET /api/users/me/inventory/packs` | Elenca quantità e definizioni possedute, incluse quelle non acquisibili | BE Implemented | Bearer JWT | `200`, `401`, `403`, `500`, `503` | `USER`; solo proprio inventario | [F03 — Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) |
 | `POST /api/users/me/pack-openings` | Apre atomicamente da 1 a 10 copie; rifiuta il possesso occupato con lock non attendente e restituisce direttamente le carte | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409`, `415`, `500`, `503` | `USER`; solo proprio possesso | [F03 - Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP) |
+| `POST /api/users/me/pack-purchases` | Addebita Scaglie disponibili e accredita pacchetti chiusi atomicamente; nessun retry automatico o storico | BE Implemented | Bearer JWT | `200`, `400`, `401`, `403`, `404`, `409`, `415`, `500`, `503` | `USER`; solo proprio inventario | [F03 — Acquisto](acquisto-pacchetti.md#Acquisto%20pacchetti%3A%20contratto%20HTTP) |
 
 ## Contratti e codice di riferimento
 
@@ -86,6 +87,8 @@ Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consenton
 - [F01 — Profili](accesso-utenti.md#Profili%20utente)
 - [F03 — Catalogo pacchetti e CRUD](acquisto-pacchetti.md#Catalogo%20implementato%3A%20migrazione%20e%20API)
 - [F03 — Inventario e apertura](acquisto-pacchetti.md#Inventario%20e%20apertura%20differita%3A%20contratto%20HTTP)
+- [F03 — Acquisto](acquisto-pacchetti.md#Acquisto%20pacchetti%3A%20contratto%20HTTP)
+- [Controller acquisto](../../springboot_app/app/src/main/java/webapp/pack/PackPurchaseController.java), [servizio di addebito condiviso](../../springboot_app/app/src/main/java/webapp/economy/DebitService.java) e [lettore prenotazioni condiviso](../../springboot_app/app/src/main/java/webapp/economy/ReservationReader.java).
 - [Controller catalogo pacchetti](../../springboot_app/app/src/main/java/webapp/pack/PackController.java) e [amministrazione pacchetti](../../springboot_app/app/src/main/java/webapp/pack/PackManagementController.java).
 - [F05 — API mazzi](gestione-mazzi.md#API%20HTTP%20implementate)
 - [F07 — Endpoint e payload](app-battaglie-api.md)
@@ -96,14 +99,18 @@ Il backend F13 è implementato: tutte le rotte richiedono Bearer JWT e consenton
 
 ## Ambito e verifiche
 
-Il branch corrente contiene le API PvE F07, catalogo/collezione F04, scritture carte F10 e catalogo/CRUD pacchetti F03. Per F03 sono implementate le cinque rotte di catalogo/amministrazione e le tre rotte inventario/apertura. L’apertura aggiorna atomicamente possesso, collezione e mercy; acquisto e accredito iniziale dei pacchetti restano non implementati; nessun percorso d’acquisto o storico F08 è introdotto. La migrazione [V12](../../springboot_app/app/src/main/resources/db/migration/V12__create_f03_packs_schema.sql) crea le quattro tabelle F03 senza seed dei pacchetti; [V13](../../springboot_app/app/src/main/resources/db/migration/V13__normalize_f03_slot_pull_rates.sql) normalizza slot e probabilità e aggiunge `is_acquirable`. Nessuna nuova migrazione o chiamata React è introdotta dall’implementazione dell’apertura.
+Il branch corrente contiene le API PvE F07, catalogo/collezione F04, scritture carte F10 e catalogo/CRUD pacchetti F03. Per F03 sono implementate le cinque rotte di catalogo/amministrazione e le quattro rotte inventario/apertura/acquisto. L’apertura aggiorna atomicamente possesso, collezione e mercy; l’acquisto è implementato con addebito Scaglie e credito di pacchetti chiusi atomici, servizi condivisi e rispetto degli hold F06; nessuna cronologia acquisti o storico F08 è introdotto. La migrazione [V12](../../springboot_app/app/src/main/resources/db/migration/V12__create_f03_packs_schema.sql) crea le quattro tabelle F03 senza seed dei pacchetti; [V13](../../springboot_app/app/src/main/resources/db/migration/V13__normalize_f03_slot_pull_rates.sql) normalizza slot e probabilità e aggiunge `is_acquirable`. Nessuna nuova migrazione o chiamata React è introdotta dall’implementazione dell’apertura o dell’acquisto; la migrazione F06 resta esclusa su istruzione dell’utente.
 
-Le chiamate React presenti coprono F01 (accesso, registrazione, rinnovo, uscita, profilo), CRUD F05, PvE F07 e le due letture di elenco F04. I dettagli F04 sono già inclusi negli elenchi; le rotte di dettaglio restano `BE Implemented`. Le scritture del catalogo F10 restano amministrative e senza interfaccia. Le otto rotte F03 di catalogo/CRUD e inventario/apertura restano backend; F03 e storico F08 non sono integrati nel client.
+Le chiamate React presenti coprono F01 (accesso, registrazione, rinnovo, uscita, profilo), CRUD F05, PvE F07 e le due letture di elenco F04. I dettagli F04 sono già inclusi negli elenchi; le rotte di dettaglio restano `BE Implemented`. Le scritture del catalogo F10 restano amministrative e senza interfaccia. Le nove rotte F03 di catalogo/CRUD, inventario/apertura e acquisto restano backend; F03 e storico F08 non sono integrati nel client.
 
 Per l’apertura F03, OpenAPI espone richiesta, risposta e descrizioni dei codici applicativi. Il conflitto sul possesso è `409 OPENING_IN_PROGRESS`; un PUT/DELETE che protegge già la definizione causa `503 TEMPORARILY_UNAVAILABLE`. Se l’apertura ha già il lock condiviso della definizione, la scrittura amministrativa attende il commit e usa il possesso residuo. Dettagli, atomicità e limiti restano nel [contratto canonico](acquisto-pacchetti.md#Lock%20semplice%20sulle%20aperture%20concorrenti).
 
+Per l’acquisto F03, il [contratto canonico](acquisto-pacchetti.md#Acquisto%20pacchetti%3A%20contratto%20HTTP) contiene richiesta, risposta, codici applicativi e regole di concorrenza. Il prezzo corrente del server è autorevole; il limite di dieci pacchetti riguarda soltanto l’apertura. Le Scaglie prenotate non sono spendibili; la risposta distingue saldo totale, prenotato e disponibile. Ogni richiesta riuscita ripetuta è un nuovo acquisto: dopo timeout non reinviare automaticamente e non presumere un rollback. Non sono introdotti endpoint di cronologia o recupero. In assenza completa dello storage F06 le prenotazioni valgono zero; storage parziale o hold incoerenti bloccano l’acquisto.
+
+Verifica finale F03 del **2026-11-27**: **412 test backend superati** e JAR prodotto, incluse 49 prove di acquisto e 5 del lettore prenotazioni condiviso, oltre alle 47 prove API/transazionali di apertura. Ambiente, comando e limiti sono nel [README backend](../../springboot_app/app/README.md#Verifica%20acquisto%20F03%20del%202026-11-27). Frontend F03 e flussi del mercato F06 esclusi. Questa revisione della guida verifica conteggi, link e coerenza con controller e contratto; non riesegue i test applicativi.
+
 Gli endpoint tecnici documentati separatamente sono [OpenAPI e salute del backend](accesso-utenti.md#Guida%20autenticazione%2C%20header%20e%20OpenAPI) e [salute del motore](../../springboot_app/game_engine/README.md#Avvio%20con%20Docker%20Compose).
 
-Gli stati derivano dai contratti, dai controller e dalle chiamate React del branch corrente. La revisione documentale del **2026-11-26** allinea il perimetro al lock semplice richiesto da Chiampo, rimuove i flussi esclusi e verifica collegamenti, ancore, schemi e conteggi. Non esegue test applicativi e non attesta implementazione di nuovi DTO, migrazioni, controller o integrazioni FrontEnd.
+Gli stati derivano dai contratti, dai controller e dalle chiamate React del branch corrente. La precedente revisione documentale del **2026-11-26** allineava il perimetro al lock semplice richiesto da Chiampo, rimuoveva i flussi esclusi e verificava collegamenti, ancore, schemi e conteggi. Non eseguiva test applicativi né attestava implementazione di nuovi DTO, migrazioni, controller o integrazioni FrontEnd; l’acquisto implementato e verificato il 2026-11-27 è descritto sopra.
 
 Gli stati derivano dall'ispezione del codice corrente. Verifica F04 del **2026-11-22**: 33 test frontend superati, build riuscita e client sorgente contro Spring locale verificato per catalogo, collezione, filtri, paginazione e risposte `400`/`401`. Il frontend locale è stato ricostruito tramite Compose ed è sano; verifica browser non eseguita per host non disponibile. Nessuna nuova esecuzione della suite backend. [Evidenze e limiti F04](../FrontEnd/collezione-carte.md#verifiche-e-limiti).

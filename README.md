@@ -1,5 +1,9 @@
 # Gioco di carte collezionabili digitale
 
+Verifica finale acquisto F03 del **2026-11-27**: **412 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.6 isolato. Incluse 49 prove di acquisto e 5 del lettore prenotazioni condiviso. Nessuna migrazione o modifica al database applicativo; frontend e flussi F06 esclusi. [Comando, copertura e limiti](springboot_app/app/README.md#verifica-acquisto-f03-del-2026-11-27).
+
+Acquisto F03 implementato il **2026-11-27**, su richiesta dell’utente: `POST /api/users/me/pack-purchases`, addebito Scaglie e credito di pacchetti chiusi atomici. `DebitService` e `ReservationReader` sono condivisi fra funzionalità; gli hold monetari F06 riservano Scaglie. Nessuna nuova migrazione, deduplicazione o cronologia acquisti; frontend e seed commerciale esclusi. [Contratto corrente](docs/BackEnd/acquisto-pacchetti.md#acquisto-pacchetti-contratto-http). Le verifiche dell’apertura sotto precedono questo intervento.
+
 Verifica dell’apertura F03 del **2026-11-27**: **358 test backend superati**, zero fallimenti/errori/casi saltati, e JAR prodotto con JDK 21.0.11 e PostgreSQL 18.6 temporaneo. Incluse 7 prove deterministiche di estrazione e 47 prove API/transazionali di apertura. Database applicativo non modificato; acquisto, seed commerciale e frontend F03 esclusi. [Comandi e copertura](springboot_app/app/README.md#verifica-dellapertura-f03-del-2026-11-27).
 
 Apertura F03 implementata il **2026-11-27**, su richiesta dell’utente: letture dell’inventario e apertura atomica di 1–10 pacchetti dello stesso tipo, filtri cumulativi, carte equiprobabili, artwork indipendente con fallback Standard e mercy sull’ultimo slot. Il servizio di validazione verifica i flussi amministrativi POST/PUT e ogni apertura. Nessuna nuova migrazione o seed commerciale; acquisto e frontend F03 restano esclusi. [Contratto e limiti](docs/BackEnd/acquisto-pacchetti.md).
@@ -63,7 +67,7 @@ Le modalità di assegnazione dei crediti in fase 1 restano **DA DEFINIRE**; i pa
 | Pacchetto | Contenitore di carte con slot configurabili e apertura backend implementata; composizioni commerciali da definire | Un pacchetto del tipo «Rare» |
 | Carta | Elemento della collezione utilizzabile nei mazzi | Creatura con attacco, difesa e fazione |
 
-Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti non rientrano nel perimetro. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità definitive. Catalogo e CRUD F03 disponibili senza seed; acquisto e apertura da implementare. [Contratto canonico](docs/BackEnd/acquisto-pacchetti.md).
+Ogni offerta contiene esattamente un pacchetto; gli insiemi di più pacchetti non rientrano nel perimetro. Gli esempi non stabiliscono prezzi, nomi commerciali, rarità o quantità definitive. Catalogo, CRUD, inventario, acquisto e apertura F03 disponibili senza seed commerciale. [Contratto canonico](docs/BackEnd/acquisto-pacchetti.md).
 
 ## Tecnologie
 

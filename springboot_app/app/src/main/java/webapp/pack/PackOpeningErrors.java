@@ -16,7 +16,7 @@ public final class PackOpeningErrors {
 
     public static boolean matches(HttpServletRequest request) {
         String path = request.getRequestURI().substring(request.getContextPath().length());
-        return path.equals("/api/users/me/pack-openings") || path.equals("/api/users/me/inventory")
+        return path.equals("/api/users/me/pack-openings") || path.equals("/api/users/me/pack-purchases") || path.equals("/api/users/me/inventory")
                 || path.equals("/api/users/me/inventory/packs");
     }
 

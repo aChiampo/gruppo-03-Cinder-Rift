@@ -146,7 +146,7 @@ class SecurityConfiguration {
                         // hasRole("ADMIN") checks the ROLE_ADMIN authority assigned during authentication.
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/me/inventory", "/api/users/me/inventory/packs",
-                                "/api/users/me/pack-openings").hasRole("USER")
+                                "/api/users/me/pack-openings", "/api/users/me/pack-purchases").hasRole("USER")
                         // Every request not matched above must have a valid authenticated principal.
                         .anyRequest().authenticated())
                 // Reads Authorization: Bearer <JWT> and validates it using the JwtDecoder bean below.

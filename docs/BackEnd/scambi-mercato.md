@@ -1,9 +1,9 @@
 # Scambi e marketplace
 
 ID: **F06**. Perimetro: confermato, scambi pubblici e privati di carte e token.
-Specifica: **in approfondimento**. Implementazione: **non iniziata**.
+Specifica: **in approfondimento**. Implementazione: **lettore prenotazioni e servizio di addebito condivisi disponibili; migrazione e flussi del mercato non implementati**.
 Responsabile: **DA DEFINIRE (Software Developer)**.
-Ultimo aggiornamento significativo: **2026-11-18**, propagazione delle decisioni dell'utente su amicizie, cancellazione account, conservazione degli scambi completati e ripubblicazione dell'annuncio pubblico della controparte. L'allineamento ai saldi distinti dell'inventario risale al 2026-11-09; la corrispondenza monetaria resta aperta. Verifiche applicative: **non eseguite**.
+Ultimo aggiornamento significativo: **2026-11-27**, su conferma dell’utente gli hold monetari riservano Scaglie; introdotti `ReservationReader` e `DebitService` condivisi senza migrazione F06. Le precedenti decisioni del 2026-11-18 riguardano la propagazione delle decisioni dell'utente su amicizie, cancellazione account, conservazione degli scambi completati e ripubblicazione dell'annuncio pubblico della controparte. L'allineamento ai saldi distinti dell'inventario risale al 2026-11-09; la corrispondenza degli importi monetari con le Scaglie è ora confermata. Verifiche dei flussi del mercato: **non eseguite**; servizi condivisi verificati con F03 secondo il contratto collegato sotto.
 Fonte dati e invarianti: [specifica canonica v1.1](Database/database-schema-v1.1.md#sistema-di-scambi-e-negoziazioni).
 
 ## Obiettivo, perimetro e dipendenze
@@ -12,11 +12,11 @@ Questa pagina descrive il contratto tecnico F06 in conformità alla base di dati
 
 A è il pubblicatore e B il rispondente o destinatario privato. Gli identificativi sono `int`; le PK autonome sono auto-incrementali. Destinatari e partecipanti usano `USERS.id`, senza un secondo identificativo pubblico. Le FK e le chiavi composte ereditano gli interi e non generano valori.
 
-`INVENTORY` conserva tre saldi `int` obbligatori con default `0`: `cobalt_shards` (Scaglie), `rift_cores` (Nuclei Rift), `scraps` (Rotami). I campi `*_token_offer` e `TRADE_TOKEN_RESERVATIONS.token_amount` restano generici e non identificano la risorsa. Quale risorsa sia trasferibile, a quale saldo corrispondano e come rappresentare eventuali scambi multirisorsa restano **DA DEFINIRE**. Non viene attribuita implicitamente trasferibilità ai Nuclei Rift o alle altre risorse. Il protocollo monetario seguente richiede questa decisione prima dell'implementazione.
+`INVENTORY` conserva tre saldi `int` obbligatori con default `0`: `cobalt_shards` (Scaglie), `rift_cores` (Nuclei Rift), `scraps` (Rotami). Su conferma dell’utente del **2026-11-27**, `*_token_offer` e `TRADE_TOKEN_RESERVATIONS.token_amount` rappresentano Scaglie; i nomi SQL restano invariati. Nessuna equivalenza o trasferibilità implicita per Nuclei Rift e Rotami. Il [contratto F03](acquisto-pacchetti.md#acquisto-pacchetti-contratto-http) documenta lettore e addebito condivisi, comportamento senza storage e guard esclusivo utente obbligatorio per futuri scrittori di hold. Migrazione e lifecycle F06 restano da implementare.
 
 La pubblicazione pubblica non prenota risorse. Gli hold appartengono sempre a una `CURRENT_NEGOTIATIONS` esistente e a un'offerta accettata. Una modifica rilascia tutti gli hold, incrementa la versione e azzera entrambi i consensi: non mantiene prenotazioni di lati non accettanti. Non sono necessari hold di annuncio senza trattativa né uno stato persistito separato di “lato già prenotato”.
 
-Dipendenze: F01 per identità e cancellazione account, F13 per richieste e amicizie reciproche, F03/F04 per disponibilità, F05/F07 per mazzi e gioco, F10 per catalogo e conversioni. Nessuna integrazione è già implementata.
+Dipendenze: F01 per identità e cancellazione account, F13 per richieste e amicizie reciproche, F03/F04 per disponibilità, F05/F07 per mazzi e gioco, F10 per catalogo e conversioni. Il consumo di disponibilità F03 usa già i servizi condivisi; le altre integrazioni restano da implementare.
 
 ## Flussi
 
@@ -90,7 +90,7 @@ type CardOffer = {
 };
 ```
 
-Ogni coppia compare una sola volta. Il backend controlla ID interi validi, arte appartenente alla carta, quantità positive, importi generici non negativi e disponibilità al momento della prenotazione. Non sono FK annidate e non si sostituisce implicitamente un'arte. Gli importi `*_token_offer`, `token_amount` e `offer_version` restano `bigint`: serializzazione a 64 bit e payload definitivi sono da concordare. I saldi di inventario sono invece `int`; gli aggiornamenti devono rispettarne il dominio e non assumere una corrispondenza di risorsa non ancora definita.
+Ogni coppia compare una sola volta. Il backend controlla ID interi validi, arte appartenente alla carta, quantità positive, importi generici non negativi e disponibilità al momento della prenotazione. Non sono FK annidate e non si sostituisce implicitamente un'arte. Gli importi `*_token_offer`, `token_amount` e `offer_version` restano `bigint`: serializzazione a 64 bit e payload definitivi sono da concordare. I saldi di inventario sono invece `int`; gli aggiornamenti devono rispettarne il dominio e usare la corrispondenza confermata con le Scaglie.
 
 ## Modello dati: annunci, negoziazioni e prenotazioni
 
@@ -334,7 +334,7 @@ Scenari previsti, **non eseguiti**. Gli ID locali restano stabili; gli esiti son
 
 Allineamento documentale alla v1.1; nessuna API, migrazione, pulizia o prenotazione è implementata. Le prove transazionali devono essere eseguite dopo l'implementazione.
 
-Restano da definire risorsa dei campi monetari generici, trasferibilità e rappresentazione di eventuali offerte multirisorsa; inoltre rotte e payload definitivi, errori, serializzazione a 64 bit, paginazione F06, deduplicazione delle creazioni, guard catalogo, timeout/retry, lotti, statistiche, altre politiche di conservazione, frammenti, giocabilità e consegna affidabile. Sono confermati la permanenza degli scambi dopo rimozione dell'amicizia, il cleanup dei soli scambi aperti al soft delete, la conservazione dello storico completato e il rifiuto/ripubblicazione per l'annuncio pubblico valido della controparte. Il coordinamento transazionale F01/F13 e la visibilità dello storico dopo cancellazione account restano aperti. L'assenza di paginazione è una decisione F13 e non definisce la paginazione degli elenchi F06. Non sono più lacune della v1.1 la prenotazione di pubblicazione o lo stato separato di lato già prenotato: questi comportamenti non fanno parte del modello corrente.
+Gli importi monetari generici rappresentano Scaglie. Restano da definire eventuali estensioni multirisorsa; inoltre rotte e payload definitivi, errori, serializzazione a 64 bit, paginazione F06, deduplicazione delle creazioni, guard catalogo, timeout/retry, lotti, statistiche, altre politiche di conservazione, frammenti, giocabilità e consegna affidabile. Sono confermati la permanenza degli scambi dopo rimozione dell'amicizia, il cleanup dei soli scambi aperti al soft delete, la conservazione dello storico completato e il rifiuto/ripubblicazione per l'annuncio pubblico valido della controparte. Il coordinamento transazionale F01/F13 e la visibilità dello storico dopo cancellazione account restano aperti. L'assenza di paginazione è una decisione F13 e non definisce la paginazione degli elenchi F06. Non sono più lacune della v1.1 la prenotazione di pubblicazione o lo stato separato di lato già prenotato: questi comportamenti non fanno parte del modello corrente.
 
 ## Collegamenti
 

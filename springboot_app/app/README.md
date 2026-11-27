@@ -1,5 +1,25 @@
 # Applicazione backend
 
+Acquisto F03 implementato il **2026-11-27**, su richiesta dell’utente: `POST /api/users/me/pack-purchases` addebita Scaglie disponibili e accredita pacchetti chiusi nello stesso commit. Nessuna migrazione aggiunta o modificata, deduplicazione o cronologia acquisti. [Contratto corrente](../../docs/BackEnd/acquisto-pacchetti.md#acquisto-pacchetti-contratto-http).
+
+I servizi [DebitService](src/main/java/webapp/economy/DebitService.java) e [ReservationReader](src/main/java/webapp/economy/ReservationReader.java) sono riutilizzabili da F03 e dai futuri servizi F06. Richiedono una transazione del chiamante; il lettore richiede il lock esclusivo dell’utente già acquisito. Il servizio di addebito acquisisce utente e inventario e preserva gli hold monetari, confermati in Scaglie. Futuri scrittori F06 devono usare il medesimo guard utente. In assenza completa delle tre tabelle F06 le prenotazioni valgono zero; storage parziale restituisce `503`, hold vivi incoerenti impediscono la spesa. Nessun errore di lettura diventa disponibilità libera. Backend di mercato, frontend e seed commerciale esclusi.
+
+Le verifiche datate dell’apertura e dell’integrazione sotto sono precedenti all’acquisto.
+
+## Verifica acquisto F03 del 2026-11-27
+
+Verifica finale sulla copia di lavoro con JDK **21.0.11**, Maven Wrapper offline e PostgreSQL **18.6** in un container temporaneo dedicato, senza volumi applicativi. Completato `verify`: **412 test backend superati**, zero fallimenti, errori o casi saltati; prodotto `target/app-0.0.1-SNAPSHOT.jar`. Database applicativo non modificato; nessuna nuova migrazione. Frontend, browser, motore separato e flussi di mercato F06 non rieseguiti.
+
+```powershell
+.\mvnw.cmd -o "-Daether.syncContext.named.factory=rwlock-local" verify
+```
+
+Configurare le variabili di connessione e sicurezza descritte sotto su un database di prova dedicato, con entrambi gli scheduler e Docker Compose disabilitati per i test. Il database temporaneo usato per questa verifica esponeva soltanto il loopback sulla porta `55439`.
+
+- [PackPurchaseDatabaseTests](src/test/java/webapp/pack/PackPurchaseDatabaseTests.java): **49 test**, con JWT e ruoli reali, contratto OpenAPI, input rigoroso, prezzo corrente, creazione/incremento del possesso, richieste ripetute, prezzo zero, limiti interi, rollback dopo credito, inventario mancante, risorse e mercy invariati, prenotazioni e disponibilità, hold mancanti/incoerenti, storage parziale e concorrenza con altri acquisti, scrittori di hold, aperture, PUT/DELETE amministrativi e cancellazione account.
+- [ReservationReaderDatabaseTests](src/test/java/webapp/economy/ReservationReaderDatabaseTests.java): **5 test**, con cutoff esatto, hold del rispondente, overflow della somma, SQL malformato e introduzione successiva dello storage senza cache. Gli schemi e le tabelle F06 sono fixture esclusivamente di test; non sono migrazioni o inizializzazioni applicative.
+- La suite completa comprende anche i **47 test API/transazionali di apertura** e i test esistenti di autenticazione, profili, amicizie, catalogo, mazzi e migrazioni.
+
 Apertura F03 implementata il **2026-11-27**, su richiesta dell’utente: letture dell’inventario e apertura atomica di 1–10 pacchetti dello stesso tipo, filtri cumulativi, carte equiprobabili, artwork indipendente con fallback Standard e mercy sull’ultimo slot. Il servizio di validazione verifica i flussi amministrativi POST/PUT e ogni apertura. Nessuna nuova migrazione o seed commerciale; acquisto e frontend F03 restano esclusi. [Contratto e limiti](../../docs/BackEnd/acquisto-pacchetti.md).
 
 Aggiornamento F03 del **2026-11-27**, su decisione dell’utente: V12 crea direttamente `mercy_rarity` in `packs` come FK nullable; `user_mercy` conserva soltanto utente, pacchetto e contatore. CRUD e apertura usano questo campo; la garanzia sostituisce l’ultimo slot con la rarità esatta configurata quando necessaria. Acquisto non implementato. [Contratto corrente](../../docs/BackEnd/acquisto-pacchetti.md).
@@ -88,7 +108,7 @@ Le dipendenze forniscono l'infrastruttura. Rispetto ai sorgenti correnti restano
 
 - Interfacce di cancellazione account e recupero password, invio email e cleanup F13/F06. Registrazione, accesso, profilo, rinnovo e uscita React sono già collegati al [backend F01](../../docs/BackEnd/accesso-utenti.md).
 - Bilanciamento definitivo V2.1 e coordinamento con i futuri scrittori del catalogo: validazione F05 e riuso nel PvE sono già implementati.
-- Acquisti e scambi atomici, rispettando il protocollo di lock documentato nella specifica del database.
+- Scambi atomici e loro migrazione F06; acquisto F03 disponibile con addebito e lettore prenotazioni condivisi, senza nuova migrazione.
 - Migrazioni per le funzionalità successive: V1–V8 e V11–V13 coprono la base implementata, seed, effetti, URL immagini, amicizie e catalogo pacchetti; le altre tabelle del modello v1.1 restano da implementare.
 - Sfide PvP e storico persistito. Simulazione PvE e snapshot per la singola esecuzione sono già implementati.
 - Configurazione SMTP; database, JWT e servizi Compose richiedono già le impostazioni di avvio descritte sotto.
