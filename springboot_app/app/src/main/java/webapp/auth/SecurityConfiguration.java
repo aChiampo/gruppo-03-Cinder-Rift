@@ -142,6 +142,7 @@ class SecurityConfiguration {
                         // Requires ADMIN for every HTTP method under /api/admin, including GET and PATCH.
                         // hasRole("ADMIN") checks the ROLE_ADMIN authority assigned during authentication.
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/pvp/**", "/api/battles/history").hasAnyRole("ADMIN", "USER")
                         // Every request not matched above must have a valid authenticated principal.
                         .anyRequest().authenticated())
                 // Reads Authorization: Bearer <JWT> and validates it using the JwtDecoder bean below.
