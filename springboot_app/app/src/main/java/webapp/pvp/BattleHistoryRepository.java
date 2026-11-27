@@ -6,6 +6,7 @@ import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import tools.jackson.databind.JsonNode;
@@ -42,7 +43,7 @@ public class BattleHistoryRepository {
                     deck_a_snapshot, deck_b_snapshot, battle_log, ranking_delta
                 )
                 VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), CAST(? AS jsonb), ?)
-                RETURNING """ + SELECT_COLUMNS;
+                RETURNING """ + " " + SELECT_COLUMNS;
 
         return jdbc.queryForObject(
                 sql,
@@ -56,6 +57,12 @@ public class BattleHistoryRepository {
                 deckBJson,
                 battleLogJson,
                 entry.rankingDelta());
+    }
+
+    /** Returns one persisted battle history record by id, if present. */
+    public Optional<BattleHistoryEntry> findById(int id) {
+        String sql = "SELECT " + SELECT_COLUMNS + " FROM battle_history WHERE id = ?";
+        return jdbc.query(sql, (rs, rowNum) -> mapRow(rs), id).stream().findFirst();
     }
 
     /** Returns all battles where the user participated as player A or player B, newest first. */

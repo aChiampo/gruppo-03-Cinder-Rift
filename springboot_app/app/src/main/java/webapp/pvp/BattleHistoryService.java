@@ -2,6 +2,7 @@ package webapp.pvp;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 /** Application service for recording and querying battle history. */
@@ -17,6 +18,11 @@ public class BattleHistoryService {
     public List<BattleHistoryEntry> listHistory(int userId, String mode) {
         String normalizedMode = (mode == null || mode.isBlank()) ? null : mode.trim();
         return repository.findByUserId(userId, normalizedMode);
+    }
+
+    /** Returns a single battle history entry by id, if present. */
+    public Optional<BattleHistoryEntry> findById(int id) {
+        return repository.findById(id);
     }
 
     /** Persists a completed battle in {@code battle_history}. */
